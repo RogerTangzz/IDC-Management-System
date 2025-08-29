@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BizMaintenanceExecutionMapper">
+    
+    <resultMap type="BizMaintenanceExecution" id="BizMaintenanceExecutionResult">
+        <result property="executionId"    column="execution_id"    />
+        <result property="executionNo"    column="execution_no"    />
+        <result property="planId"    column="plan_id"    />
+        <result property="title"    column="title"    />
+        <result property="floor"    column="floor"    />
+        <result property="version"    column="version"    />
+        <result property="mopCategory"    column="mop_category"    />
+        <result property="executorId"    column="executor_id"    />
+        <result property="executorName"    column="executor_name"    />
+        <result property="planExecutionTime"    column="plan_execution_time"    />
+        <result property="actualExecutionTime"    column="actual_execution_time"    />
+        <result property="executionStatus"    column="execution_status"    />
+        <result property="executionResult"    column="execution_result"    />
+        <result property="executionRecord"    column="execution_record"    />
+        <result property="abnormalDescription"    column="abnormal_description"    />
+        <result property="photos"    column="photos"    />
+        <result property="attachments"    column="attachments"    />
+        <result property="checkList"    column="check_list"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectBizMaintenanceExecutionVo">
+        select execution_id, execution_no, plan_id, title, floor, version, mop_category, executor_id, executor_name, plan_execution_time, actual_execution_time, execution_status, execution_result, execution_record, abnormal_description, photos, attachments, check_list, del_flag, create_by, create_time, update_by, update_time, remark from biz_maintenance_execution
+    </sql>
+
+    <select id="selectBizMaintenanceExecutionList" parameterType="BizMaintenanceExecution" resultMap="BizMaintenanceExecutionResult">
+        <include refid="selectBizMaintenanceExecutionVo"/>
+        <where>  
+            <if test="executionNo != null  and executionNo != ''"> and execution_no = #{executionNo}</if>
+            <if test="planId != null "> and plan_id = #{planId}</if>
+            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="floor != null  and floor != ''"> and floor = #{floor}</if>
+            <if test="version != null  and version != ''"> and version = #{version}</if>
+            <if test="mopCategory != null  and mopCategory != ''"> and mop_category = #{mopCategory}</if>
+            <if test="executorId != null "> and executor_id = #{executorId}</if>
+            <if test="executorName != null  and executorName != ''"> and executor_name like concat('%', #{executorName}, '%')</if>
+            <if test="planExecutionTime != null "> and plan_execution_time = #{planExecutionTime}</if>
+            <if test="actualExecutionTime != null "> and actual_execution_time = #{actualExecutionTime}</if>
+            <if test="executionStatus != null  and executionStatus != ''"> and execution_status = #{executionStatus}</if>
+            <if test="executionResult != null  and executionResult != ''"> and execution_result = #{executionResult}</if>
+            <if test="executionRecord != null  and executionRecord != ''"> and execution_record = #{executionRecord}</if>
+            <if test="abnormalDescription != null  and abnormalDescription != ''"> and abnormal_description = #{abnormalDescription}</if>
+            <if test="photos != null  and photos != ''"> and photos = #{photos}</if>
+            <if test="attachments != null  and attachments != ''"> and attachments = #{attachments}</if>
+            <if test="checkList != null  and checkList != ''"> and check_list = #{checkList}</if>
+        </where>
+    </select>
+    
+    <select id="selectBizMaintenanceExecutionByExecutionId" parameterType="Long" resultMap="BizMaintenanceExecutionResult">
+        <include refid="selectBizMaintenanceExecutionVo"/>
+        where execution_id = #{executionId}
+    </select>
+
+    <insert id="insertBizMaintenanceExecution" parameterType="BizMaintenanceExecution" useGeneratedKeys="true" keyProperty="executionId">
+        insert into biz_maintenance_execution
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="executionNo != null and executionNo != ''">execution_no,</if>
+            <if test="planId != null">plan_id,</if>
+            <if test="title != null">title,</if>
+            <if test="floor != null">floor,</if>
+            <if test="version != null">version,</if>
+            <if test="mopCategory != null">mop_category,</if>
+            <if test="executorId != null">executor_id,</if>
+            <if test="executorName != null">executor_name,</if>
+            <if test="planExecutionTime != null">plan_execution_time,</if>
+            <if test="actualExecutionTime != null">actual_execution_time,</if>
+            <if test="executionStatus != null">execution_status,</if>
+            <if test="executionResult != null">execution_result,</if>
+            <if test="executionRecord != null">execution_record,</if>
+            <if test="abnormalDescription != null">abnormal_description,</if>
+            <if test="photos != null">photos,</if>
+            <if test="attachments != null">attachments,</if>
+            <if test="checkList != null">check_list,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="executionNo != null and executionNo != ''">#{executionNo},</if>
+            <if test="planId != null">#{planId},</if>
+            <if test="title != null">#{title},</if>
+            <if test="floor != null">#{floor},</if>
+            <if test="version != null">#{version},</if>
+            <if test="mopCategory != null">#{mopCategory},</if>
+            <if test="executorId != null">#{executorId},</if>
+            <if test="executorName != null">#{executorName},</if>
+            <if test="planExecutionTime != null">#{planExecutionTime},</if>
+            <if test="actualExecutionTime != null">#{actualExecutionTime},</if>
+            <if test="executionStatus != null">#{executionStatus},</if>
+            <if test="executionResult != null">#{executionResult},</if>
+            <if test="executionRecord != null">#{executionRecord},</if>
+            <if test="abnormalDescription != null">#{abnormalDescription},</if>
+            <if test="photos != null">#{photos},</if>
+            <if test="attachments != null">#{attachments},</if>
+            <if test="checkList != null">#{checkList},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBizMaintenanceExecution" parameterType="BizMaintenanceExecution">
+        update biz_maintenance_execution
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="executionNo != null and executionNo != ''">execution_no = #{executionNo},</if>
+            <if test="planId != null">plan_id = #{planId},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="floor != null">floor = #{floor},</if>
+            <if test="version != null">version = #{version},</if>
+            <if test="mopCategory != null">mop_category = #{mopCategory},</if>
+            <if test="executorId != null">executor_id = #{executorId},</if>
+            <if test="executorName != null">executor_name = #{executorName},</if>
+            <if test="planExecutionTime != null">plan_execution_time = #{planExecutionTime},</if>
+            <if test="actualExecutionTime != null">actual_execution_time = #{actualExecutionTime},</if>
+            <if test="executionStatus != null">execution_status = #{executionStatus},</if>
+            <if test="executionResult != null">execution_result = #{executionResult},</if>
+            <if test="executionRecord != null">execution_record = #{executionRecord},</if>
+            <if test="abnormalDescription != null">abnormal_description = #{abnormalDescription},</if>
+            <if test="photos != null">photos = #{photos},</if>
+            <if test="attachments != null">attachments = #{attachments},</if>
+            <if test="checkList != null">check_list = #{checkList},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where execution_id = #{executionId}
+    </update>
+
+    <delete id="deleteBizMaintenanceExecutionByExecutionId" parameterType="Long">
+        delete from biz_maintenance_execution where execution_id = #{executionId}
+    </delete>
+
+    <delete id="deleteBizMaintenanceExecutionByExecutionIds" parameterType="String">
+        delete from biz_maintenance_execution where execution_id in 
+        <foreach item="executionId" collection="array" open="(" separator="," close=")">
+            #{executionId}
+        </foreach>
+    </delete>
+</mapper>
