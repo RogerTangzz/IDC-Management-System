@@ -261,24 +261,35 @@
 </template>
 
 <script setup name="Ticket">
-import { listTicket, getTicket, delTicket, addTicket, updateTicket, assignTickets } from "@/api/business/ticket";
-import { listUser } from "@/api/system/user";
+import { ref, reactive, getCurrentInstance, toRefs } from 'vue'
+import { parseTime } from '@/utils/ruoyi'
+import { listTicket, getTicket, delTicket, addTicket, updateTicket, assignTickets } from "@/api/business/ticket"
+import { listUser } from "@/api/system/user"
+import { useRouter } from 'vue-router'
 
-const { proxy } = getCurrentInstance();
-const { ticket_status, equipment_specialty } = proxy.useDict('ticket_status', 'equipment_specialty');
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const { ticket_status, equipment_specialty } = proxy.useDict('ticket_status', 'equipment_specialty')
 
-const ticketList = ref([]);
-const open = ref(false);
-const assignOpen = ref(false);
-const loading = ref(true);
-const showSearch = ref(true);
-const ids = ref([]);
-const single = ref(true);
-const multiple = ref(true);
-const total = ref(0);
-const title = ref("");
-const dateRange = ref([]);
-const userList = ref([]);
+const ticketList = ref([])
+const open = ref(false)
+const assignOpen = ref(false)
+const loading = ref(true)
+const showSearch = ref(true)
+const ids = ref([])
+const single = ref(true)
+const multiple = ref(true)
+const total = ref(0)
+const title = ref("")
+const dateRange = ref([])
+const userList = ref([])
+
+// Mock数据存储
+const mockTickets = ref([
+  { ticketId: 1, ticketNo: 'TK202501001', title: '空调漏水处理', status: 'pending', priority: 'high', equipment: '空调01', reporter: '张三', specialty: 'hvac', createTime: '2024-01-20 10:00:00', deadline: '2024-01-21 10:00:00' },
+  { ticketId: 2, ticketNo: 'TK202501002', title: 'UPS电池更换', status: 'processing', priority: 'medium', equipment: 'UPS-A', reporter: '王五', assigneeName: '赵六', specialty: 'power', createTime: '2024-01-20 11:00:00', deadline: '2024-01-21 11:00:00' },
+  { ticketId: 3, ticketNo: 'TK202501003', title: '消防系统检测', status: 'completed', priority: 'low', equipment: '烟感器', reporter: '李四', assigneeName: '钱七', specialty: 'fire', createTime: '2024-01-19 09:00:00', deadline: '2024-01-20 09:00:00' }
+])
 
 const data = reactive({
   form: {},
@@ -302,24 +313,50 @@ const data = reactive({
     equipment: [{ required: true, message: "故障设备不能为空", trigger: "blur" }],
     description: [{ required: true, message: "故障描述不能为空", trigger: "blur" }]
   }
-});
+})
 
-const { queryParams, form, assignForm, rules } = toRefs(data);
+const { queryParams, form, assignForm, rules } = toRefs(data)
 
 /** 查询工单列表 */
 function getList() {
-  loading.value = true;
-  listTicket(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-    ticketList.value = response.rows;
-    total.value = response.total;
-    loading.value = false;
-  });
+  loading.value = true
+  
+  // 使用Mock数据并应用过滤
+  setTimeout(() => {
+    let filteredData = [...mockTickets.value]
+    
+    // 应用搜索过滤
+    if (queryParams.value.ticketNo) {
+      filteredData = filteredData.filter(item => 
+        item.ticketNo.toLowerCase().includes(queryParams.value.ticketNo.toLowerCase())
+      )
+    }
+    if (queryParams.value.title) {
+      filteredData = filteredData.filter(item => 
+        item.title.includes(queryParams.value.title)
+      )
+    }
+    if (queryParams.value.status) {
+      filteredData = filteredData.filter(item => 
+        item.status === queryParams.value.status
+      )
+    }
+    if (queryParams.value.priority) {
+      filteredData = filteredData.filter(item => 
+        item.priority === queryParams.value.priority
+      )
+    }
+    
+    ticketList.value = filteredData
+    total.value = filteredData.length
+    loading.value = false
+  }, 300)
 }
 
 /** 取消按钮 */
 function cancel() {
-  open.value = false;
-  reset();
+  open.value = false
+  reset()
 }
 
 /** 表单重置 */
@@ -336,52 +373,53 @@ function reset() {
     description: undefined,
     emergencyAction: undefined,
     discoveryTime: undefined
-  };
-  proxy.resetForm("ticketRef");
+  }
+  proxy.resetForm("ticketRef")
 }
 
 /** 搜索按钮操作 */
 function handleQuery() {
-  queryParams.value.pageNum = 1;
-  getList();
+  queryParams.value.pageNum = 1
+  getList()
 }
 
 /** 重置按钮操作 */
 function resetQuery() {
-  dateRange.value = [];
-  proxy.resetForm("queryRef");
-  handleQuery();
+  dateRange.value = []
+  proxy.resetForm("queryRef")
+  handleQuery()
 }
 
 /** 多选框选中数据 */
 function handleSelectionChange(selection) {
-  ids.value = selection.map(item => item.ticketId);
-  single.value = selection.length != 1;
-  multiple.value = !selection.length;
+  ids.value = selection.map(item => item.ticketId)
+  single.value = selection.length != 1
+  multiple.value = !selection.length
 }
 
 /** 新增按钮操作 */
 function handleAdd() {
-  reset();
-  open.value = true;
-  title.value = "添加工单";
+  reset()
+  open.value = true
+  title.value = "添加工单"
 }
 
 /** 查看按钮操作 */
 function handleView(row) {
-  const ticketId = row.ticketId;
-  proxy.$router.push("/business/ticket/detail/" + ticketId);
+  const ticketId = row.ticketId
+  router.push("/business/ticket/detail/" + ticketId)
 }
 
 /** 修改按钮操作 */
 function handleUpdate(row) {
-  reset();
-  const ticketId = row.ticketId || ids.value[0];
-  getTicket(ticketId).then(response => {
-    form.value = response.data;
-    open.value = true;
-    title.value = "修改工单";
-  });
+  reset()
+  const ticketId = row.ticketId || ids.value[0]
+  const ticket = mockTickets.value.find(t => t.ticketId === ticketId)
+  if (ticket) {
+    form.value = { ...ticket }
+    open.value = true
+    title.value = "修改工单"
+  }
 }
 
 /** 提交按钮 */
@@ -389,61 +427,76 @@ function submitForm() {
   proxy.$refs["ticketRef"].validate(valid => {
     if (valid) {
       if (form.value.ticketId != undefined) {
-        updateTicket(form.value).then(response => {
-          proxy.$modal.msgSuccess("修改成功");
-          open.value = false;
-          getList();
-        });
+        // 修改
+        const index = mockTickets.value.findIndex(t => t.ticketId === form.value.ticketId)
+        if (index > -1) {
+          mockTickets.value[index] = { ...form.value }
+        }
+        proxy.$modal.msgSuccess("修改成功")
       } else {
-        addTicket(form.value).then(response => {
-          proxy.$modal.msgSuccess("新增成功");
-          open.value = false;
-          getList();
-        });
+        // 新增
+        const newTicket = {
+          ...form.value,
+          ticketId: Date.now(),
+          ticketNo: 'TK' + Date.now(),
+          status: 'pending',
+          createTime: parseTime(new Date()),
+          deadline: parseTime(new Date(Date.now() + 24*60*60*1000))
+        }
+        mockTickets.value.push(newTicket)
+        proxy.$modal.msgSuccess("新增成功")
       }
+      open.value = false
+      getList()
     }
-  });
+  })
 }
 
 /** 删除按钮操作 */
 function handleDelete(row) {
-  const ticketIds = row.ticketId || ids.value;
+  const ticketIds = row.ticketId || ids.value
   proxy.$modal.confirm('是否确认删除工单编号为"' + ticketIds + '"的数据项？').then(function() {
-    return delTicket(ticketIds);
-  }).then(() => {
-    getList();
-    proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {});
+    // 从Mock数据中删除
+    mockTickets.value = mockTickets.value.filter(t => !ticketIds.includes(t.ticketId))
+    getList()
+    proxy.$modal.msgSuccess("删除成功")
+  }).catch(() => {})
 }
 
 /** 批量指派按钮操作 */
 function handleBatchAssign() {
-  assignForm.value.userId = undefined;
-  assignOpen.value = true;
-  // 获取用户列表
-  listUser().then(response => {
-    userList.value = response.rows;
-  });
+  assignForm.value.userId = undefined
+  assignOpen.value = true
+  // Mock用户列表
+  userList.value = [
+    { userId: 1, nickName: '张三' },
+    { userId: 2, nickName: '李四' },
+    { userId: 3, nickName: '王五' }
+  ]
 }
 
 /** 提交指派 */
 function submitAssign() {
   if (!assignForm.value.userId) {
-    proxy.$modal.msgWarning("请选择处理人");
-    return;
+    proxy.$modal.msgWarning("请选择处理人")
+    return
   }
-  assignTickets(ids.value, assignForm.value.userId).then(response => {
-    proxy.$modal.msgSuccess("指派成功");
-    assignOpen.value = false;
-    getList();
-  });
+  const user = userList.value.find(u => u.userId === assignForm.value.userId)
+  ids.value.forEach(id => {
+    const ticket = mockTickets.value.find(t => t.ticketId === id)
+    if (ticket) {
+      ticket.assigneeName = user.nickName
+      ticket.status = 'assigned'
+    }
+  })
+  proxy.$modal.msgSuccess("指派成功")
+  assignOpen.value = false
+  getList()
 }
 
 /** 导出按钮操作 */
 function handleExport() {
-  proxy.download('business/ticket/export', {
-    ...queryParams.value
-  }, `ticket_${new Date().getTime()}.xlsx`)
+  proxy.$modal.msgSuccess("导出功能待实现")
 }
 
 /** 获取优先级标签 */
@@ -452,9 +505,9 @@ function getPriorityLabel(priority) {
     high: '高',
     medium: '中', 
     low: '低'
-  };
-  return map[priority] || priority;
+  }
+  return map[priority] || priority
 }
 
-getList();
+getList()
 </script>

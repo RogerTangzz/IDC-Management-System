@@ -195,8 +195,20 @@ CREATE TABLE `biz_maintenance_execution` (
 -- 插入工单模板数据
 INSERT INTO `biz_ticket_template` VALUES 
 (1, 'TPL202501001', '空调漏水处理', 'hvac', 'low', 'hvac', '空调内机漏水', '空调内机出现漏水现象，水滴落到地面', '立即放置接水容器，防止水损坏其他设备', '1.检查排水管是否堵塞\n2.清理排水管\n3.检查内机安装是否水平', 0, '0', '0', 'admin', NOW(), 'admin', NOW(), NULL),
-(2, 'TPL202501002', 'UPS电池故障', 'power', 'high', 'power', 'UPS电池告警', 'UPS系统显示电池故障告警', '检查UPS运行状态，必要时切换至旁路模式', '1.检查电池组电压\n2.测试单体电池\n3.更换故障电池', 0, '0', '0', 'admin', NOW(), 'admin', NOW(), NULL);
+(2, 'TPL202501002', 'UPS电池故障', 'power', 'high', 'power', 'UPS电池告警', 'UPS系统显示电池故障告警', '检查UPS运行状态，必要时切换至旁路模式', '1.检查电池组电压\n2.测试单体电池\n3.更换故障电池', 0, '0', '0', 'admin', NOW(), 'admin', NOW(), NULL),
+(3, 'TPL202501003', '温度过高告警', 'hvac', 'high', 'hvac', '机房温度超标', '机房温度超过预设阈值，触发高温告警', '立即检查空调运行状态，开启备用空调', '1.检查空调运行状态\n2.清洗空调滤网\n3.检查制冷剂', 0, '0', '0', 'admin', NOW(), 'admin', NOW(), NULL),
+(4, 'TPL202501004', '配电柜跳闸', 'power', 'urgent', 'power', '配电柜断路器跳闸', '配电柜内断路器跳闸，导致部分设备断电', '立即检查跳闸原因，确认无短路后尝试合闸', '1.检查跳闸原因\n2.排除故障点\n3.恢复供电', 0, '0', '0', 'admin', NOW(), 'admin', NOW(), NULL),
+(5, 'TPL202501005', '消防报警误报', 'fire', 'medium', 'fire', '消防系统误报', '消防报警系统出现误报警', '确认现场无火情，消音并复位', '1.现场确认\n2.系统复位\n3.检查传感器', 0, '0', '0', 'admin', NOW(), 'admin', NOW(), NULL);
 
 -- 插入示例巡检记录
 INSERT INTO `biz_inspection` VALUES 
 (1, 'INS202501001', '2025-01-20', 'floor1', 1, 'admin', NULL, '{"oil_tank":true,"electric_room":true,"water_pump":true}', 15, 0, 0, NULL, NULL, 'N', NULL, 'draft', '0', 'admin', NOW(), 'admin', NOW(), '1楼日常巡检');
+
+-- 插入示例工单数据
+INSERT INTO `biz_ticket` VALUES 
+(1, 'TK202501001', '空调漏水处理', '2楼机房空调内机漏水', 'low', 'pending', '精密空调#01', '2楼机房', 'hvac', 'leak', 1, '张三', '13800138000', NULL, NULL, 'manual', NULL, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR), NULL, NULL, NULL, NULL, '0', 'admin', NOW(), 'admin', NOW(), NULL),
+(2, 'TK202501002', 'UPS电池更换', 'UPS-A组电池老化需更换', 'high', 'assigned', 'UPS-A', '1楼配电室', 'power', 'battery', 1, '李四', '13900139000', 2, '王五', 'manual', NULL, NOW(), DATE_ADD(NOW(), INTERVAL 4 HOUR), NULL, NULL, NULL, NULL, '0', 'admin', NOW(), 'admin', NOW(), NULL);
+
+-- 插入示例维保计划
+INSERT INTO `biz_maintenance` VALUES 
+(1, 'MP202501001', '1楼月度维保计划', '1', 'V1.0', 'monthly', '配电系统月检', '确保配电系统稳定运行', '每月一次', 1, 'month', 1, 'admin', 'draft', NULL, NULL, 'pending', DATE_ADD(NOW(), INTERVAL 1 MONTH), NULL, '1,2,3', NULL, '万用表、绝缘电阻测试仪', '清洁剂、抹布', '绝缘手套、护目镜', NULL, '1.检查配电柜\n2.测试绝缘电阻\n3.紧固接线端子', NULL, NULL, 1, 'admin', '0', 'admin', NOW(), 'admin', NOW(), NULL);

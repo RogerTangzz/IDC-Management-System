@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 最小可运行 API 桩：inspectionPlanApi
  * 后续接后端时，把 return 换成真实 request 即可
  */

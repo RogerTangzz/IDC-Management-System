@@ -71,3 +71,21 @@ export function getOverdueTickets(params) {
     params
   })
 }
+
+// 在文件末尾添加缺失的函数
+export function assignTickets(data) {
+  return request({
+    url: '/business/ticket/assign',
+    method: 'post',
+    data: data
+  })
+}
+
+// 批量指派（为后续功能准备）
+export function batchAssignTickets(ticketIds, assigneeId) {
+  return request({
+    url: '/business/ticket/batchAssign', 
+    method: 'post',
+    data: { ticketIds, assigneeId }
+  })
+}

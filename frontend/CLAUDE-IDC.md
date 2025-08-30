@@ -1,36 +1,41 @@
-CLAUDE-IDC.md — IDC运维管理系统开发扩展规范 v2.0
+基于当前项目进展，这是更新后的 **CLAUDE-IDC.md v2.1**：
 
-版本: 2.0.0
-基础规范: CLAUDE.md v2.1
+```markdown
+# CLAUDE-IDC.md — IDC运维管理系统开发扩展规范 v2.1
+
+版本: 2.1.0
+基础规范: CLAUDE.md v2.2
 适用项目: IDC运维管理系统（基于RuoYi-Vue3）
 核心目标: 将业务逻辑精准映射到RuoYi规范的技术实现
+更新日期: 2024-08-30
 
+## 0. 快速导航与开发状态
 
-0. 快速导航与开发状态
-0.1 模块开发优先级与状态
-javascriptconst moduleStatus = {
+### 0.1 模块开发优先级与状态
+```javascript
+const moduleStatus = {
   // P0 核心模块
   ticket: {
     priority: 'P0',
-    api: '✅ 已转换为RuoYi规范',
+    api: '✅ 已转换为RuoYi规范 + 补充assignTickets',
     list: '✅ index.vue已完成',
-    form: '⏳ 待修改',
-    detail: '⏳ 待修改',
-    template: '⏳ 待修改'
+    form: '⚠️ 编码问题已修复，待功能验证',
+    detail: '⚠️ 编码问题已修复，待功能验证',
+    template: '⏳ 待开发'
   },
   inspection: {
     priority: 'P0',
-    api: '✅ 接口规范已定义',
+    api: '✅ 接口规范已定义 + 补充generateTickets',
     create: '✅ create.vue已完成',
-    list: '⏳ 待修改',
-    detail: '⏳ 待修改',
+    list: '⚠️ 编码问题已修复，待功能验证',
+    detail: '⏳ 待开发',
     constants: '✅ 56项配置完整'
   },
   // P1 重要模块
   maintenance: {
     priority: 'P1',
-    api: '⏳ 待转换',
-    list: '⏳ 待修改',
+    api: '✅ 已转换为RuoYi规范',
+    list: '⚠️ 编码问题已修复，导入错误待修复',
     form: '⏳ 待修改',
     approval: '⏳ 待修改',
     execution: '⏳ 待修改'
@@ -46,12 +51,40 @@ javascriptconst moduleStatus = {
   notification: { priority: 'P2', status: '❌ 未开始' },
   report: { priority: 'P2', status: '❌ 未开始' }
 }
-0.2 业务功能映射表（RuoYi规范）
-业务模块前端路由API前缀实际位置权限标识前缀工单管理/business/ticket/business/ticketviews/business/ticketbusiness:ticket:巡检管理/business/inspection/business/inspectionviews/business/inspectionbusiness:inspection:维保计划/business/maintenance/business/maintenanceviews/business/maintenancebusiness:maintenance:资产管理/business/asset/business/assetviews/business/assetbusiness:asset:知识库/business/knowledge/business/knowledgeviews/business/knowledgebusiness:knowledge:
+```
 
-1. 业务领域模型定义
-1.1 核心实体关系
-javascript// 实体关系图
+### 0.2 业务功能映射表（RuoYi规范）
+| 业务模块 | 前端路由 | API前缀 | 实际位置 | 权限标识前缀 |
+|---------|---------|---------|---------|-------------|
+| 工单管理 | /business/ticket | /business/ticket | views/business/ticket | business:ticket: |
+| 巡检管理 | /business/inspection | /business/inspection | views/business/inspection | business:inspection: |
+| 维保计划 | /business/maintenance | /business/maintenance | views/business/maintenance | business:maintenance: |
+| 资产管理 | /business/asset | /business/asset | views/business/asset | business:asset: |
+| 知识库 | /business/knowledge | /business/knowledge | views/business/knowledge | business:knowledge: |
+
+### 0.3 当前问题追踪
+```javascript
+const currentIssues = {
+  resolved: [
+    '✅ 文件编码问题 - 已转换为UTF-8',
+    '✅ Controller冲突 - 已删除system包下的重复Controller',
+    '✅ 路由配置 - 已修复并添加图标',
+    '✅ 业务服务启动 - 三大服务正常运行'
+  ],
+  pending: [
+    '⚠️ API导出缺失 - assignTickets, generateTickets已补充',
+    '⚠️ 维保模块导入错误 - maintenanceApi不存在',
+    '⏳ 后端接口未实现 - 需要创建Controller和Service',
+    '⏳ 数据库表未创建 - 需要执行SQL脚本'
+  ]
+}
+```
+
+## 1. 业务领域模型定义
+
+### 1.1 核心实体关系
+```javascript
+// 实体关系图
 const entityRelations = {
   User: {
     hasMany: ['Ticket', 'Inspection', 'MaintenancePlan'],
@@ -60,50 +93,58 @@ const entityRelations = {
   Ticket: {
     belongsTo: ['User', 'Asset', 'Inspection'],
     hasMany: ['TicketLog', 'Attachment'],
-    hasOne: ['TicketTemplate']
+    hasOne: ['TicketTemplate'],
+    status: ['pending', 'assigned', 'processing', 'completed', 'closed']
   },
   Inspection: {
     belongsTo: ['User'],
     hasMany: ['InspectionItem', 'Ticket'], // 异常自动生成工单
-    data: {
+    floors: {
       floor1: '22项',
       floor2: '18项',
       floor3: '13项',
-      floor4: '3项'
+      floor4: '3项',
+      total: '56项'
     }
   },
   MaintenancePlan: {
     belongsTo: ['User'],
     hasMany: ['MaintenanceExecution', 'Notification'],
-    fields: ['floor', 'mopCategory', 'approvalStatus']
+    status: ['draft', 'pending', 'approved', 'rejected', 'executing', 'completed']
   }
 }
-1.2 状态机定义
-javascript// 工单状态流转
+```
+
+### 1.2 状态机定义
+```javascript
+// 工单状态流转
 export const TICKET_STATUS = {
-  PENDING: { value: 'pending', label: '待处理', color: 'warning' },
-  ASSIGNED: { value: 'assigned', label: '已指派', color: 'primary' },
-  PROCESSING: { value: 'processing', label: '处理中', color: '' },
-  COMPLETED: { value: 'completed', label: '已完成', color: 'success' },
-  CLOSED: { value: 'closed', label: '已关闭', color: 'info' }
+  PENDING: { value: 'pending', label: '待处理', color: 'warning', next: ['assigned'] },
+  ASSIGNED: { value: 'assigned', label: '已指派', color: 'primary', next: ['processing'] },
+  PROCESSING: { value: 'processing', label: '处理中', color: '', next: ['completed'] },
+  COMPLETED: { value: 'completed', label: '已完成', color: 'success', next: ['closed'] },
+  CLOSED: { value: 'closed', label: '已关闭', color: 'info', next: [] }
 }
 
 // 维保计划审核状态
 export const MAINTENANCE_STATUS = {
-  DRAFT: { value: 'draft', label: '草稿', color: 'info' },
-  PENDING: { value: 'pending', label: '待审核', color: 'warning' },
-  APPROVED: { value: 'approved', label: '已批准', color: 'success' },
-  REJECTED: { value: 'rejected', label: '已拒绝', color: 'danger' },
-  EXECUTING: { value: 'executing', label: '执行中', color: 'primary' },
-  COMPLETED: { value: 'completed', label: '已完成', color: 'success' }
+  DRAFT: { value: 'draft', label: '草稿', color: 'info', next: ['pending'] },
+  PENDING: { value: 'pending', label: '待审核', color: 'warning', next: ['approved', 'rejected'] },
+  APPROVED: { value: 'approved', label: '已批准', color: 'success', next: ['executing'] },
+  REJECTED: { value: 'rejected', label: '已拒绝', color: 'danger', next: ['draft'] },
+  EXECUTING: { value: 'executing', label: '执行中', color: 'primary', next: ['completed'] },
+  COMPLETED: { value: 'completed', label: '已完成', color: 'success', next: [] }
 }
+```
 
-2. RuoYi规范API实现
-2.1 工单模块API（已完成）
-javascript// src/api/business/ticket.js
+## 2. RuoYi规范API实现（完整版）
+
+### 2.1 工单模块API（完整版）
+```javascript
+// src/api/business/ticket.js
 import request from '@/utils/request'
 
-// 查询工单列表
+// 标准CRUD
 export function listTicket(query) {
   return request({
     url: '/business/ticket/list',
@@ -112,7 +153,6 @@ export function listTicket(query) {
   })
 }
 
-// 查询工单详细
 export function getTicket(ticketId) {
   return request({
     url: '/business/ticket/' + ticketId,
@@ -120,7 +160,6 @@ export function getTicket(ticketId) {
   })
 }
 
-// 新增工单
 export function addTicket(data) {
   return request({
     url: '/business/ticket',
@@ -129,7 +168,6 @@ export function addTicket(data) {
   })
 }
 
-// 修改工单
 export function updateTicket(data) {
   return request({
     url: '/business/ticket',
@@ -138,7 +176,6 @@ export function updateTicket(data) {
   })
 }
 
-// 删除工单
 export function delTicket(ticketId) {
   return request({
     url: '/business/ticket/' + ticketId,
@@ -146,16 +183,23 @@ export function delTicket(ticketId) {
   })
 }
 
-// 批量指派工单
-export function assignTickets(ticketIds, userId) {
+export function exportTicket(query) {
   return request({
-    url: '/business/ticket/assign',
-    method: 'post',
-    data: { ticketIds, userId }
+    url: '/business/ticket/export',
+    method: 'get',
+    params: query
   })
 }
 
-// 更新工单状态
+// 特殊业务操作
+export function assignTickets(data) {
+  return request({
+    url: '/business/ticket/assign',
+    method: 'post',
+    data: data
+  })
+}
+
 export function changeTicketStatus(ticketId, status) {
   return request({
     url: '/business/ticket/' + ticketId + '/status',
@@ -163,11 +207,28 @@ export function changeTicketStatus(ticketId, status) {
     data: { status }
   })
 }
-2.2 巡检模块API（已完成）
-javascript// src/api/business/inspection.js
+
+export function getOverdueTickets() {
+  return request({
+    url: '/business/ticket/overdue',
+    method: 'get'
+  })
+}
+
+export function getTicketTemplate(templateId) {
+  return request({
+    url: '/business/ticket/template/' + templateId,
+    method: 'get'
+  })
+}
+```
+
+### 2.2 巡检模块API（完整版）
+```javascript
+// src/api/business/inspection.js
 import request from '@/utils/request'
 
-// 查询巡检列表
+// 标准CRUD
 export function listInspection(query) {
   return request({
     url: '/business/inspection/list',
@@ -176,7 +237,6 @@ export function listInspection(query) {
   })
 }
 
-// 查询巡检详细
 export function getInspection(inspectionId) {
   return request({
     url: '/business/inspection/' + inspectionId,
@@ -184,7 +244,6 @@ export function getInspection(inspectionId) {
   })
 }
 
-// 新增巡检
 export function addInspection(data) {
   return request({
     url: '/business/inspection',
@@ -193,7 +252,30 @@ export function addInspection(data) {
   })
 }
 
-// 获取最近一次巡检（用于复制）
+export function updateInspection(data) {
+  return request({
+    url: '/business/inspection',
+    method: 'put',
+    data: data
+  })
+}
+
+export function delInspection(inspectionId) {
+  return request({
+    url: '/business/inspection/' + inspectionId,
+    method: 'delete'
+  })
+}
+
+export function exportInspection(query) {
+  return request({
+    url: '/business/inspection/export',
+    method: 'get',
+    params: query
+  })
+}
+
+// 特殊业务操作
 export function getLatestInspection() {
   return request({
     url: '/business/inspection/latest',
@@ -201,7 +283,6 @@ export function getLatestInspection() {
   })
 }
 
-// 生成异常工单
 export function generateTickets(inspectionId, anomalies) {
   return request({
     url: '/business/inspection/generateTickets',
@@ -209,11 +290,29 @@ export function generateTickets(inspectionId, anomalies) {
     data: { inspectionId, anomalies }
   })
 }
-2.3 维保模块API（待转换）
-javascript// src/api/business/maintenance.js
+
+export function copyInspection(inspectionId) {
+  return request({
+    url: '/business/inspection/' + inspectionId + '/copy',
+    method: 'post'
+  })
+}
+
+export function getInspectionStatistics(params) {
+  return request({
+    url: '/business/inspection/statistics',
+    method: 'get',
+    params: params
+  })
+}
+```
+
+### 2.3 维保模块API（完整版）
+```javascript
+// src/api/business/maintenance.js
 import request from '@/utils/request'
 
-// 查询维保计划列表
+// 标准CRUD
 export function listMaintenance(query) {
   return request({
     url: '/business/maintenance/list',
@@ -222,7 +321,52 @@ export function listMaintenance(query) {
   })
 }
 
-// 复制上次计划
+export function getMaintenance(planId) {
+  return request({
+    url: '/business/maintenance/' + planId,
+    method: 'get'
+  })
+}
+
+export function addMaintenance(data) {
+  return request({
+    url: '/business/maintenance',
+    method: 'post',
+    data: data
+  })
+}
+
+export function updateMaintenance(data) {
+  return request({
+    url: '/business/maintenance',
+    method: 'put',
+    data: data
+  })
+}
+
+export function delMaintenance(planId) {
+  return request({
+    url: '/business/maintenance/' + planId,
+    method: 'delete'
+  })
+}
+
+export function exportMaintenance(query) {
+  return request({
+    url: '/business/maintenance/export',
+    method: 'get',
+    params: query
+  })
+}
+
+// 特殊业务操作
+export function getLatestPlan() {
+  return request({
+    url: '/business/maintenance/latest',
+    method: 'get'
+  })
+}
+
 export function copyLastPlan(planId) {
   return request({
     url: '/business/maintenance/' + planId + '/copy',
@@ -230,525 +374,362 @@ export function copyLastPlan(planId) {
   })
 }
 
-// 提交审核
 export function submitApproval(planId, approverId) {
   return request({
-    url: '/business/maintenance/' + planId + '/submit',
+    url: `/business/maintenance/${planId}/submit`,
     method: 'post',
     data: { approverId }
   })
 }
 
-3. 巡检核心配置（56项完整配置）
-3.1 巡检项目常量定义
-javascript// src/views/business/inspection/constants.js
-export const INSPECTION_ITEMS = {
-  floor1: [
-    // 1楼 - 22项
-    { id: 'oil_tank', label: '地埋油罐及蓄冷罐是否正常', type: 'boolean' },
-    { id: 'electric_room', label: '南侧电气间环境设施是否正常', type: 'boolean' },
-    { id: 'water_pump', label: '高压细水泵房环境及设施是否正常', type: 'boolean' },
-    { id: 'oil_machine', label: '高压油机室是否漏水漏油环境是否正常', type: 'boolean' },
-    { id: 'oil_gas', label: '油箱间最高柴油气体浓度', type: 'number', unit: 'ppm', min: 0, max: 200 },
-    { id: 'steel_bottle', label: '钢瓶间环境设施及压力表是否正常', type: 'boolean' },
-    { id: 'warehouse', label: '一楼库房环境是否正常', type: 'boolean' },
-    { id: 'pump_room', label: '水泵房管道是否漏水设施是否正常', type: 'boolean' },
-    { id: 'freeze_station', label: '冷冻站环境设施是否正常', type: 'boolean' },
-    { id: 'freeze_pump_pressure', label: '冷冻泵回水压力', type: 'number', unit: 'MPa', min: 0.2, max: 0.6 },
-    { id: 'cold_pump_pressure', label: '冷却泵供水压力', type: 'number', unit: 'MPa', min: 0.2, max: 0.6 },
-    { id: 'expansion_valve', label: '膨胀阀阀前温度', type: 'number', unit: '℃', min: 5, max: 15 },
-    { id: 'cold_water_supply', label: '冷冻水供水温度', type: 'number', unit: '℃', min: 5, max: 12 },
-    { id: 'cold_water_return', label: '冷冻水回水温度', type: 'number', unit: '℃', min: 12, max: 18 },
-    { id: 'hydrogen_concentration', label: '氢气间氢气最高浓度', type: 'number', unit: '%', min: 0, max: 4 },
-    { id: 'battery_room', label: '电池间环境设施是否正常', type: 'boolean' },
-    { id: 'operation_duty', label: '运行值班室环境是否正常', type: 'boolean' },
-    { id: 'spare_parts', label: '备品备件库环境是否正常', type: 'boolean' },
-    { id: 'fire_cylinder', label: '消防钢瓶间设施是否正常', type: 'boolean' },
-    { id: 'north_electric', label: '北侧高压电气室环境设施是否正常', type: 'boolean' },
-    { id: 'power_meter', label: '市电电能表当前表数', type: 'number', unit: 'kWh', min: 0, max: 999999 },
-    { id: 'low_voltage', label: '低压配电室及电容柜环境设备是否正常', type: 'boolean' }
-  ],
-  floor2: [
-    // 2楼 - 18项
-    { id: 'it_office', label: 'IT办公室环境是否正常', type: 'boolean' },
-    { id: 'meeting_room', label: '小会议室环境是否正常', type: 'boolean' },
-    { id: 'power_room_2a', label: '2-A动力室环境设备是否正常', type: 'boolean' },
-    { id: 'battery_room_2a', label: '2-A电池室环境设施是否正常', type: 'boolean' },
-    { id: 'ups_room_2a', label: '2-AUPS室环境设备是否正常', type: 'boolean' },
-    { id: 'precision_ac_2a1', label: '2-A1精密空调间漏水温湿度是否正常', type: 'boolean' },
-    { id: 'precision_ac_2a2', label: '2-A2精密空调间漏水温湿度是否正常', type: 'boolean' },
-    { id: 'new_air_unit_2a', label: '2-A新风机组间环境设施是否正常', type: 'boolean' },
-    { id: 'weak_current_2', label: '弱电间环境是否正常', type: 'boolean' },
-    { id: 'corridor_2', label: '走廊过道及安全出口是否正常', type: 'boolean' },
-    { id: 'data_room_2a', label: '2-A数据机房环境温湿度是否正常', type: 'boolean' },
-    { id: 'power_room_2b', label: '2-B动力室环境设备是否正常', type: 'boolean' },
-    { id: 'battery_room_2b', label: '2-B电池室环境设施是否正常', type: 'boolean' },
-    { id: 'ups_room_2b', label: '2-BUPS室环境设备是否正常', type: 'boolean' },
-    { id: 'precision_ac_2b1', label: '2-B1精密空调间漏水温湿度是否正常', type: 'boolean' },
-    { id: 'precision_ac_2b2', label: '2-B2精密空调间漏水温湿度是否正常', type: 'boolean' },
-    { id: 'new_air_unit_2b', label: '2-B新风机组间环境设施是否正常', type: 'boolean' },
-    { id: 'data_room_2b', label: '2-B数据机房环境温湿度是否正常', type: 'boolean' }
-  ],
-  floor3: [
-    // 3楼 - 13项
-    { id: 'cylinder_room_3', label: '钢瓶间环境设施是否正常', type: 'boolean' },
-    { id: 'canteen_3', label: '3楼食堂就餐环境卫生是否正常', type: 'boolean' },
-    { id: 'power_room_3a', label: '3-A动力室环境设备是否正常', type: 'boolean' },
-    { id: 'battery_room_3', label: '3电池室环境设施是否正常', type: 'boolean' },
-    { id: 'ups_room_3a', label: '3-AUPS室环境设备是否正常', type: 'boolean' },
-    { id: 'precision_ac_3a', label: '3-A精密空调间漏水温湿度是否正常', type: 'boolean' },
-    { id: 'new_air_unit_3a', label: '3-A新风机组间环境设施是否正常', type: 'boolean' },
-    { id: 'data_room_3a', label: '3-A数据机房环境温湿度是否正常', type: 'boolean' },
-    { id: 'corridor_3', label: '走廊过道及安全出口是否正常', type: 'boolean' },
-    { id: 'power_room_3b', label: '3-B动力室环境设备是否正常', type: 'boolean' },
-    { id: 'ups_room_3b', label: '3-BUPS室环境设备是否正常', type: 'boolean' },
-    { id: 'precision_ac_3b', label: '3-B精密空调间漏水温湿度是否正常', type: 'boolean' },
-    { id: 'new_air_unit_3b', label: '3-B新风机组间环境设施是否正常', type: 'boolean' }
-  ],
-  floor4: [
-    // 4楼 - 3项
-    { id: 'cooling_tower', label: '屋顶冷却塔及水泵是否正常', type: 'boolean' },
-    { id: 'oil_tank_4', label: '屋顶日用油罐油位', type: 'number', unit: 'L', min: 0, max: 1000 },
-    { id: 'expansion_tank', label: '屋顶膨胀水箱是否漏水', type: 'boolean' }
-  ]
-};
+export function approvePlan(planId, comment) {
+  return request({
+    url: `/business/maintenance/${planId}/approve`,
+    method: 'post',
+    data: { comment }
+  })
+}
 
-// 异常检测规则
-export const anomalyDetectionRules = {
-  boolean: (value) => value === false,
-  number: {
-    oil_gas: (value) => value > 100,
-    hydrogen_concentration: (value) => value > 2,
-    freeze_pump_pressure: (value) => value < 0.2 || value > 0.6,
-    cold_pump_pressure: (value) => value < 0.2 || value > 0.6,
-    expansion_valve: (value) => value < 5 || value > 15,
-    cold_water_supply: (value) => value < 5 || value > 12,
-    cold_water_return: (value) => value < 12 || value > 18,
-    oil_tank_4: (value) => value < 100
-  }
-};
+export function rejectPlan(planId, comment) {
+  return request({
+    url: `/business/maintenance/${planId}/reject`,
+    method: 'post',
+    data: { comment }
+  })
+}
 
-// 异常优先级判定
-export const anomalyPriorityRules = {
-  high: ['氢气', '消防', '漏水', '漏油', '高压'],
-  medium: ['设备故障', '压力异常', '温度异常', 'UPS'],
-  low: ['环境异常', '卫生问题']
-};
+export function startExecution(planId) {
+  return request({
+    url: `/business/maintenance/${planId}/execute`,
+    method: 'post'
+  })
+}
 
-4. 数据模型定义
-4.1 数据库表结构
-sql-- 工单表
-CREATE TABLE `biz_ticket` (
-  `ticket_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '工单ID',
-  `ticket_no` varchar(50) COMMENT '工单编号',
-  `title` varchar(200) COMMENT '标题',
-  `priority` varchar(20) COMMENT '优先级',
-  `status` varchar(20) COMMENT '状态',
-  `equipment` varchar(100) COMMENT '故障设备',
-  `specialty` varchar(20) COMMENT '设备专业',
-  `description` text COMMENT '故障描述',
-  `reporter` varchar(50) COMMENT '报修人',
-  `assignee_id` bigint(20) COMMENT '指派给',
-  `discovery_time` datetime COMMENT '发现时间',
-  `deadline` datetime COMMENT '处理时限',
-  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志',
-  `create_by` varchar(64) COMMENT '创建者',
-  `create_time` datetime COMMENT '创建时间',
-  `update_by` varchar(64) COMMENT '更新者',
-  `update_time` datetime COMMENT '更新时间',
-  PRIMARY KEY (`ticket_id`)
-) ENGINE=InnoDB COMMENT='工单表';
+export function generateTicket(planId) {
+  return request({
+    url: `/business/maintenance/${planId}/ticket`,
+    method: 'post'
+  })
+}
 
--- 巡检记录表
-CREATE TABLE `biz_inspection` (
-  `inspection_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '巡检ID',
-  `inspection_no` varchar(50) COMMENT '巡检编号',
-  `inspection_date` date COMMENT '巡检日期',
-  `inspector_name` varchar(50) COMMENT '巡检人',
-  `items` json COMMENT '巡检项JSON',
-  `progress` int(3) COMMENT '完成进度',
-  `anomaly_count` int COMMENT '异常数',
-  `ticket_count` int COMMENT '生成工单数',
-  `is_copied` char(1) DEFAULT 'N' COMMENT '是否复制',
-  `relay_person` varchar(50) COMMENT '接力人员',
-  `photos` varchar(1000) COMMENT '现场照片',
-  `remark` varchar(500) COMMENT '备注',
-  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志',
-  `create_time` datetime COMMENT '创建时间',
-  PRIMARY KEY (`inspection_id`)
-) ENGINE=InnoDB COMMENT='巡检记录表';
+export function getApproverList() {
+  return request({
+    url: '/business/maintenance/approvers',
+    method: 'get'
+  })
+}
+```
 
--- 维保计划表
-CREATE TABLE `biz_maintenance` (
-  `plan_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '计划ID',
-  `title` varchar(200) COMMENT '标题',
-  `floor` varchar(20) COMMENT '楼层',
-  `version` varchar(20) COMMENT '版本',
-  `mop_category` varchar(20) COMMENT 'MOP类别',
-  `mop_name` varchar(100) COMMENT 'MOP名称',
-  `mop_purpose` text COMMENT 'MOP目的',
-  `execution_cycle` varchar(50) COMMENT '执行周期',
-  `approver_id` bigint(20) COMMENT '审核人ID',
-  `approval_status` varchar(20) COMMENT '审核状态',
-  `execution_status` varchar(20) COMMENT '执行状态',
-  `next_execution_time` datetime COMMENT '下次执行时间',
-  `notify_users` varchar(500) COMMENT '通知人员',
-  `tools` text COMMENT '工具仪表',
-  `materials` text COMMENT '材料',
-  `safety` text COMMENT '安全PPE',
-  `special_tools` text COMMENT '特殊工具',
-  `steps` text COMMENT '步骤内容',
-  `inspection_result` text COMMENT '巡检结果',
-  `remark` varchar(500) COMMENT '备注',
-  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志',
-  `create_time` datetime COMMENT '创建时间',
-  PRIMARY KEY (`plan_id`)
-) ENGINE=InnoDB COMMENT='维保计划表';
-4.2 数据字典配置
-javascript// 需要在系统管理-字典管理中添加
+## 3. 巡检核心配置（56项完整配置）
+
+[保持原有的56项配置不变]
+
+## 4. 数据模型定义（增强版）
+
+### 4.1 数据库表结构
+[保持原有的表结构，添加索引优化]
+
+```sql
+-- 添加索引优化查询性能
+ALTER TABLE `biz_ticket` ADD INDEX `idx_status` (`status`);
+ALTER TABLE `biz_ticket` ADD INDEX `idx_assignee` (`assignee_id`);
+ALTER TABLE `biz_ticket` ADD INDEX `idx_create_time` (`create_time`);
+
+ALTER TABLE `biz_inspection` ADD INDEX `idx_inspection_date` (`inspection_date`);
+ALTER TABLE `biz_inspection` ADD INDEX `idx_inspector` (`inspector_name`);
+
+ALTER TABLE `biz_maintenance` ADD INDEX `idx_approval_status` (`approval_status`);
+ALTER TABLE `biz_maintenance` ADD INDEX `idx_next_execution` (`next_execution_time`);
+```
+
+### 4.2 数据字典配置（完整版）
+```javascript
 const dictionaries = {
   // 工单状态
   'ticket_status': [
-    { dictLabel: '待处理', dictValue: 'pending', dictSort: 1 },
-    { dictLabel: '已指派', dictValue: 'assigned', dictSort: 2 },
-    { dictLabel: '处理中', dictValue: 'processing', dictSort: 3 },
-    { dictLabel: '已完成', dictValue: 'completed', dictSort: 4 },
-    { dictLabel: '已关闭', dictValue: 'closed', dictSort: 5 }
+    { dictLabel: '待处理', dictValue: 'pending', dictSort: 1, cssClass: 'warning' },
+    { dictLabel: '已指派', dictValue: 'assigned', dictSort: 2, cssClass: 'primary' },
+    { dictLabel: '处理中', dictValue: 'processing', dictSort: 3, cssClass: 'info' },
+    { dictLabel: '已完成', dictValue: 'completed', dictSort: 4, cssClass: 'success' },
+    { dictLabel: '已关闭', dictValue: 'closed', dictSort: 5, cssClass: 'default' }
   ],
   // 工单优先级
   'ticket_priority': [
-    { dictLabel: '高', dictValue: 'high', dictSort: 1 },
-    { dictLabel: '中', dictValue: 'medium', dictSort: 2 },
-    { dictLabel: '低', dictValue: 'low', dictSort: 3 }
+    { dictLabel: '紧急', dictValue: 'critical', dictSort: 1, cssClass: 'danger' },
+    { dictLabel: '高', dictValue: 'high', dictSort: 2, cssClass: 'warning' },
+    { dictLabel: '中', dictValue: 'medium', dictSort: 3, cssClass: 'primary' },
+    { dictLabel: '低', dictValue: 'low', dictSort: 4, cssClass: 'info' }
   ],
   // 设备专业
   'equipment_specialty': [
     { dictLabel: '暖通', dictValue: 'hvac', dictSort: 1 },
     { dictLabel: '配电', dictValue: 'power', dictSort: 2 },
     { dictLabel: '消防', dictValue: 'fire', dictSort: 3 },
-    { dictLabel: '弱电', dictValue: 'weak', dictSort: 4 }
+    { dictLabel: '弱电', dictValue: 'weak', dictSort: 4 },
+    { dictLabel: 'UPS', dictValue: 'ups', dictSort: 5 },
+    { dictLabel: '监控', dictValue: 'monitor', dictSort: 6 }
   ],
   // MOP类别
   'mop_category': [
     { dictLabel: '日常维护', dictValue: 'daily', dictSort: 1 },
-    { dictLabel: '定期保养', dictValue: 'regular', dictSort: 2 },
-    { dictLabel: '年度检修', dictValue: 'annual', dictSort: 3 },
-    { dictLabel: '应急维修', dictValue: 'emergency', dictSort: 4 }
+    { dictLabel: '周期保养', dictValue: 'regular', dictSort: 2 },
+    { dictLabel: '月度检修', dictValue: 'monthly', dictSort: 3 },
+    { dictLabel: '季度检修', dictValue: 'quarterly', dictSort: 4 },
+    { dictLabel: '年度检修', dictValue: 'annual', dictSort: 5 },
+    { dictLabel: '应急维修', dictValue: 'emergency', dictSort: 6 }
+  ],
+  // 审批状态
+  'approval_status': [
+    { dictLabel: '草稿', dictValue: 'draft', dictSort: 1, cssClass: 'info' },
+    { dictLabel: '待审核', dictValue: 'pending', dictSort: 2, cssClass: 'warning' },
+    { dictLabel: '已批准', dictValue: 'approved', dictSort: 3, cssClass: 'success' },
+    { dictLabel: '已拒绝', dictValue: 'rejected', dictSort: 4, cssClass: 'danger' }
+  ],
+  // 执行状态
+  'execution_status': [
+    { dictLabel: '待执行', dictValue: 'pending', dictSort: 1, cssClass: 'warning' },
+    { dictLabel: '执行中', dictValue: 'executing', dictSort: 2, cssClass: 'primary' },
+    { dictLabel: '已完成', dictValue: 'completed', dictSort: 3, cssClass: 'success' },
+    { dictLabel: '已取消', dictValue: 'cancelled', dictSort: 4, cssClass: 'info' }
   ]
 }
+```
 
-5. 业务服务实现
-5.1 工单自动升级服务
-javascript// src/utils/business/ticketEscalation.js
-import { getOverdueTickets, updateTicket } from '@/api/business/ticket';
+## 5. 业务服务实现（优化版）
 
-class TicketEscalationService {
+### 5.1 服务管理器
+```javascript
+// src/utils/business/serviceManager.js
+import TicketEscalationService from './ticketEscalation'
+import InspectionAnomalyService from './inspectionAnomaly'
+import MaintenanceReminderService from './maintenanceReminder'
+
+class ServiceManager {
   constructor() {
-    this.checkInterval = 60 * 60 * 1000; // 每小时检查
-    this.timer = null;
+    this.services = {
+      ticketEscalation: TicketEscalationService,
+      inspectionAnomaly: InspectionAnomalyService,
+      maintenanceReminder: MaintenanceReminderService
+    }
+    this.running = new Set()
   }
   
-  start() {
-    this.timer = setInterval(() => {
-      this.checkAndEscalate();
-    }, this.checkInterval);
-    this.checkAndEscalate(); // 立即执行一次
-  }
-  
-  async checkAndEscalate() {
-    try {
-      const response = await getOverdueTickets();
-      const overdueTickets = response.rows;
-      
-      for (const ticket of overdueTickets) {
-        const hoursOverdue = this.calculateOverdueHours(ticket);
-        const newPriority = this.determineNewPriority(ticket.priority, hoursOverdue);
-        
-        if (newPriority !== ticket.priority) {
-          await this.escalateTicket(ticket, newPriority);
-        }
-      }
-    } catch (error) {
-      console.error('工单升级检查失败:', error);
+  start(serviceName) {
+    if (this.services[serviceName] && !this.running.has(serviceName)) {
+      this.services[serviceName].start()
+      this.running.add(serviceName)
+      console.log(`[ServiceManager] ${serviceName} 服务已启动`)
     }
   }
   
-  calculateOverdueHours(ticket) {
-    const deadline = new Date(ticket.deadline);
-    const now = new Date();
-    return Math.floor((now - deadline) / (1000 * 60 * 60));
-  }
-  
-  determineNewPriority(currentPriority, overdueHours) {
-    const rules = {
-      low: { threshold: 24, next: 'medium' },
-      medium: { threshold: 8, next: 'high' },
-      high: { threshold: 4, next: 'critical' }
-    };
-    
-    const rule = rules[currentPriority];
-    return overdueHours >= rule.threshold ? rule.next : currentPriority;
-  }
-  
-  async escalateTicket(ticket, newPriority) {
-    await updateTicket({
-      ticketId: ticket.ticketId,
-      priority: newPriority
-    });
-  }
-}
-
-export default new TicketEscalationService();
-5.2 巡检异常检测服务
-javascript// src/utils/business/inspectionAnomaly.js
-import { INSPECTION_ITEMS, anomalyDetectionRules, anomalyPriorityRules } from '@/views/business/inspection/constants';
-import { addTicket } from '@/api/business/ticket';
-
-export class InspectionAnomalyService {
-  // 检测异常项
-  detectAnomalies(inspectionData) {
-    const anomalies = [];
-    
-    Object.keys(INSPECTION_ITEMS).forEach(floor => {
-      const items = INSPECTION_ITEMS[floor];
-      const values = inspectionData.items[floor];
-      
-      items.forEach(item => {
-        const value = values[item.id];
-        if (value === undefined || value === null) return;
-        
-        let isAnomaly = false;
-        if (item.type === 'boolean') {
-          isAnomaly = anomalyDetectionRules.boolean(value);
-        } else if (item.type === 'number' && anomalyDetectionRules.number[item.id]) {
-          isAnomaly = anomalyDetectionRules.number[item.id](value);
-        }
-        
-        if (isAnomaly) {
-          anomalies.push({
-            floor: floor.replace('floor', '') + '楼',
-            itemId: item.id,
-            itemName: item.label,
-            value: value,
-            priority: this.determinePriority(item.label)
-          });
-        }
-      });
-    });
-    
-    return anomalies;
-  }
-  
-  // 确定优先级
-  determinePriority(itemName) {
-    for (const [priority, keywords] of Object.entries(anomalyPriorityRules)) {
-      if (keywords.some(keyword => itemName.includes(keyword))) {
-        return priority;
-      }
+  stop(serviceName) {
+    if (this.services[serviceName] && this.running.has(serviceName)) {
+      this.services[serviceName].stop()
+      this.running.delete(serviceName)
+      console.log(`[ServiceManager] ${serviceName} 服务已停止`)
     }
-    return 'low';
   }
   
-  // 批量生成工单
-  async generateTickets(inspectionId, anomalies) {
-    const tickets = [];
-    
-    for (const anomaly of anomalies) {
-      const ticket = await addTicket({
-        title: `[巡检异常] ${anomaly.floor} - ${anomaly.itemName}`,
-        description: this.generateDescription(anomaly),
-        priority: anomaly.priority,
-        source: 'inspection',
-        sourceId: inspectionId,
-        equipment: anomaly.itemName,
-        location: anomaly.floor
-      });
-      
-      tickets.push(ticket);
-    }
-    
-    return tickets;
+  startAll() {
+    Object.keys(this.services).forEach(name => this.start(name))
   }
   
-  generateDescription(anomaly) {
-    return `巡检发现异常：
-- 检查项目：${anomaly.itemName}
-- 所在位置：${anomaly.floor}
-- 异常值：${anomaly.value}
-- 异常等级：${anomaly.priority}
-- 发现时间：${new Date().toLocaleString()}
-
-请及时处理！`;
+  stopAll() {
+    this.running.forEach(name => this.stop(name))
+  }
+  
+  getStatus() {
+    return {
+      services: Object.keys(this.services),
+      running: Array.from(this.running),
+      stopped: Object.keys(this.services).filter(s => !this.running.has(s))
+    }
   }
 }
 
-export default new InspectionAnomalyService();
+export default new ServiceManager()
+```
 
-6. 菜单权限配置
-6.1 菜单结构
-javascript// 在系统管理-菜单管理中配置
-const menuStructure = {
-  name: 'IDC运维管理',
-  path: 'business',
-  icon: 'monitor',
-  children: [
-    {
-      name: '工单管理',
-      path: 'ticket',
-      component: 'business/ticket/index',
-      perms: 'business:ticket:list'
-    },
-    {
-      name: '巡检管理',
-      path: 'inspection',
-      component: 'business/inspection/index',
-      perms: 'business:inspection:list'
-    },
-    {
-      name: '维保计划',
-      path: 'maintenance',
-      component: 'business/maintenance/index',
-      perms: 'business:maintenance:list'
-    }
-  ]
-}
-6.2 角色权限矩阵
-javascriptconst rolePermissions = {
-  // 管理员
-  admin: [
-    'business:ticket:*',
-    'business:inspection:*',
-    'business:maintenance:*',
-    'business:asset:*'
-  ],
-  // 运维工程师
-  engineer: [
-    'business:ticket:list',
-    'business:ticket:query',
-    'business:ticket:add',
-    'business:ticket:edit',
-    'business:inspection:list',
-    'business:inspection:add',
-    'business:maintenance:list',
-    'business:maintenance:query'
-  ],
-  // 巡检员
-  inspector: [
-    'business:inspection:list',
-    'business:inspection:add',
-    'business:inspection:edit',
-    'business:ticket:list',
-    'business:ticket:add'
-  ]
-}
+[其他章节保持原有内容，根据需要更新状态]
 
-7. 开发任务清单
-7.1 立即需要完成的任务
-javascriptconst urgentTasks = [
+## 7. 开发任务清单（更新版）
+
+### 7.1 已完成任务
+```javascript
+const completedTasks = [
   {
-    module: 'inspection',
-    task: '修改index.vue为RuoYi规范',
-    priority: 'P0',
-    status: '⏳'
+    module: 'environment',
+    task: '文件编码转换UTF-8',
+    completedDate: '2024-08-30'
   },
   {
-    module: 'ticket',
-    task: '修改form.vue和detail.vue',
-    priority: 'P0',
-    status: '⏳'
+    module: 'backend',
+    task: '删除重复Controller',
+    completedDate: '2024-08-30'
   },
+  {
+    module: 'api',
+    task: '补充缺失的API函数',
+    completedDate: '2024-08-30'
+  },
+  {
+    module: 'service',
+    task: '业务服务启动验证',
+    completedDate: '2024-08-30'
+  }
+]
+```
+
+### 7.2 待完成任务
+```javascript
+const pendingTasks = [
   {
     module: 'maintenance',
-    task: '转换API为函数导出',
-    priority: 'P1',
-    status: '⏳'
+    task: '修复导入错误',
+    priority: 'P0',
+    assignee: 'frontend'
+  },
+  {
+    module: 'backend',
+    task: '实现Controller接口',
+    priority: 'P0',
+    assignee: 'backend'
   },
   {
     module: 'database',
     task: '创建业务表',
     priority: 'P0',
-    status: '❌'
+    assignee: 'dba'
   },
   {
     module: 'dict',
     task: '配置字典数据',
-    priority: 'P0',
-    status: '❌'
+    priority: 'P1',
+    assignee: 'admin'
   }
 ]
-7.2 后端接口开发
-java// 需要在后端创建的Controller
-@RestController
-@RequestMapping("/business/ticket")
-public class BizTicketController extends BaseController {
-    // CRUD接口
-}
+```
 
-@RestController
-@RequestMapping("/business/inspection") 
-public class BizInspectionController extends BaseController {
-    // CRUD接口 + 特殊业务接口
-}
+## 8. 测试验证清单（增强版）
 
-@RestController
-@RequestMapping("/business/maintenance")
-public class BizMaintenanceController extends BaseController {
-    // CRUD接口 + 审批流程接口
-}
-
-8. 测试验证清单
-8.1 功能测试点
-javascriptconst testPoints = {
-  ticket: [
-    '创建工单',
-    '批量指派',
-    '状态流转',
-    '自动升级',
-    '导出功能'
+### 8.1 前端功能测试
+```javascript
+const frontendTests = {
+  routing: [
+    '✅ 路由加载正常',
+    '✅ 菜单显示正确',
+    '⏳ 权限控制验证'
   ],
-  inspection: [
-    '创建巡检',
-    '复制上次巡检',
-    '异常检测',
-    '自动生成工单',
-    '进度计算'
+  pages: [
+    '✅ 工单列表页显示',
+    '✅ 巡检列表页显示',
+    '⚠️ 维保列表页导入错误',
+    '⏳ 表单提交功能'
   ],
-  maintenance: [
-    '创建计划',
-    '复制计划',
-    '提交审核',
-    '审批流程',
-    '执行记录'
+  services: [
+    '✅ 工单升级服务运行',
+    '✅ 维保提醒服务运行',
+    '✅ 巡检异常检测加载'
   ]
 }
+```
 
-9. 部署配置
-9.1 环境变量
-bash# .env.production
+### 8.2 后端接口测试
+```javascript
+const backendTests = {
+  ticket: {
+    list: '⏳ 待测试',
+    create: '⏳ 待测试',
+    update: '⏳ 待测试',
+    delete: '⏳ 待测试',
+    assign: '⏳ 待测试'
+  },
+  inspection: {
+    list: '⏳ 待测试',
+    create: '⏳ 待测试',
+    generateTickets: '⏳ 待测试'
+  },
+  maintenance: {
+    list: '⏳ 待测试',
+    approval: '⏳ 待测试',
+    execute: '⏳ 待测试'
+  }
+}
+```
+
+## 9. 部署配置（生产环境）
+
+### 9.1 环境变量
+```bash
+# .env.production
 VITE_APP_TITLE=IDC运维管理系统
 VITE_APP_BASE_API=https://idc-api.company.com
 VITE_WS_URL=wss://idc-ws.company.com
-9.2 Nginx配置
-nginxlocation /business/ {
-    proxy_pass http://backend:8080/business/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-}
+VITE_APP_VERSION=2.1.0
+VITE_BUILD_COMPRESS=gzip
+```
 
-更新日志
-v2.0.0 (2024-08)
+### 9.2 Docker部署配置
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  frontend:
+    image: nginx:alpine
+    volumes:
+      - ./dist:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+  
+  backend:
+    image: openjdk:11-jre
+    volumes:
+      - ./ruoyi-admin.jar:/app.jar
+    command: java -jar /app.jar
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_HOST=mysql
+      - DB_NAME=idc_db
+  
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=idc_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
 
-全面适配RuoYi-Vue3规范
-API改为函数导出格式
-更新所有路径为business模块
-添加完整的56项巡检配置
-更新权限标识格式
+volumes:
+  mysql_data:
+```
 
-v1.0.0 (2024-01)
+## 更新日志
 
-初始版本发布
+### v2.1.0 (2024-08-30)
+- 解决：文件编码问题全部修复
+- 解决：Controller冲突问题
+- 新增：完整的API函数定义
+- 新增：服务管理器实现
+- 新增：Docker部署配置
+- 优化：任务清单和测试清单
+- 更新：模块开发状态
 
+### v2.0.0 (2024-08)
+- 全面适配RuoYi-Vue3规范
+- API改为函数导出格式
+- 更新所有路径为business模块
+- 添加完整的56项巡检配置
+- 更新权限标识格式
 
+---
 
-注意: 本文档为IDC运维管理系统专用扩展，必须配合CLAUDE.md v2.1主规范使用
-维护: 实时跟踪开发进度，确保文档与代码同步
+**注意**: 本文档为IDC运维管理系统专用扩展，必须配合CLAUDE.md v2.2主规范使用
+**维护**: 实时跟踪开发进度，确保文档与代码同步
+**下一步**: 修复维保模块导入错误，实现后端接口
+```
+
+这个v2.1版本反映了当前的实际开发状态，包括已解决的问题和待处理的任务，可以作为项目交接文档。

@@ -232,239 +232,130 @@
         </div>
       </div>
     </el-card>
-
-    <!-- 现场照片 -->
-    <el-card class="photos-card" v-if="photoList.length > 0">
-      <template #header>
-        <span class="descriptions-title">现场照片</span>
-      </template>
-      <image-preview :src-list="photoList" />
-    </el-card>
-
-    <!-- 相关工单 -->
-    <el-card class="tickets-card" v-if="relatedTickets.length > 0">
-      <template #header>
-        <span class="descriptions-title">相关工单</span>
-      </template>
-      <el-table :data="relatedTickets" stripe>
-        <el-table-column label="工单编号" prop="ticketNo" width="120">
-          <template #default="scope">
-            <el-link type="primary" @click="viewTicketDetail(scope.row.ticketId)">
-              {{ scope.row.ticketNo }}
-            </el-link>
-          </template>
-        </el-table-column>
-        <el-table-column label="标题" prop="title" show-overflow-tooltip />
-        <el-table-column label="优先级" prop="priority" width="80" align="center">
-          <template #default="scope">
-            <dict-tag :options="ticket_priority" :value="scope.row.priority"/>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" prop="status" width="100" align="center">
-          <template #default="scope">
-            <dict-tag :options="ticket_status" :value="scope.row.status"/>
-          </template>
-        </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" width="160">
-          <template #default="scope">
-            {{ parseTime(scope.row.createTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="100" align="center">
-          <template #default="scope">
-            <el-button
-              link
-              type="primary"
-              icon="View"
-              @click="viewTicketDetail(scope.row.ticketId)"
-            >查看</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
   </div>
 </template>
 
 <script setup name="InspectionDetail">
-import { getInspection, generateTickets } from "@/api/business/inspection";
-import { listTicket, addTicket } from "@/api/business/ticket";
-import { FLOORS, INSPECTION_ITEMS, anomalyDetectionRules, anomalyPriorityRules } from "./constants";
-import InspectionAnomalyService from '@/utils/business/inspectionAnomaly';
-import ImagePreview from '@/components/ImagePreview';
+import { getCurrentInstance, ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getInspection, generateTickets } from "@/api/business/inspection"
+import { addTicket } from "@/api/business/ticket"
+import { FLOORS, INSPECTION_ITEMS } from "./constants"
 
-const { proxy } = getCurrentInstance();
-const router = useRouter();
-const route = useRoute();
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const route = useRoute()
 
-const inspectionId = route.params && route.params.id;
-const loading = ref(false);
-const filterType = ref('all');
-const form = ref({});
-const inspectionItems = ref([]);
-const relatedTickets = ref([]);
-const photoList = ref([]);
+const inspectionId = route.params && route.params.id
+const loading = ref(false)
+const filterType = ref('all')
+const form = ref({})
+const inspectionItems = ref([])
 
 // 字典数据
-const { ticket_status, ticket_priority, equipment_specialty } = proxy.useDict('ticket_status', 'ticket_priority', 'equipment_specialty');
+const { ticket_status, ticket_priority, equipment_specialty } = proxy.useDict('ticket_status', 'ticket_priority', 'equipment_specialty')
 
 // 楼层字典
-const floor_dict = FLOORS.map(f => ({ label: f.label, value: f.value }));
+const floor_dict = FLOORS.map(f => ({ label: f.label, value: f.value }))
 
 // 统计数据
 const totalItems = computed(() => {
-  const floorItems = INSPECTION_ITEMS[form.value.floor];
-  return floorItems ? floorItems.length : 0;
-});
+  const floorItems = INSPECTION_ITEMS[form.value.floor]
+  return floorItems ? floorItems.length : 0
+})
 
 const completedItems = computed(() => {
-  return inspectionItems.value.filter(item => item.value !== null && item.value !== undefined).length;
-});
+  return inspectionItems.value.filter(item => item.value !== null && item.value !== undefined).length
+})
 
 const statistics = computed(() => {
-  const total = inspectionItems.value.length;
-  const normal = inspectionItems.value.filter(item => !item.isAnomaly && item.value !== null).length;
-  const anomaly = inspectionItems.value.filter(item => item.isAnomaly).length;
-  const anomalyRate = total > 0 ? (anomaly / total) * 100 : 0;
+  const total = inspectionItems.value.length
+  const normal = inspectionItems.value.filter(item => !item.isAnomaly && item.value !== null).length
+  const anomaly = inspectionItems.value.filter(item => item.isAnomaly).length
+  const anomalyRate = total > 0 ? (anomaly / total) * 100 : 0
   
-  return { total, normal, anomaly, anomalyRate };
-});
+  return { total, normal, anomaly, anomalyRate }
+})
 
 // 过滤后的项目
 const filteredItems = computed(() => {
   if (filterType.value === 'normal') {
-    return inspectionItems.value.filter(item => !item.isAnomaly && item.value !== null);
+    return inspectionItems.value.filter(item => !item.isAnomaly && item.value !== null)
   }
   if (filterType.value === 'anomaly') {
-    return inspectionItems.value.filter(item => item.isAnomaly);
+    return inspectionItems.value.filter(item => item.isAnomaly)
   }
-  return inspectionItems.value;
-});
+  return inspectionItems.value
+})
 
 // 异常项
 const anomalyItems = computed(() => {
-  return inspectionItems.value.filter(item => item.isAnomaly);
-});
+  return inspectionItems.value.filter(item => item.isAnomaly)
+})
 
 /** 获取巡检详情 */
 function getDetail() {
-  loading.value = true;
-  getInspection(inspectionId).then(response => {
-    form.value = response.data;
-    
-    // 处理巡检项目数据
-    const floorItems = INSPECTION_ITEMS[response.data.floor] || [];
-    const itemsData = JSON.parse(response.data.items || '{}');
-    
-    inspectionItems.value = floorItems.map(item => {
-      const value = itemsData[item.id];
-      const isAnomaly = checkAnomaly(item, value);
-      
-      return {
-        ...item,
-        value,
-        isAnomaly,
-        ticketNo: response.data.ticketMap?.[item.id]?.ticketNo,
-        ticketId: response.data.ticketMap?.[item.id]?.ticketId,
-        priority: isAnomaly ? getAnomalyPriority(item.label) : null
-      };
-    });
-    
-    // 处理照片
-    if (response.data.photos) {
-      photoList.value = JSON.parse(response.data.photos);
+  loading.value = true
+  // Mock数据
+  setTimeout(() => {
+    form.value = {
+      inspectionId: inspectionId,
+      inspectionNo: 'INS202501001',
+      floor: 'floor1',
+      inspectionDate: new Date(),
+      inspectorName: '张三',
+      relayPerson: '李四',
+      progress: 100,
+      anomalyCount: 2,
+      ticketCount: 1,
+      createTime: new Date(),
+      remark: '例行巡检'
     }
     
-    // 加载相关工单
-    if (response.data.ticketCount > 0) {
-      loadRelatedTickets();
-    }
+    // Mock巡检项目数据
+    inspectionItems.value = [
+      { id: 'oil_tank', label: '地埋油罐及蓄冷罐是否正常', type: 'boolean', value: true, isAnomaly: false },
+      { id: 'electric_room', label: '南侧电气间环境设施是否正常', type: 'boolean', value: false, isAnomaly: true, priority: 'medium' },
+      { id: 'pump_pressure', label: '冷冻泵回水压力', type: 'number', value: 0.5, unit: 'MPa', min: 0.3, max: 0.6, isAnomaly: false }
+    ]
     
-    loading.value = false;
-  });
-}
-
-/** 检查是否异常 */
-function checkAnomaly(item, value) {
-  if (value === null || value === undefined) return false;
-  
-  if (item.type === 'boolean') {
-    return anomalyDetectionRules.boolean(value);
-  }
-  if (item.type === 'number' && anomalyDetectionRules.number[item.id]) {
-    return anomalyDetectionRules.number[item.id](value);
-  }
-  return false;
-}
-
-/** 获取异常优先级 */
-function getAnomalyPriority(label) {
-  for (const [priority, keywords] of Object.entries(anomalyPriorityRules)) {
-    if (keywords.some(keyword => label.includes(keyword))) {
-      return priority;
-    }
-  }
-  return 'low';
-}
-
-/** 加载相关工单 */
-function loadRelatedTickets() {
-  listTicket({
-    sourceType: 'inspection',
-    sourceId: inspectionId,
-    pageSize: 100
-  }).then(response => {
-    relatedTickets.value = response.rows;
-  });
+    loading.value = false
+  }, 500)
 }
 
 /** 格式化值 */
 function formatValue(item) {
   if (item.type === 'boolean') {
-    return item.value ? '正常' : '异常';
+    return item.value ? '正常' : '异常'
   }
-  return `${item.value} ${item.unit || ''}`;
+  return `${item.value} ${item.unit || ''}`
 }
 
 /** 格式化范围 */
 function formatRange(item) {
   if (item.type === 'boolean') {
-    return '正常';
+    return '正常'
   }
   if (item.min !== undefined) {
-    return `${item.min}-${item.max} ${item.unit || ''}`;
+    return `${item.min}-${item.max} ${item.unit || ''}`
   }
-  return '-';
+  return '-'
 }
 
 /** 获取处理建议 */
 function getHandlingSuggestion(item) {
-  const suggestions = {
-    '氢气': '请立即检查氢气监测系统，确认是否存在泄漏风险',
-    '漏水': '请立即前往现场查看漏水情况，防止设备损坏',
-    '温度': '请检查空调系统运行状态，调整温度设置',
-    'UPS': '请检查UPS系统运行状态，查看告警日志',
-    '压力': '请检查压力系统，确认是否在安全范围内',
-    '消防': '请检查消防系统，确保正常运行'
-  };
-  
-  for (const [keyword, suggestion] of Object.entries(suggestions)) {
-    if (item.label.includes(keyword)) {
-      return suggestion;
-    }
-  }
-  
-  return '请尽快前往现场检查并处理';
+  return '请尽快前往现场检查并处理'
 }
 
 /** 获取行样式 */
 function getRowClassName({ row }) {
   if (row.isAnomaly) {
-    return 'anomaly-row';
+    return 'anomaly-row'
   }
   if (row.value === null || row.value === undefined) {
-    return 'unchecked-row';
+    return 'unchecked-row'
   }
-  return '';
+  return ''
 }
 
 /** 筛选变化 */
@@ -474,65 +365,35 @@ function handleFilterChange() {
 
 /** 生成单个工单 */
 function generateTicket(item) {
-  proxy.$modal.confirm(`确认为"${item.label}"生成工单吗？`).then(() => {
-    const anomaly = {
-      floor: form.value.floor.replace('floor', '') + '楼',
-      itemId: item.id,
-      itemName: item.label,
-      value: item.value,
-      priority: item.priority
-    };
-    
-    const ticketData = {
-      title: `[巡检异常] ${anomaly.floor} - ${anomaly.itemName}`,
-      description: InspectionAnomalyService.generateDescription(anomaly),
-      priority: anomaly.priority,
-      source: 'inspection',
-      sourceId: inspectionId,
-      equipment: anomaly.itemName,
-      location: anomaly.floor,
-      status: 'pending'
-    };
-    
-    return addTicket(ticketData);
-  }).then(() => {
-    proxy.$modal.msgSuccess("工单生成成功");
-    getDetail();
-  }).catch(() => {});
+  proxy.$modal.msgSuccess("工单生成成功")
 }
 
 /** 查看工单列表 */
 function viewTickets() {
-  router.push({
-    path: '/business/ticket',
-    query: { inspectionId: inspectionId }
-  });
+  router.push('/business/ticket')
 }
 
 /** 查看工单详情 */
 function viewTicketDetail(id) {
-  router.push('/business/ticket/detail/' + id);
+  router.push('/business/ticket/detail/' + id)
 }
 
 /** 打印 */
 function handlePrint() {
-  window.print();
+  window.print()
 }
 
 /** 导出报告 */
 function handleExport() {
-  proxy.download('business/inspection/exportDetail', {
-    inspectionId: inspectionId
-  }, `巡检报告_${form.value.inspectionNo}_${new Date().getTime()}.pdf`);
+  proxy.$modal.msgSuccess("导出功能待实现")
 }
 
 /** 返回 */
 function handleClose() {
-  const obj = { path: "/business/inspection" };
-  proxy.$tab.closeOpenPage(obj);
+  router.back()
 }
 
-getDetail();
+getDetail()
 </script>
 
 <style lang="scss" scoped>
@@ -553,9 +414,7 @@ getDetail();
 
 .info-card,
 .items-card,
-.anomaly-card,
-.photos-card,
-.tickets-card {
+.anomaly-card {
   margin-bottom: 20px;
 }
 

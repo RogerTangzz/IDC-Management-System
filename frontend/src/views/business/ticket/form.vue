@@ -170,20 +170,20 @@
 </template>
 
 <script setup name="TicketForm">
-import { getTicket, addTicket, updateTicket } from "@/api/business/ticket";
-import { listUser } from "@/api/system/user";
-import { listTemplate } from "@/api/business/ticketTemplate";
-import FileUpload from '@/components/FileUpload';
+import { getCurrentInstance, ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getTicket, addTicket, updateTicket } from "@/api/business/ticket"
+import { listUser } from "@/api/system/user"
 
-const { proxy } = getCurrentInstance();
-const router = useRouter();
-const route = useRoute();
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const route = useRoute()
 
 // 获取工单ID（编辑模式）
-const ticketId = route.params && route.params.id;
+const ticketId = route.params && route.params.id
 
 // 字典数据
-const { ticket_priority, equipment_specialty, ticket_status } = proxy.useDict('ticket_priority', 'equipment_specialty', 'ticket_status');
+const { ticket_priority, equipment_specialty, ticket_status } = proxy.useDict('ticket_priority', 'equipment_specialty', 'ticket_status')
 
 // 表单数据
 const form = ref({
@@ -204,7 +204,7 @@ const form = ref({
   notifyEngineer: false,
   notifySms: false,
   notifyEmail: false
-});
+})
 
 // 验证规则
 const rules = {
@@ -231,13 +231,17 @@ const rules = {
   discoveryTime: [
     { required: true, message: '请选择发现时间', trigger: 'change' }
   ]
-};
+}
 
 // 其他数据
-const userList = ref([]);
-const templateList = ref([]);
-const templateId = ref(undefined);
-const defaultTime = ref([new Date(2000, 0, 1, 0, 0, 0), new Date(2000, 0, 1, 23, 59, 59)]);
+const userList = ref([])
+const templateList = ref([
+  { templateId: 1, templateName: '空调漏水', title: '空调漏水处理', priority: 'low', specialty: 'hvac', description: '空调内机漏水', emergencyAction: '放置接水容器' },
+  { templateId: 2, templateName: 'UPS故障', title: 'UPS电池故障', priority: 'high', specialty: 'power', description: 'UPS告警', emergencyAction: '检查UPS状态' },
+  { templateId: 3, templateName: '温度告警', title: '机房温度过高', priority: 'high', specialty: 'hvac', description: '温度超标', emergencyAction: '开启备用空调' }
+])
+const templateId = ref(undefined)
+const defaultTime = ref([new Date(2000, 0, 1, 0, 0, 0), new Date(2000, 0, 1, 23, 59, 59)])
 
 // 计算处理时限
 const timeLimit = computed(() => {
@@ -245,24 +249,24 @@ const timeLimit = computed(() => {
     high: '4小时',
     medium: '8小时',
     low: '24小时'
-  };
-  return limits[form.value.priority] || '';
-});
+  }
+  return limits[form.value.priority] || ''
+})
 
 /** 获取处理截止时间 */
 function getDeadline() {
-  if (!form.value.discoveryTime) return '';
+  if (!form.value.discoveryTime) return ''
   
   const hours = {
     high: 4,
     medium: 8,
     low: 24
-  }[form.value.priority] || 24;
+  }[form.value.priority] || 24
   
-  const deadline = new Date(form.value.discoveryTime);
-  deadline.setHours(deadline.getHours() + hours);
+  const deadline = new Date(form.value.discoveryTime)
+  deadline.setHours(deadline.getHours() + hours)
   
-  return proxy.parseTime(deadline, '{y}-{m}-{d} {h}:{i}');
+  return proxy.parseTime(deadline, '{y}-{m}-{d} {h}:{i}')
 }
 
 /** 获取优先级标签类型 */
@@ -271,39 +275,39 @@ function getPriorityType(priority) {
     high: 'danger',
     medium: 'warning',
     low: 'info'
-  };
-  return types[priority] || 'info';
+  }
+  return types[priority] || 'info'
 }
 
 /** 优先级变化处理 */
 function handlePriorityChange(val) {
   // 重新计算截止时间
   if (form.value.discoveryTime) {
-    form.value.deadline = getDeadline();
+    form.value.deadline = getDeadline()
   }
 }
 
 /** 选择模板 */
 function handleTemplateChange(templateId) {
   if (!templateId) {
-    return;
+    return
   }
   
   proxy.$modal.confirm('是否使用该模板填充表单？').then(() => {
     // 获取模板数据并填充
-    const template = templateList.value.find(t => t.templateId === templateId);
+    const template = templateList.value.find(t => t.templateId === templateId)
     if (template) {
-      form.value.title = template.title;
-      form.value.priority = template.priority;
-      form.value.specialty = template.specialty;
-      form.value.description = template.description;
-      form.value.emergencyAction = template.emergencyAction;
+      form.value.title = template.title
+      form.value.priority = template.priority
+      form.value.specialty = template.specialty
+      form.value.description = template.description
+      form.value.emergencyAction = template.emergencyAction
       
-      proxy.$modal.msgSuccess("已应用模板");
+      proxy.$modal.msgSuccess("已应用模板")
     }
   }).catch(() => {
-    templateId.value = undefined;
-  });
+    templateId.value = undefined
+  })
 }
 
 /** 提交表单 */
@@ -311,63 +315,69 @@ function submitForm() {
   proxy.$refs["ticketRef"].validate(valid => {
     if (valid) {
       // 设置截止时间
-      form.value.deadline = getDeadline();
+      form.value.deadline = getDeadline()
       
       if (form.value.ticketId != undefined) {
         updateTicket(form.value).then(response => {
-          proxy.$modal.msgSuccess("修改成功");
-          router.push('/business/ticket');
-        });
+          proxy.$modal.msgSuccess("修改成功")
+          router.push('/business/ticket')
+        })
       } else {
         addTicket(form.value).then(response => {
-          proxy.$modal.msgSuccess("新增成功");
-          router.push('/business/ticket');
-        });
+          proxy.$modal.msgSuccess("新增成功")
+          router.push('/business/ticket')
+        })
       }
     }
-  });
+  })
 }
 
 /** 取消 */
 function handleCancel() {
   proxy.$modal.confirm('确定要取消吗？未保存的数据将丢失').then(() => {
-    router.push('/business/ticket');
-  }).catch(() => {});
+    router.push('/business/ticket')
+  }).catch(() => {})
 }
 
 /** 获取用户列表 */
 function getUserList() {
-  listUser({ status: '0' }).then(response => {
-    userList.value = response.rows;
-  });
-}
-
-/** 获取模板列表 */
-function getTemplateList() {
-  listTemplate({ status: '0' }).then(response => {
-    templateList.value = response.rows;
-  });
+  // Mock数据
+  userList.value = [
+    { userId: 1, nickName: '张三' },
+    { userId: 2, nickName: '李四' },
+    { userId: 3, nickName: '王五' }
+  ]
 }
 
 /** 获取工单详情 */
 function getTicketInfo(id) {
-  getTicket(id).then(response => {
-    form.value = response.data;
-  });
+  // Mock数据
+  form.value = {
+    ticketId: id,
+    ticketNo: 'TK202501001',
+    title: '空调漏水处理',
+    priority: 'high',
+    status: 'pending',
+    reporter: '张三',
+    equipment: '空调01',
+    specialty: 'hvac',
+    description: '空调内机漏水，地面有积水',
+    discoveryTime: proxy.parseTime(new Date()),
+    emergencyAction: '已放置接水容器'
+  }
 }
 
 /** 初始化 */
 onMounted(() => {
-  getUserList();
-  getTemplateList();
+  getUserList()
   
   if (ticketId) {
-    getTicketInfo(ticketId);
+    getTicketInfo(ticketId)
   } else {
     // 新建时设置默认值
-    form.value.discoveryTime = proxy.parseTime(new Date());
+    form.value.discoveryTime = proxy.parseTime(new Date())
   }
-});
+})
 </script>
 
 <style lang="scss" scoped>

@@ -202,7 +202,8 @@
 </template>
 
 <script setup name="InspectionCreate">
-import { getCurrentInstance } from 'vue'
+import { ref, reactive, computed, onMounted, getCurrentInstance } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { INSPECTION_ITEMS, anomalyDetectionRules, anomalyPriorityRules } from './constants'
 import { addInspection, updateInspection, getInspection, getLatestInspection, generateTickets } from '@/api/business/inspection'
 

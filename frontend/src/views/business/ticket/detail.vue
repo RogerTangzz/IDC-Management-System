@@ -257,96 +257,106 @@
 </template>
 
 <script setup name="TicketDetail">
-import { getTicket, updateTicket, changeTicketStatus, getTicketLogs } from "@/api/business/ticket";
-import { listUser } from "@/api/system/user";
+import { getCurrentInstance, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getTicket, updateTicket, changeTicketStatus } from "@/api/business/ticket"
+import { listUser } from "@/api/system/user"
 
-const { proxy } = getCurrentInstance();
-const router = useRouter();
-const route = useRoute();
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const route = useRoute()
 
-const ticketId = route.params && route.params.id;
-const loading = ref(false);
-const assignOpen = ref(false);
-const completeOpen = ref(false);
-const userList = ref([]);
-const logList = ref([]);
-const attachmentList = ref([]);
+const ticketId = route.params && route.params.id
+const loading = ref(false)
+const assignOpen = ref(false)
+const completeOpen = ref(false)
+const userList = ref([])
+const logList = ref([])
+const attachmentList = ref([])
 
 // 字典数据
-const { ticket_status, ticket_priority, equipment_specialty } = proxy.useDict('ticket_status', 'ticket_priority', 'equipment_specialty');
+const { ticket_status, ticket_priority, equipment_specialty } = proxy.useDict('ticket_status', 'ticket_priority', 'equipment_specialty')
 
 // 表单数据
-const form = ref({});
+const form = ref({})
 const assignForm = ref({
   assigneeId: undefined,
   remark: ''
-});
+})
 const completeForm = ref({
   solution: '',
   result: 'resolved',
   remark: ''
-});
+})
 
 // 验证规则
 const assignRules = {
   assigneeId: [{ required: true, message: "请选择处理人员", trigger: "change" }]
-};
+}
 const completeRules = {
   solution: [{ required: true, message: "请输入处理方法", trigger: "blur" }],
   result: [{ required: true, message: "请选择处理结果", trigger: "change" }]
-};
+}
 
 /** 获取工单详情 */
 function getDetail() {
-  loading.value = true;
-  getTicket(ticketId).then(response => {
-    form.value = response.data;
-    // 处理附件
-    if (form.value.attachments) {
-      attachmentList.value = JSON.parse(form.value.attachments);
-    }
-    loading.value = false;
-  });
-  // 获取操作日志
-  getTicketLogs(ticketId).then(response => {
-    logList.value = response.rows;
-  });
+  loading.value = true
+  // Mock数据
+  form.value = {
+    ticketId: ticketId,
+    ticketNo: 'TK202501001',
+    title: '空调漏水处理',
+    status: 'pending',
+    priority: 'high',
+    equipment: '空调01',
+    reporter: '张三',
+    reporterPhone: '13800138000',
+    specialty: 'hvac',
+    location: '2楼机房',
+    description: '空调内机漏水，地面有积水',
+    createTime: new Date(),
+    deadline: new Date(Date.now() + 4*60*60*1000)
+  }
+  logList.value = [
+    { createTime: new Date(), userName: 'admin', action: '创建工单', type: 'primary' }
+  ]
+  loading.value = false
 }
 
 /** 获取剩余时间 */
 function getRemainTime() {
   if (!form.value.deadline || form.value.status === 'completed' || form.value.status === 'closed') {
-    return '-';
+    return '-'
   }
-  const now = new Date();
-  const deadline = new Date(form.value.deadline);
-  const diff = deadline - now;
+  const now = new Date()
+  const deadline = new Date(form.value.deadline)
+  const diff = deadline - now
   
   if (diff <= 0) {
-    return '已超时';
+    return '已超时'
   }
   
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return `${hours}小时${minutes}分钟`;
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  return `${hours}小时${minutes}分钟`
 }
 
 /** 获取超时类型 */
 function getTimeoutType() {
-  const remain = getRemainTime();
-  if (remain === '已超时') return 'danger';
-  if (remain.includes('小时') && parseInt(remain) < 2) return 'warning';
-  return 'success';
+  const remain = getRemainTime()
+  if (remain === '已超时') return 'danger'
+  if (remain.includes('小时') && parseInt(remain) < 2) return 'warning'
+  return 'success'
 }
 
 /** 超时处理 */
 function handleTimeout() {
-  proxy.$modal.msgWarning("工单已超时，请尽快处理");
+  proxy.$modal.msgWarning("工单已超时，请尽快处理")
 }
 
 /** 编辑 */
 function handleEdit() {
-  router.push('/business/ticket/edit/' + ticketId);
+  router.push('/business/ticket/edit/' + ticketId)
 }
 
 /** 指派 */
@@ -354,37 +364,30 @@ function handleAssign() {
   assignForm.value = {
     assigneeId: undefined,
     remark: ''
-  };
-  assignOpen.value = true;
-  getUserList();
+  }
+  assignOpen.value = true
+  getUserList()
 }
 
 /** 提交指派 */
 function submitAssign() {
   proxy.$refs["assignRef"].validate(valid => {
     if (valid) {
-      const data = {
-        ...form.value,
-        assigneeId: assignForm.value.assigneeId,
-        status: 'assigned'
-      };
-      updateTicket(data).then(response => {
-        proxy.$modal.msgSuccess("指派成功");
-        assignOpen.value = false;
-        getDetail();
-      });
+      proxy.$modal.msgSuccess("指派成功")
+      assignOpen.value = false
+      form.value.status = 'assigned'
+      getDetail()
     }
-  });
+  })
 }
 
 /** 开始处理 */
 function handleStart() {
   proxy.$modal.confirm('确认开始处理该工单吗？').then(() => {
-    return changeTicketStatus(ticketId, 'processing');
-  }).then(() => {
-    proxy.$modal.msgSuccess("已开始处理");
-    getDetail();
-  }).catch(() => {});
+    proxy.$modal.msgSuccess("已开始处理")
+    form.value.status = 'processing'
+    getDetail()
+  }).catch(() => {})
 }
 
 /** 完成工单 */
@@ -393,59 +396,51 @@ function handleComplete() {
     solution: '',
     result: 'resolved',
     remark: ''
-  };
-  completeOpen.value = true;
+  }
+  completeOpen.value = true
 }
 
 /** 提交完成 */
 function submitComplete() {
   proxy.$refs["completeRef"].validate(valid => {
     if (valid) {
-      const data = {
-        ticketId: ticketId,
-        status: 'completed',
-        solution: completeForm.value.solution,
-        result: completeForm.value.result,
-        completeTime: proxy.parseTime(new Date())
-      };
-      updateTicket(data).then(response => {
-        proxy.$modal.msgSuccess("工单已完成");
-        completeOpen.value = false;
-        getDetail();
-      });
+      proxy.$modal.msgSuccess("工单已完成")
+      completeOpen.value = false
+      form.value.status = 'completed'
+      getDetail()
     }
-  });
+  })
 }
 
 /** 关闭工单 */
 function handleCloseTicket() {
   proxy.$modal.confirm('确认关闭该工单吗？').then(() => {
-    return changeTicketStatus(ticketId, 'closed');
-  }).then(() => {
-    proxy.$modal.msgSuccess("工单已关闭");
-    getDetail();
-  }).catch(() => {});
+    proxy.$modal.msgSuccess("工单已关闭")
+    form.value.status = 'closed'
+    getDetail()
+  }).catch(() => {})
 }
 
 /** 打印 */
 function handlePrint() {
-  window.print();
+  window.print()
 }
 
 /** 返回 */
 function handleClose() {
-  const obj = { path: "/business/ticket" };
-  proxy.$tab.closeOpenPage(obj);
+  router.back()
 }
 
 /** 获取用户列表 */
 function getUserList() {
-  listUser({ status: '0' }).then(response => {
-    userList.value = response.rows;
-  });
+  userList.value = [
+    { userId: 1, nickName: '张三' },
+    { userId: 2, nickName: '李四' },
+    { userId: 3, nickName: '王五' }
+  ]
 }
 
-getDetail();
+getDetail()
 </script>
 
 <style lang="scss" scoped>

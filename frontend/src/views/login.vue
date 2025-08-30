@@ -69,6 +69,9 @@ import { getCodeImg } from "@/api/login"
 import Cookies from "js-cookie"
 import { encrypt, decrypt } from "@/utils/jsencrypt"
 import useUserStore from '@/store/modules/user'
+import { getCurrentInstance } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
 
 const title = import.meta.env.VITE_APP_TITLE
 const userStore = useUserStore()
@@ -92,8 +95,8 @@ const loginRules = {
 
 const codeUrl = ref("")
 const loading = ref(false)
-// 验证码开关
-const captchaEnabled = ref(true)
+// 验证码开关 - 开发环境默认关闭
+const captchaEnabled = ref(false)
 // 注册开关
 const register = ref(false)
 const redirect = ref(undefined)
@@ -139,13 +142,19 @@ function handleLogin() {
 }
 
 function getCode() {
+  // 开发环境跳过验证码
+  if (import.meta.env.DEV) {
+    captchaEnabled.value = false
+    return
+  }
+  
   getCodeImg().then(res => {
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
     if (captchaEnabled.value) {
       codeUrl.value = "data:image/gif;base64," + res.img
       loginForm.value.uuid = res.uuid
     }
-  })
+  })  
 }
 
 function getCookie() {
