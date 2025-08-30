@@ -1,5 +1,6 @@
 // src/main.js
 import { createApp } from 'vue'
+import './mock'
 
 import Cookies from 'js-cookie'
 
@@ -48,14 +49,14 @@ import DictTag from '@/components/DictTag'
 // ★ 新增：引入并全局挂载 $auth
 import auth from '@/plugins/auth'
 
-// ★★ 添加Mock支持
-if (import.meta.env.DEV) {
-  import('./mock/index.js').then(() => {
-    console.log('✅ Mock模块加载完成')
-  }).catch(err => {
-    console.log('Mock模块不存在，跳过加载')
-  })
-}
+// // ★★ 添加Mock支持
+// if (import.meta.env.DEV) {
+//   import('./mock/index.js').then(() => {
+//     console.log('✅ Mock模块加载完成')
+//   }).catch(err => {
+//     console.log('Mock模块不存在，跳过加载')
+//   })
+// }
 
 const app = createApp(App)
 
