@@ -1,11 +1,11 @@
- /**
- * v-hasPermi 操作权限处理
- * Copyright (c) 2019 ruoyi
- */
+/**
+* v-hasPermi 操作权限处理
+* Copyright (c) 2019 ruoyi
+*/
 import useUserStore from '@/store/modules/user'
 
 export default {
-  mounted(el, binding, vnode) {
+  mounted(el, binding) {
     const { value } = binding
     const all_permission = "*:*:*"
     const permissions = useUserStore().permissions

@@ -2,7 +2,8 @@
   <div class="icon-dialog">
     <el-dialog v-model="value" width="980px" :close-on-click-modal="false" :modal-append-to-body="false" @open="onOpen"
       @close="onClose">
-      <template #header="{ close, titleId, titleClass }">
+      <!-- 仅保留需要的 header 插槽内容，移除未使用的作用域变量以通过 lint -->
+      <template #header>
         选择图标
         <el-input v-model="key" size="small" :style="{ width: '260px' }" placeholder="请输入图标名称" prefix-icon="Search"
           clearable />
@@ -35,8 +36,12 @@ for (const [key] of Object.entries(ElementPlusIconsVue)) {
   originList.push(key)
 }
 
-function onOpen() { }
-function onClose() { }
+function onOpen() {
+  // 预留：打开弹窗时如需初始化可在此添加逻辑
+}
+function onClose() {
+  // 预留：关闭弹窗时清理状态
+}
 function onSelect(icon) {
   active.value = icon
   emit('select', icon)

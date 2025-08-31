@@ -1,18 +1,16 @@
-import request from '@/utils/request'
+import { get, del } from '@/utils/request'
 
 // 查询在线用户列表
-export function list(query) {
-  return request({
-    url: '/monitor/online/list',
-    method: 'get',
-    params: query
-  })
-}
+/**
+ * 在线用户列表
+ * @param {object} query
+ * @returns {Promise<ApiResult<PageResult<User>>>}
+ */
+export function list(query) { return get('/monitor/online/list', query) }
 
 // 强退用户
-export function forceLogout(tokenId) {
-  return request({
-    url: '/monitor/online/' + tokenId,
-    method: 'delete'
-  })
-}
+/**
+ * 强制下线
+ * @param {string} tokenId
+ */
+export function forceLogout(tokenId) { return del('/monitor/online/' + tokenId) }

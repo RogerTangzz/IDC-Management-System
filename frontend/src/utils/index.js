@@ -1,23 +1,28 @@
 import { parseTime } from './ruoyi'
+// 统一从 index.js 入口再导出 parseTime 供外部按 { parseTime } 方式引入
+export { parseTime } from './ruoyi'
 
 /**
- * 表格时间格式化
+ * 表格通用时间格式化 (yyyy-MM-dd HH:mm:ss)
+ * @param {number | string | Date} cellValue
+ * @returns {string}
  */
 export function formatDate(cellValue) {
   if (cellValue == null || cellValue == "") return ""
-  var date = new Date(cellValue) 
+  var date = new Date(cellValue)
   var year = date.getFullYear()
   var month = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
-  var day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate() 
-  var hours = date.getHours() < 10 ? '0' + date.getHours() : date.getHours() 
-  var minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes() 
+  var day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+  var hours = date.getHours() < 10 ? '0' + date.getHours() : date.getHours()
+  var minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()
   var seconds = date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds()
   return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds
 }
 
 /**
- * @param {number} time
- * @param {string} option
+ * 相对时间格式化：刚刚 / X分钟前 / X小时前 / 1天前 或自定义 pattern
+ * @param {number | string | Date} time 时间
+ * @param {string} [option] parseTime 模板
  * @returns {string}
  */
 export function formatTime(time, option) {
@@ -59,8 +64,9 @@ export function formatTime(time, option) {
 }
 
 /**
- * @param {string} url
- * @returns {Object}
+ * 解析 URL 查询参数为对象
+ * @param {string} [url]
+ * @returns {Record<string,string>}
  */
 export function getQueryObject(url) {
   url = url == null ? window.location.href : url
@@ -78,8 +84,9 @@ export function getQueryObject(url) {
 }
 
 /**
- * @param {string} input value
- * @returns {number} output value
+ * 计算 UTF-8 字节长度
+ * @param {string} str
+ * @returns {number}
  */
 export function byteLength(str) {
   // returns the byte length of an utf8 string
@@ -94,8 +101,10 @@ export function byteLength(str) {
 }
 
 /**
- * @param {Array} actual
- * @returns {Array}
+ * 过滤数组中假值
+ * @template T
+ * @param {T[]} actual
+ * @returns {T[]}
  */
 export function cleanArray(actual) {
   const newArray = []
@@ -108,8 +117,9 @@ export function cleanArray(actual) {
 }
 
 /**
- * @param {Object} json
- * @returns {Array}
+ * 序列化对象为 query 字符串（值为 undefined 跳过）
+ * @param {Record<string, any>} json
+ * @returns {string}
  */
 export function param(json) {
   if (!json) return ''
@@ -122,8 +132,9 @@ export function param(json) {
 }
 
 /**
+ * 解析 query string 为对象
  * @param {string} url
- * @returns {Object}
+ * @returns {Record<string,string>}
  */
 export function param2Obj(url) {
   const search = decodeURIComponent(url.split('?')[1]).replace(/\+/g, ' ')
@@ -143,10 +154,7 @@ export function param2Obj(url) {
   return obj
 }
 
-/**
- * @param {string} val
- * @returns {string}
- */
+/** HTML 转纯文本 */
 export function html2Text(val) {
   const div = document.createElement('div')
   div.innerHTML = val
@@ -154,10 +162,12 @@ export function html2Text(val) {
 }
 
 /**
- * Merges two objects, giving the last one precedence
- * @param {Object} target
- * @param {(Object|Array)} source
- * @returns {Object}
+ * 深合并（数组直接浅复制覆盖）
+ * @template T
+ * @template U
+ * @param {T} target
+ * @param {U | any[]} source
+ * @returns {T & U}
  */
 export function objectMerge(target, source) {
   if (typeof target !== 'object') {
@@ -177,10 +187,7 @@ export function objectMerge(target, source) {
   return target
 }
 
-/**
- * @param {HTMLElement} element
- * @param {string} className
- */
+/** 切换元素类名 */
 export function toggleClass(element, className) {
   if (!element || !className) {
     return
@@ -197,10 +204,7 @@ export function toggleClass(element, className) {
   element.className = classString
 }
 
-/**
- * @param {string} type
- * @returns {Date}
- */
+/** 获取时间：type==='start' 返回 90 天前时间戳，否则返回当天零点 Date */
 export function getTime(type) {
   if (type === 'start') {
     return new Date().getTime() - 3600 * 1000 * 24 * 90
@@ -210,15 +214,17 @@ export function getTime(type) {
 }
 
 /**
- * @param {Function} func
- * @param {number} wait
- * @param {boolean} immediate
- * @return {*}
+ * 防抖
+ * @template {(...args:any[])=>any} F
+ * @param {F} func 函数
+ * @param {number} wait 等待毫秒
+ * @param {boolean} [immediate]
+ * @returns {F}
  */
 export function debounce(func, wait, immediate) {
   let timeout, args, context, timestamp, result
 
-  const later = function() {
+  const later = function () {
     // 据上一次触发时间间隔
     const last = +new Date() - timestamp
 
@@ -235,7 +241,7 @@ export function debounce(func, wait, immediate) {
     }
   }
 
-  return function(...args) {
+  return function (...args) {
     context = this
     timestamp = +new Date()
     const callNow = immediate && !timeout
@@ -251,11 +257,10 @@ export function debounce(func, wait, immediate) {
 }
 
 /**
- * This is just a simple version of deep copy
- * Has a lot of edge cases bug
- * If you want to use a perfect deep copy, use lodash's _.cloneDeep
- * @param {Object} source
- * @returns {Object}
+ * 简单深拷贝（不处理循环引用、Map/Set/Date/RegExp 等特殊对象）
+ * @template T
+ * @param {T} source
+ * @returns {T}
  */
 export function deepClone(source) {
   if (!source && typeof source !== 'object') {
@@ -272,47 +277,29 @@ export function deepClone(source) {
   return targetObj
 }
 
-/**
- * @param {Array} arr
- * @returns {Array}
- */
+/** 数组去重 */
 export function uniqueArr(arr) {
   return Array.from(new Set(arr))
 }
 
-/**
- * @returns {string}
- */
+/** 生成近似唯一字符串 */
 export function createUniqueString() {
   const timestamp = +new Date() + ''
   const randomNum = parseInt((1 + Math.random()) * 65536) + ''
   return (+(randomNum + timestamp)).toString(32)
 }
 
-/**
- * Check if an element has a class
- * @param {HTMLElement} elm
- * @param {string} cls
- * @returns {boolean}
- */
+/** 判断元素是否包含 class */
 export function hasClass(ele, cls) {
   return !!ele.className.match(new RegExp('(\\s|^)' + cls + '(\\s|$)'))
 }
 
-/**
- * Add class to element
- * @param {HTMLElement} elm
- * @param {string} cls
- */
+/** 添加 class */
 export function addClass(ele, cls) {
   if (!hasClass(ele, cls)) ele.className += ' ' + cls
 }
 
-/**
- * Remove class from element
- * @param {HTMLElement} elm
- * @param {string} cls
- */
+/** 移除 class */
 export function removeClass(ele, cls) {
   if (hasClass(ele, cls)) {
     const reg = new RegExp('(\\s|^)' + cls + '(\\s|$)')
@@ -320,6 +307,12 @@ export function removeClass(ele, cls) {
   }
 }
 
+/**
+ * 生成快速查找映射
+ * @param {string} str 逗号分隔
+ * @param {boolean} [expectsLowerCase]
+ * @returns {(val:string)=>boolean}
+ */
 export function makeMap(str, expectsLowerCase) {
   const map = Object.create(null)
   const list = str.split(',')
@@ -330,7 +323,7 @@ export function makeMap(str, expectsLowerCase) {
     ? val => map[val.toLowerCase()]
     : val => map[val]
 }
- 
+
 export const exportDefault = 'export default '
 
 export const beautifierConf = {
@@ -387,4 +380,4 @@ export function camelCase(str) {
 export function isNumberStr(str) {
   return /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g.test(str)
 }
- 
+

@@ -73,7 +73,7 @@ const emit = defineEmits(['update'])
 const props = defineProps({
     cron: {
         type: Object,
-        default: {
+        default: () => ({
             second: "*",
             min: "*",
             hour: "*",
@@ -81,7 +81,7 @@ const props = defineProps({
             month: "*",
             week: "?",
             year: ""
-        }
+        })
     },
     check: {
         type: Function,
@@ -106,20 +106,15 @@ const weekList = ref([
     {key: 6, value: '星期五'},
     {key: 7, value: '星期六'}
 ])
-const cycleTotal = computed(() => {
-    cycle01.value = props.check(cycle01.value, 1, 6)
-    cycle02.value = props.check(cycle02.value, cycle01.value + 1, 7)
-    return cycle01.value + '-' + cycle02.value
-})
-const averageTotal = computed(() => {
-    average01.value = props.check(average01.value, 1, 4)
-    average02.value = props.check(average02.value, 1, 7)
-    return average02.value + '#' + average01.value
-})
-const weekdayTotal = computed(() => {
-    weekday.value = props.check(weekday.value, 1, 7)
-    return weekday.value + 'L'
-})
+watch(cycle01, () => { cycle01.value = props.check(cycle01.value, 1, 6) })
+watch([cycle02, cycle01], () => { cycle02.value = props.check(cycle02.value, cycle01.value + 1, 7) })
+watch(average01, () => { average01.value = props.check(average01.value, 1, 4) })
+watch(average02, () => { average02.value = props.check(average02.value, 1, 7) })
+watch(weekday, () => { weekday.value = props.check(weekday.value, 1, 7) })
+
+const cycleTotal = computed(() => cycle01.value + '-' + cycle02.value)
+const averageTotal = computed(() => average02.value + '#' + average01.value)
+const weekdayTotal = computed(() => weekday.value + 'L')
 const checkboxString = computed(() => {
     return checkboxList.value.join(',')
 })

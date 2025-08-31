@@ -1,5 +1,4 @@
 // src/utils/business/inspectionAnomaly.js
-import { getInspection } from '@/api/business/inspection'
 import { addTicket } from '@/api/business/ticket'
 import {
   INSPECTION_ITEMS,
@@ -12,6 +11,9 @@ export class InspectionAnomalyService {
    * 检测单次巡检的所有异常项
    * @param {Object} inspectionData - 后端返回的巡检记录，需包含 floor、items(JSON字符串/对象)
    * @returns {Array<Object>} 异常项数组
+   */
+  /**
+   * @param {{floor:any,items:any}} inspectionData
    */
   detectAnomalies(inspectionData) {
     const anomalies = []
@@ -49,6 +51,7 @@ export class InspectionAnomalyService {
    * 是否异常：布尔项 false 为异常；数值项超 min/max 为异常
    * constants.js 已提供 ANOMALY_RULES：boolean(value) 与 number(item, value)
    */
+  /** 判断是否异常 */
   isAnomaly(itemCfg, value) {
     if (itemCfg.type === 'boolean') {
       return ANOMALY_RULES.boolean(value)
@@ -60,6 +63,7 @@ export class InspectionAnomalyService {
   }
 
   /** 期望范围展示 */
+  /** 获取期望范围展示字符串 */
   getExpectedRange(itemCfg) {
     if (itemCfg.type === 'boolean') return '正常'
     if (itemCfg.type === 'number' && itemCfg.min !== undefined && itemCfg.max !== undefined) {
@@ -72,6 +76,7 @@ export class InspectionAnomalyService {
    * 严重度：按偏离区间比例判定
    * critical > major > minor > normal
    */
+  /** 计算严重度 */
   calculateSeverity(itemCfg, valueRaw) {
     if (itemCfg.type !== 'number' || itemCfg.min === undefined || itemCfg.max === undefined) {
       return 'normal'
@@ -99,6 +104,12 @@ export class InspectionAnomalyService {
    * @param {Array<Object>} anomalies
    * @param {any} proxy - Vue 实例 proxy，用于 $modal 与 parseTime
    */
+  /**
+   * 批量生成工单
+   * @param {string|number} inspectionId 
+   * @param {Array<any>} anomalies 
+   * @param {any} proxy
+   */
   async generateTickets(inspectionId, anomalies, proxy) {
     const tickets = []
 
@@ -119,7 +130,6 @@ export class InspectionAnomalyService {
       try {
         const resp = await addTicket(ticketData)
         tickets.push(resp?.data ?? resp)
-
         proxy?.$modal?.msgSuccess?.(`已为「${anomaly.itemName}」生成工单`)
       } catch (err) {
         console.error('生成工单失败:', err)
@@ -131,6 +141,7 @@ export class InspectionAnomalyService {
   }
 
   /** 工单描述 */
+  /** 生成工单描述 */
   generateDescription(anomaly) {
     const time =
       (this._proxyParseTime?.(new Date())) ||
@@ -153,6 +164,7 @@ export class InspectionAnomalyService {
   }
 
   /** 建议（根据关键词） */
+  /** 获取处理建议 */
   getHandlingSuggestion(anomaly) {
     const suggestions = {
       '氢气': '请立即检查氢气监测系统，确认是否存在泄漏风险，必要时启动应急预案',
@@ -161,8 +173,8 @@ export class InspectionAnomalyService {
       '压力': '请检查相关泵组和管道系统，调整压力参数或排查故障',
       'UPS': '请检查UPS系统运行状态，查看告警日志，必要时切换至旁路供电',
       '消防': '请立即检查消防系统，确认是否存在真实火警，排查误报原因',
-      '油':  '请检查油罐油位和供油系统，确保供油正常',
-      '电':  '请检查配电系统，测量电压电流是否正常'
+      '油': '请检查油罐油位和供油系统，确保供油正常',
+      '电': '请检查配电系统，测量电压电流是否正常'
     }
 
     for (const [kw, tip] of Object.entries(suggestions)) {
@@ -204,13 +216,12 @@ export class InspectionAnomalyService {
   }
 
   // 供 generateDescription 使用的兜底格式化
-  _proxyParseTime(date) {
-    try {
-      // 可按需接入全局工具
-      return null
-    } catch { return null }
+  _proxyParseTime() {
+    // 占位：返回 null 表示无格式化器
+    return null
   }
 }
 
 // 导出单例
 export default new InspectionAnomalyService()
+// 文件末尾确保无额外不可达代码（保留此注释）

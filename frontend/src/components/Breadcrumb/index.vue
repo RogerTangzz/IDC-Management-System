@@ -2,43 +2,42 @@
   <el-breadcrumb class="app-breadcrumb" separator="/">
     <transition-group name="breadcrumb">
       <el-breadcrumb-item v-for="(item, index) in levelList" :key="item.path">
-        <span v-if="item.redirect === 'noRedirect' || index == levelList.length - 1" class="no-redirect">{{ item.meta.title }}</span>
+        <span v-if="item.redirect === 'noRedirect' || index == levelList.length - 1" class="no-redirect">{{
+          item.meta.title }}</span>
         <a v-else @click.prevent="handleLink(item)">{{ item.meta.title }}</a>
       </el-breadcrumb-item>
     </transition-group>
   </el-breadcrumb>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import usePermissionStore from '@/store/modules/permission'
 
 const route = useRoute()
 const router = useRouter()
 const permissionStore = usePermissionStore()
-const levelList = ref([])
+// 面包屑每级路由项类型（简化）
+interface BreadcrumbMeta { title: string; breadcrumb?: boolean }
+interface BreadcrumbRouteLike { path: string; name?: string; redirect?: string; meta: BreadcrumbMeta; children?: BreadcrumbRouteLike[] }
+const levelList = ref<BreadcrumbRouteLike[]>([])
 
-function getBreadcrumb() {
-  // only show routes with meta.title
-  let matched = []
+function getBreadcrumb(): void {
+  let matched: BreadcrumbRouteLike[] = []
   const pathNum = findPathNum(route.path)
-  // multi-level menu
   if (pathNum > 2) {
     const reg = /\/\w+/gi
-    const pathList = route.path.match(reg).map((item, index) => {
-      if (index !== 0) item = item.slice(1)
-      return item
-    })
-    getMatched(pathList, permissionStore.defaultRoutes, matched)
+    const raw = route.path.match(reg) || []
+    const pathList = raw.map((seg, idx) => (idx !== 0 ? seg.slice(1) : seg))
+    getMatched(pathList, permissionStore.defaultRoutes as any, matched)
   } else {
-    matched = route.matched.filter((item) => item.meta && item.meta.title)
+    matched = (route.matched as any as BreadcrumbRouteLike[]).filter(r => r.meta && r.meta.title)
   }
-  // 判断是否为首页
   if (!isDashboard(matched[0])) {
-    matched = [{ path: "/index", meta: { title: "首页" } }].concat(matched)
+    matched = [{ path: '/index', meta: { title: '首页' } } as BreadcrumbRouteLike].concat(matched)
   }
-  levelList.value = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false)
+  levelList.value = matched.filter(r => r.meta && r.meta.title && r.meta.breadcrumb !== false)
 }
-function findPathNum(str, char = "/") {
+function findPathNum(str: string, char = '/'): number {
   let index = str.indexOf(char)
   let num = 0
   while (index !== -1) {
@@ -47,25 +46,24 @@ function findPathNum(str, char = "/") {
   }
   return num
 }
-function getMatched(pathList, routeList, matched) {
-  let data = routeList.find(item => item.path == pathList[0] || (item.name += '').toLowerCase() == pathList[0])
+function getMatched(pathList: string[], routeList: BreadcrumbRouteLike[], matched: BreadcrumbRouteLike[]): void {
+  if (!pathList.length) return
+  const first = pathList[0]
+  const data = routeList.find(item => item.path === first || (item.name || '').toLowerCase() === first)
   if (data) {
     matched.push(data)
-    if (data.children && pathList.length) {
+    if (data.children && pathList.length > 1) {
       pathList.shift()
       getMatched(pathList, data.children, matched)
     }
   }
 }
-function isDashboard(route) {
-  const name = route && route.name
-  if (!name) {
-    return false
-  }
-  return name.trim() === 'Index'
+function isDashboard(routeLike: BreadcrumbRouteLike | undefined): boolean {
+  const name = routeLike && routeLike.name
+  return !!name && name.trim() === 'Index'
 }
-function handleLink(item) {
-  const { redirect, path } = item
+function handleLink(item: BreadcrumbRouteLike): void {
+  const { redirect, path } = item as any
   if (redirect) {
     router.push(redirect)
     return

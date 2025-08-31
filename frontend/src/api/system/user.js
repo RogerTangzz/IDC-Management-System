@@ -1,47 +1,39 @@
-import request from '@/utils/request'
+// 采用新的泛型请求封装（request / get / post / put / del）
+import { request, get, post, put, del } from '@/utils/request'
 import { parseStrEmpty } from "@/utils/ruoyi";
 
 // 查询用户列表
+// 查询用户列表 (支持泛型指定行类型)
+// @param query
 export function listUser(query) {
-  return request({
-    url: '/system/user/list',
-    method: 'get',
-    params: query
-  })
+  return get('/system/user/list', query)
 }
 
+// （保持 getUser 定义在后，不在注释块里以免被 tree-shaking 忽略）
+
 // 查询用户详细
+/**
+ * 查询用户详情
+ * @param {number|string} userId
+ * @returns {Promise<ApiResult<User>>}
+ */
 export function getUser(userId) {
-  return request({
-    url: '/system/user/' + parseStrEmpty(userId),
-    method: 'get'
-  })
+  return get('/system/user/' + parseStrEmpty(userId))
 }
 
 // 新增用户
 export function addUser(data) {
-  return request({
-    url: '/system/user',
-    method: 'post',
-    data: data
-  })
+  return post('/system/user', data)
 }
 
 // 修改用户
 export function updateUser(data) {
-  return request({
-    url: '/system/user',
-    method: 'put',
-    data: data
-  })
+  return put('/system/user', data)
 }
 
 // 删除用户
 export function delUser(userId) {
-  return request({
-    url: '/system/user/' + userId,
-    method: 'delete'
-  })
+  return del('/system/user/' + userId)
 }
 
 // 用户密码重置
@@ -50,11 +42,7 @@ export function resetUserPwd(userId, password) {
     userId,
     password
   }
-  return request({
-    url: '/system/user/resetPwd',
-    method: 'put',
-    data: data
-  })
+  return put('/system/user/resetPwd', data)
 }
 
 // 用户状态修改
@@ -63,28 +51,21 @@ export function changeUserStatus(userId, status) {
     userId,
     status
   }
-  return request({
-    url: '/system/user/changeStatus',
-    method: 'put',
-    data: data
-  })
+  return put('/system/user/changeStatus', data)
 }
 
 // 查询用户个人信息
+/**
+ * 查询当前登录用户个人信息
+ * @returns {Promise<ApiResult<User>>}
+ */
 export function getUserProfile() {
-  return request({
-    url: '/system/user/profile',
-    method: 'get'
-  })
+  return get('/system/user/profile')
 }
 
 // 修改用户个人信息
 export function updateUserProfile(data) {
-  return request({
-    url: '/system/user/profile',
-    method: 'put',
-    data: data
-  })
+  return put('/system/user/profile', data)
 }
 
 // 用户密码重置
@@ -93,44 +74,36 @@ export function updateUserPwd(oldPassword, newPassword) {
     oldPassword,
     newPassword
   }
-  return request({
-    url: '/system/user/profile/updatePwd',
-    method: 'put',
-    data: data
-  })
+  return put('/system/user/profile/updatePwd', data)
 }
 
 // 用户头像上传
 export function uploadAvatar(data) {
-  return request({
-    url: '/system/user/profile/avatar',
-    method: 'post',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    data: data
-  })
+  return post('/system/user/profile/avatar', data, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
 }
 
 // 查询授权角色
 export function getAuthRole(userId) {
-  return request({
-    url: '/system/user/authRole/' + userId,
-    method: 'get'
-  })
+  return get('/system/user/authRole/' + userId)
 }
 
 // 保存授权角色
 export function updateAuthRole(data) {
-  return request({
-    url: '/system/user/authRole',
-    method: 'put',
-    params: data
-  })
+  // 原接口使用 params 传递（PUT + query），保持一致
+  return request({ url: '/system/user/authRole', method: 'put', params: data })
 }
 
 // 查询部门下拉树结构
+/**
+ * 查询部门下拉树结构
+ * @returns {Promise<ApiResult<Dept[]>>}
+ */
 export function deptTreeSelect() {
-  return request({
-    url: '/system/user/deptTree',
-    method: 'get'
-  })
+  return get('/system/user/deptTree')
+}
+
+export const userApi = {
+  list(query) {
+    return listUser(query)
+  }
 }

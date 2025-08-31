@@ -1,9 +1,9 @@
 import useUserStore from '@/store/modules/user'
 
 /**
- * 字符权限校验
- * @param {Array} value 校验值
- * @returns {Boolean}
+ * 字符权限校验：传入所需权限数组 value，当前用户任一权限匹配即通过
+ * @param {string[]} value 权限标识集合
+ * @returns {boolean}
  */
 export function checkPermi(value) {
   if (value && value instanceof Array && value.length > 0) {
@@ -26,9 +26,9 @@ export function checkPermi(value) {
 }
 
 /**
- * 角色权限校验
- * @param {Array} value 校验值
- * @returns {Boolean}
+ * 角色校验：传入允许的角色数组 value，拥有 admin 或任一匹配即通过
+ * @param {string[]} value 角色集合
+ * @returns {boolean}
  */
 export function checkRole(value) {
   if (value && value instanceof Array && value.length > 0) {

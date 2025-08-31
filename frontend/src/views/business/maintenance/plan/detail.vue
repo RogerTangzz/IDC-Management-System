@@ -6,11 +6,7 @@
         <div class="header-wrapper">
           <span>维保计划详情</span>
           <div class="actions">
-            <el-button 
-              v-if="plan.approvalStatus === 'draft'"
-              type="primary" 
-              @click="handleEdit"
-            >
+            <el-button v-if="plan.approvalStatus === 'draft'" type="primary" @click="handleEdit">
               编辑
             </el-button>
             <el-button @click="handleBack">返回</el-button>
@@ -89,12 +85,8 @@
       <div class="approval-history" v-if="plan.approvalHistory?.length">
         <el-divider content-position="left">审批历史</el-divider>
         <el-timeline>
-          <el-timeline-item 
-            v-for="item in plan.approvalHistory" 
-            :key="item.id"
-            :timestamp="parseTime(item.time)"
-            :type="getApprovalType(item.action)"
-          >
+          <el-timeline-item v-for="item in plan.approvalHistory" :key="item.id" :timestamp="parseTime(item.time)"
+            :type="getApprovalType(item.action)">
             {{ item.operatorName }} {{ getApprovalAction(item.action) }}
             <span v-if="item.comment">：{{ item.comment }}</span>
           </el-timeline-item>
@@ -142,7 +134,7 @@ const plan = ref({
   specialTools: '-',
   steps: '',
   inspectionResult: '-',
-  remark: '-' 
+  remark: '-'
 })
 
 // 加载详情

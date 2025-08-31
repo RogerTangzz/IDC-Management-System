@@ -3,31 +3,16 @@
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="模板名称" prop="templateName">
-        <el-input
-          v-model="queryParams.templateName"
-          placeholder="请输入模板名称"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.templateName" placeholder="请输入模板名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="故障类型" prop="faultType">
         <el-select v-model="queryParams.faultType" placeholder="请选择" clearable>
-          <el-option
-            v-for="dict in fault_type"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in fault_type" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="设备专业" prop="specialty">
         <el-select v-model="queryParams.specialty" placeholder="请选择" clearable>
-          <el-option
-            v-for="dict in equipment_specialty"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in equipment_specialty" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -39,42 +24,20 @@
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['business:ticket:template:add']"
-        >新增模板</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd"
+          v-hasPermi="['business:ticket:template:add']">新增模板</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['business:ticket:template:edit']"
-        >修改</el-button>
+        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['business:ticket:template:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['business:ticket:template:remove']"
-        >删除</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['business:ticket:template:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['business:ticket:template:export']"
-        >导出</el-button>
+        <el-button type="warning" plain icon="Download" @click="handleExport"
+          v-hasPermi="['business:ticket:template:export']">导出</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -86,17 +49,17 @@
       <el-table-column label="模板名称" align="center" prop="templateName" :show-overflow-tooltip="true" />
       <el-table-column label="故障类型" align="center" prop="faultType" width="100">
         <template #default="scope">
-          <dict-tag :options="fault_type" :value="scope.row.faultType"/>
+          <dict-tag :options="fault_type" :value="scope.row.faultType" />
         </template>
       </el-table-column>
       <el-table-column label="默认优先级" align="center" prop="priority" width="100">
         <template #default="scope">
-          <dict-tag :options="ticket_priority" :value="scope.row.priority"/>
+          <dict-tag :options="ticket_priority" :value="scope.row.priority" />
         </template>
       </el-table-column>
       <el-table-column label="设备专业" align="center" prop="specialty" width="100">
         <template #default="scope">
-          <dict-tag :options="equipment_specialty" :value="scope.row.specialty"/>
+          <dict-tag :options="equipment_specialty" :value="scope.row.specialty" />
         </template>
       </el-table-column>
       <el-table-column label="使用次数" align="center" prop="useCount" width="90">
@@ -106,12 +69,8 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status" width="80">
         <template #default="scope">
-          <el-switch
-            v-model="scope.row.status"
-            active-value="0"
-            inactive-value="1"
-            @change="handleStatusChange(scope.row)"
-          ></el-switch>
+          <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
+            @change="handleStatusChange(scope.row)"></el-switch>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
@@ -121,39 +80,19 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="View"
-            @click="handleView(scope.row)"
-            v-hasPermi="['business:ticket:template:query']"
-          >查看</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['business:ticket:template:edit']"
-          >修改</el-button>
-          <el-button
-            link
-            type="danger"
-            icon="Delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['business:ticket:template:remove']"
-          >删除</el-button>
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+            v-hasPermi="['business:ticket:template:query']">查看</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['business:ticket:template:edit']">修改</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['business:ticket:template:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改对话框 -->
     <el-dialog :title="title" v-model="open" width="700px" append-to-body>
@@ -167,12 +106,7 @@
           <el-col :span="12">
             <el-form-item label="故障类型" prop="faultType">
               <el-select v-model="form.faultType" placeholder="请选择故障类型">
-                <el-option
-                  v-for="dict in fault_type"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                />
+                <el-option v-for="dict in fault_type" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -181,23 +115,16 @@
           <el-col :span="12">
             <el-form-item label="默认优先级" prop="priority">
               <el-radio-group v-model="form.priority">
-                <el-radio
-                  v-for="dict in ticket_priority"
-                  :key="dict.value"
-                  :label="dict.value"
-                >{{ dict.label }}</el-radio>
+                <el-radio v-for="dict in ticket_priority" :key="dict.value" :label="dict.value">{{ dict.label
+                  }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="设备专业" prop="specialty">
               <el-select v-model="form.specialty" placeholder="请选择">
-                <el-option
-                  v-for="dict in equipment_specialty"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                />
+                <el-option v-for="dict in equipment_specialty" :key="dict.value" :label="dict.label"
+                  :value="dict.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -206,34 +133,16 @@
           <el-input v-model="form.defaultTitle" placeholder="请输入默认标题" />
         </el-form-item>
         <el-form-item label="故障描述" prop="defaultDescription">
-          <el-input
-            v-model="form.defaultDescription"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入默认故障描述"
-            maxlength="500"
-            show-word-limit
-          />
+          <el-input v-model="form.defaultDescription" type="textarea" :rows="4" placeholder="请输入默认故障描述" maxlength="500"
+            show-word-limit />
         </el-form-item>
         <el-form-item label="应急处置" prop="defaultEmergencyAction">
-          <el-input
-            v-model="form.defaultEmergencyAction"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入默认应急处置方法"
-            maxlength="300"
-            show-word-limit
-          />
+          <el-input v-model="form.defaultEmergencyAction" type="textarea" :rows="3" placeholder="请输入默认应急处置方法"
+            maxlength="300" show-word-limit />
         </el-form-item>
         <el-form-item label="处理方案" prop="defaultSolution">
-          <el-input
-            v-model="form.defaultSolution"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入默认处理方案"
-            maxlength="500"
-            show-word-limit
-          />
+          <el-input v-model="form.defaultSolution" type="textarea" :rows="4" placeholder="请输入默认处理方案" maxlength="500"
+            show-word-limit />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
@@ -253,13 +162,13 @@
         <el-descriptions-item label="模板编号">{{ detail.templateNo }}</el-descriptions-item>
         <el-descriptions-item label="模板名称">{{ detail.templateName }}</el-descriptions-item>
         <el-descriptions-item label="故障类型">
-          <dict-tag :options="fault_type" :value="detail.faultType"/>
+          <dict-tag :options="fault_type" :value="detail.faultType" />
         </el-descriptions-item>
         <el-descriptions-item label="默认优先级">
-          <dict-tag :options="ticket_priority" :value="detail.priority"/>
+          <dict-tag :options="ticket_priority" :value="detail.priority" />
         </el-descriptions-item>
         <el-descriptions-item label="设备专业">
-          <dict-tag :options="equipment_specialty" :value="detail.specialty"/>
+          <dict-tag :options="equipment_specialty" :value="detail.specialty" />
         </el-descriptions-item>
         <el-descriptions-item label="使用次数">{{ detail.useCount }}次</el-descriptions-item>
         <el-descriptions-item label="默认标题" :span="2">{{ detail.defaultTitle }}</el-descriptions-item>
@@ -278,7 +187,9 @@
 </template>
 
 <script setup name="TicketTemplate">
+import { ref, reactive, toRefs, getCurrentInstance } from 'vue'
 import { listTemplate, getTemplate, delTemplate, addTemplate, updateTemplate, changeTemplateStatus } from "@/api/business/ticketTemplate";
+import { parseTime } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance();
 
@@ -395,8 +306,8 @@ function handleAdd() {
 
 /** 查看详情 */
 function handleView(row) {
-  getTemplate(row.templateId).then(response => {
-    detail.value = response.data;
+  getTemplate(row.templateId).then(_response => {
+    detail.value = _response.data;
     detailOpen.value = true;
   });
 }
@@ -405,8 +316,8 @@ function handleView(row) {
 function handleUpdate(row) {
   reset();
   const templateId = row.templateId || ids.value[0];
-  getTemplate(templateId).then(response => {
-    form.value = response.data;
+  getTemplate(templateId).then(_response => {
+    form.value = _response.data;
     open.value = true;
     title.value = "修改工单模板";
   });
@@ -417,13 +328,13 @@ function submitForm() {
   proxy.$refs["templateRef"].validate(valid => {
     if (valid) {
       if (form.value.templateId != undefined) {
-        updateTemplate(form.value).then(response => {
+        updateTemplate(form.value).then(_response => {
           proxy.$modal.msgSuccess("修改成功");
           open.value = false;
           getList();
         });
       } else {
-        addTemplate(form.value).then(response => {
+        addTemplate(form.value).then(_response => {
           proxy.$modal.msgSuccess("新增成功");
           open.value = false;
           getList();
@@ -436,22 +347,22 @@ function submitForm() {
 /** 删除按钮操作 */
 function handleDelete(row) {
   const templateIds = row.templateId || ids.value;
-  proxy.$modal.confirm('是否确认删除工单模板编号为"' + templateIds + '"的数据项？').then(function() {
+  proxy.$modal.confirm('是否确认删除工单模板编号为"' + templateIds + '"的数据项？').then(function () {
     return delTemplate(templateIds);
   }).then(() => {
     getList();
     proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 状态修改 */
 function handleStatusChange(row) {
   let text = row.status === "0" ? "启用" : "停用";
-  proxy.$modal.confirm('确认要"' + text + '""' + row.templateName + '"模板吗？').then(function() {
+  proxy.$modal.confirm('确认要"' + text + '""' + row.templateName + '"模板吗？').then(function () {
     return changeTemplateStatus(row.templateId, row.status);
   }).then(() => {
     proxy.$modal.msgSuccess(text + "成功");
-  }).catch(function() {
+  }).catch(function () {
     row.status = row.status === "0" ? "1" : "0";
   });
 }

@@ -1,4 +1,4 @@
-// 处理主题样式
+// 处理主题样式：设置主色及浅/深派生色变量
 export function handleThemeStyle(theme) {
 	document.documentElement.style.setProperty('--el-color-primary', theme)
 	for (let i = 1; i <= 9; i++) {
@@ -10,6 +10,7 @@ export function handleThemeStyle(theme) {
 }
 
 // hex颜色转rgb颜色
+/** Hex -> RGB 数组 */
 export function hexToRgb(str) {
 	str = str.replace('#', '')
 	let hexs = str.match(/../g)
@@ -20,6 +21,7 @@ export function hexToRgb(str) {
 }
 
 // rgb颜色转Hex颜色
+/** RGB -> Hex */
 export function rgbToHex(r, g, b) {
 	let hexs = [r.toString(16), g.toString(16), b.toString(16)]
 	for (let i = 0; i < 3; i++) {
@@ -31,6 +33,7 @@ export function rgbToHex(r, g, b) {
 }
 
 // 变浅颜色值
+/** 变浅颜色 */
 export function getLightColor(color, level) {
 	let rgb = hexToRgb(color)
 	for (let i = 0; i < 3; i++) {
@@ -40,6 +43,7 @@ export function getLightColor(color, level) {
 }
 
 // 变深颜色值
+/** 变深颜色 */
 export function getDarkColor(color, level) {
 	let rgb = hexToRgb(color)
 	for (let i = 0; i < 3; i++) {

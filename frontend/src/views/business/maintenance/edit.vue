@@ -4,7 +4,7 @@
       <template #header>
         <span>编辑维保计划</span>
       </template>
-      
+
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <!-- 基础信息 -->
         <el-row>
@@ -57,7 +57,8 @@
               <el-tag :type="getApprovalType(form.approvalStatus)">
                 {{ getApprovalLabel(form.approvalStatus) }}
               </el-tag>
-              <el-tag v-if="form.executionStatus" :type="getExecutionType(form.executionStatus)" style="margin-left: 10px">
+              <el-tag v-if="form.executionStatus" :type="getExecutionType(form.executionStatus)"
+                style="margin-left: 10px">
                 {{ getExecutionLabel(form.executionStatus) }}
               </el-tag>
             </el-form-item>
@@ -66,18 +67,18 @@
 
         <!-- MOP信息 -->
         <el-divider content-position="left">MOP信息</el-divider>
-        
+
         <el-form-item label="MOP名称" prop="mopName">
           <el-input v-model="form.mopName" placeholder="请输入MOP名称" />
         </el-form-item>
-        
+
         <el-form-item label="MOP目的" prop="mopPurpose">
           <el-input v-model="form.mopPurpose" type="textarea" :rows="3" placeholder="请输入MOP目的" />
         </el-form-item>
 
         <!-- 执行周期 -->
         <el-divider content-position="left">执行周期</el-divider>
-        
+
         <el-row>
           <el-col :span="12">
             <el-form-item label="执行频次" prop="executionFrequency">
@@ -99,24 +100,16 @@
           <el-col :span="12">
             <el-form-item label="审核人" prop="approverId">
               <el-select v-model="form.approverId" placeholder="请选择审核人" :disabled="form.approvalStatus !== 'draft'">
-                <el-option
-                  v-for="user in approverList"
-                  :key="user.userId"
-                  :label="user.nickName"
-                  :value="user.userId"
-                />
+                <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName"
+                  :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="执行审核人" prop="executorId">
               <el-select v-model="form.executorId" placeholder="请选择执行审核人">
-                <el-option
-                  v-for="user in approverList"
-                  :key="user.userId"
-                  :label="user.nickName"
-                  :value="user.userId"
-                />
+                <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName"
+                  :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -124,50 +117,43 @@
 
         <el-form-item label="通知人员" prop="notifyUsers">
           <el-select v-model="form.notifyUsers" multiple placeholder="请选择通知人员">
-            <el-option
-              v-for="user in userList"
-              :key="user.userId"
-              :label="user.nickName"
-              :value="user.userId"
-            />
+            <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
 
         <!-- 工具材料 -->
         <el-divider content-position="left">工具材料</el-divider>
-        
+
         <el-form-item label="工具仪表" prop="tools">
           <el-input v-model="form.tools" type="textarea" :rows="2" placeholder="请输入所需工具仪表" />
         </el-form-item>
-        
+
         <el-form-item label="材料" prop="materials">
           <el-input v-model="form.materials" type="textarea" :rows="2" placeholder="请输入所需材料" />
         </el-form-item>
-        
+
         <el-form-item label="安全(PPE)" prop="safety">
           <el-input v-model="form.safety" type="textarea" :rows="2" placeholder="请输入个人防护装备要求" />
         </el-form-item>
-        
+
         <el-form-item label="特殊工具" prop="specialTools">
           <el-input v-model="form.specialTools" type="textarea" :rows="2" placeholder="请输入所需特殊工具或配件" />
         </el-form-item>
 
         <!-- 执行步骤 -->
         <el-divider content-position="left">执行步骤</el-divider>
-        
+
         <el-form-item label="步骤内容" prop="steps">
           <div class="steps-editor">
             <el-button type="primary" size="small" @click="addStep" style="margin-bottom: 10px">添加步骤</el-button>
             <draggable v-model="stepsList" item-key="id" handle=".handle">
-              <template #item="{element, index}">
+              <template #item="{ element, index }">
                 <div class="step-item">
-                  <el-icon class="handle"><Rank /></el-icon>
+                  <el-icon class="handle">
+                    <Rank />
+                  </el-icon>
                   <span class="step-number">{{ index + 1 }}.</span>
-                  <el-input 
-                    v-model="element.content" 
-                    placeholder="请输入步骤内容"
-                    style="flex: 1"
-                  />
+                  <el-input v-model="element.content" placeholder="请输入步骤内容" style="flex: 1" />
                   <el-button type="danger" size="small" icon="Delete" @click="removeStep(index)" />
                 </div>
               </template>
@@ -178,18 +164,10 @@
         <!-- 表格编辑 -->
         <el-form-item label="检查表格" v-if="tableData.length > 0">
           <el-table :data="tableData" border>
-            <el-table-column
-              v-for="(col, index) in tableCols"
-              :key="index"
-              :label="tableHeaders[index] || `列${index + 1}`"
-              :prop="`col${index}`"
-            >
+            <el-table-column v-for="(col, index) in tableCols" :key="index"
+              :label="tableHeaders[index] || `列${index + 1}`" :prop="`col${index}`">
               <template #header>
-                <el-input 
-                  v-model="tableHeaders[index]" 
-                  placeholder="列标题"
-                  size="small"
-                />
+                <el-input v-model="tableHeaders[index]" placeholder="列标题" size="small" />
               </template>
               <template #default="scope">
                 <el-input v-model="scope.row[`col${index}`]" />
@@ -221,26 +199,23 @@
 
         <!-- 其他信息 -->
         <el-divider content-position="left">其他信息</el-divider>
-        
+
         <el-form-item label="巡检结果" prop="inspectionResult">
           <el-input v-model="form.inspectionResult" type="textarea" :rows="3" placeholder="请输入巡检结果" />
         </el-form-item>
-        
+
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
 
         <!-- 审核记录 -->
-        <el-divider content-position="left" v-if="form.approvalHistory && form.approvalHistory.length > 0">审核记录</el-divider>
-        
+        <el-divider content-position="left"
+          v-if="form.approvalHistory && form.approvalHistory.length > 0">审核记录</el-divider>
+
         <el-timeline v-if="form.approvalHistory && form.approvalHistory.length > 0">
-          <el-timeline-item
-            v-for="(record, index) in form.approvalHistory"
-            :key="index"
-            :timestamp="parseTime(record.time)"
-            placement="top"
-            :type="record.action === 'approved' ? 'success' : record.action === 'rejected' ? 'danger' : 'primary'"
-          >
+          <el-timeline-item v-for="(record, index) in form.approvalHistory" :key="index"
+            :timestamp="parseTime(record.time)" placement="top"
+            :type="record.action === 'approved' ? 'success' : record.action === 'rejected' ? 'danger' : 'primary'">
             <div>
               <strong>{{ record.userName }}</strong> {{ getActionLabel(record.action) }}
               <div v-if="record.comment" style="margin-top: 5px; color: #909399">
@@ -265,8 +240,10 @@
 <script setup name="MaintenanceEdit">
 import { getCurrentInstance, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getMaintenance, updateMaintenance, submitApproval, getApproverList } from '@/api/business/maintenance'
-import { listUser } from '@/api/system/user'
+// NOTE: 真实接口集成后再按需恢复下列 API 引入
+// import { getMaintenance, updateMaintenance, submitApproval, getApproverList } from '@/api/business/maintenance'
+// import { listUser } from '@/api/system/user'
+import { parseTime } from '@/utils/ruoyi'
 import draggable from 'vuedraggable'
 
 const { proxy } = getCurrentInstance()
@@ -347,7 +324,7 @@ function getPlanDetail() {
     executionStatus: 'pending',
     approvalHistory: []
   }
-  
+
   // 转换步骤为列表
   if (form.value.steps) {
     stepsList.value = form.value.steps.split('\n').map((step, index) => ({
@@ -374,10 +351,10 @@ function removeStep(index) {
 function generateTable() {
   const rows = parseInt(tableRows.value) || 6
   const cols = parseInt(tableCols.value) || 7
-  
+
   tableData.value = []
   tableHeaders.value = new Array(cols).fill('')
-  
+
   for (let i = 0; i < rows; i++) {
     const row = {}
     for (let j = 0; j < cols; j++) {
@@ -462,10 +439,10 @@ function handleSave() {
   proxy.$refs.formRef.validate(valid => {
     if (valid) {
       // 转换步骤为字符串
-      form.value.steps = stepsList.value.map((step, index) => 
+      form.value.steps = stepsList.value.map((step, index) =>
         `${index + 1}. ${step.content}`
       ).join('\n')
-      
+
       proxy.$modal.msgSuccess('保存成功')
       router.push('/business/maintenance')
     }
@@ -527,13 +504,13 @@ onMounted(() => {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
-    
+
     .handle {
       cursor: move;
       margin-right: 10px;
       color: #909399;
     }
-    
+
     .step-number {
       margin-right: 10px;
       font-weight: bold;

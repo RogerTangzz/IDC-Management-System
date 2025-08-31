@@ -1,116 +1,124 @@
 // src/api/inspection/config.js
-import request from '@/utils/request'
+import { get, post, put, del } from '@/utils/request'
 
 // 巡检项配置API
 export const inspectionConfigApi = {
   // 获取配置列表
+  /**
+   * 巡检项配置列表
+   * @param {string|number} floor
+   * @returns {Promise<ApiResult<InspectionItem[]>>}
+   */
   list(floor) {
-    return request({
-      url: '/inspection/config/list',
-      method: 'get',
-      params: { floor }
-    })
+    return get('/inspection/config/list', { floor })
   },
 
   // 获取单个配置
+  /**
+   * 配置详情
+   * @param {number|string} id
+   * @returns {Promise<ApiResult<InspectionItem>>}
+   */
   get(id) {
-    return request({
-      url: `/inspection/config/${id}`,
-      method: 'get'
-    })
+    return get(`/inspection/config/${id}`)
   },
 
   // 创建配置
+  /**
+   * 创建巡检项配置
+   * @param {Partial<InspectionItem>} data
+   */
   create(data) {
-    return request({
-      url: '/inspection/config',
-      method: 'post',
-      data
-    })
+    return post('/inspection/config', data)
   },
 
   // 更新配置
+  /**
+   * 更新巡检项配置
+   * @param {number|string} id
+   * @param {Partial<InspectionItem>} data
+   */
   update(id, data) {
-    return request({
-      url: `/inspection/config/${id}`,
-      method: 'put',
-      data
-    })
+    return put(`/inspection/config/${id}`, data)
   },
 
   // 删除配置
+  /**
+   * 删除配置
+   * @param {number|string} id
+   */
   delete(id) {
-    return request({
-      url: `/inspection/config/${id}`,
-      method: 'delete'
-    })
+    return del(`/inspection/config/${id}`)
   },
 
   // 批量更新排序
+  /**
+   * 批量更新排序
+   * @param {Array<Pick<InspectionItem,'itemId'|'orderNum'>>} items
+   */
   updateSort(items) {
-    return request({
-      url: '/inspection/config/sort',
-      method: 'put',
-      data: items
-    })
+    return put('/inspection/config/sort', items)
   },
 
   // 导出配置
+  /**
+   * 导出配置 (blob)
+   * @param {string|number} floor
+   * @returns {Promise<Blob>}
+   */
   export(floor) {
-    return request({
-      url: '/inspection/config/export',
-      method: 'get',
-      params: { floor },
-      responseType: 'blob'
-    })
+    return get('/inspection/config/export', { floor }, { responseType: 'blob' })
   },
 
   // 导入配置
+  /**
+   * 导入配置
+   * @param {File} file
+   */
   import(file) {
     const formData = new FormData()
     formData.append('file', file)
-    return request({
-      url: '/inspection/config/import',
-      method: 'post',
-      data: formData,
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    return post('/inspection/config/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
 
   // 复制楼层配置
+  /**
+   * 复制楼层配置
+   * @param {string|number} sourceFloor
+   * @param {string|number} targetFloor
+   */
   copyFloor(sourceFloor, targetFloor) {
-    return request({
-      url: '/inspection/config/copy',
-      method: 'post',
-      data: { sourceFloor, targetFloor }
-    })
+    return post('/inspection/config/copy', { sourceFloor, targetFloor })
   },
 
   // 恢复默认配置
+  /**
+   * 恢复默认配置
+   * @param {string|number} floor
+   */
   restoreDefault(floor) {
-    return request({
-      url: '/inspection/config/restore-default',
-      method: 'post',
-      data: { floor }
-    })
+    return post('/inspection/config/restore-default', { floor })
   }
 }
 
 // 巡检标准API
 export const inspectionStandardApi = {
   // 获取行业标准
+  /**
+   * 行业标准集合
+   * @returns {Promise<ApiResult<IndustryStandard[]>>}
+   */
   getIndustryStandards() {
-    return request({
-      url: '/inspection/standard/industry',
-      method: 'get'
-    })
+    return get('/inspection/standard/industry')
   },
 
   // 获取历史阈值
+  /**
+   * 历史阈值
+   * @param {number|string} itemId
+   * @returns {Promise<ApiResult<ThresholdHistoryRecord[]>>}
+   */
   getHistoricalThresholds(itemId) {
-    return request({
-      url: `/inspection/standard/history/${itemId}`,
-      method: 'get'
-    })
+    return get(`/inspection/standard/history/${itemId}`)
   }
 }

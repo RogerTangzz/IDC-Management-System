@@ -3,21 +3,11 @@
     <!-- 搜索区域 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true">
       <el-form-item label="计划名称" prop="planName">
-        <el-input
-          v-model="queryParams.planName"
-          placeholder="请输入计划名称"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.planName" placeholder="请输入计划名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="楼层" prop="floor">
         <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
-          <el-option
-            v-for="floor in FLOORS"
-            :key="floor.value"
-            :label="floor.label"
-            :value="floor.value"
-          />
+          <el-option v-for="floor in FLOORS" :key="floor.value" :label="floor.label" :value="floor.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="状态" prop="enabled">
@@ -35,13 +25,8 @@
     <!-- 操作按钮 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['inspection:plan:add']"
-        >新建计划</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd"
+          v-hasPermi="['inspection:plan:add']">新建计划</el-button>
       </el-col>
     </el-row>
 
@@ -85,48 +70,24 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="enabled" width="80">
         <template #default="scope">
-          <el-switch
-            v-model="scope.row.enabled"
-            @change="handleStatusChange(scope.row)"
-          />
+          <el-switch v-model="scope.row.enabled" @change="handleStatusChange(scope.row)" />
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="Edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['inspection:plan:edit']"
-          >修改</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Timer"
-            @click="handleExecute(scope.row)"
-            v-hasPermi="['inspection:execute']"
-            :disabled="!scope.row.enabled"
-          >立即执行</el-button>
-          <el-button
-            link
-            type="danger"
-            icon="Delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['inspection:plan:delete']"
-          >删除</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['inspection:plan:edit']">修改</el-button>
+          <el-button link type="primary" icon="Timer" @click="handleExecute(scope.row)"
+            v-hasPermi="['inspection:execute']" :disabled="!scope.row.enabled">立即执行</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['inspection:plan:delete']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 新增/编辑对话框 -->
     <el-dialog :title="title" v-model="open" width="700px" append-to-body>
@@ -140,12 +101,8 @@
           <el-col :span="12">
             <el-form-item label="巡检楼层" prop="floor">
               <el-select v-model="form.floor" placeholder="请选择楼层">
-                <el-option
-                  v-for="floor in FLOORS"
-                  :key="floor.value"
-                  :label="`${floor.label} (${floor.itemCount}项)`"
-                  :value="floor.value"
-                />
+                <el-option v-for="floor in FLOORS" :key="floor.value" :label="`${floor.label} (${floor.itemCount}项)`"
+                  :value="floor.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -163,24 +120,15 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="执行时间" prop="executionTime">
-              <el-time-select
-                v-model="form.executionTime"
-                start="00:00"
-                step="00:30"
-                end="23:30"
-                placeholder="选择执行时间"
-              />
+              <el-time-select v-model="form.executionTime" start="00:00" step="00:30" end="23:30"
+                placeholder="选择执行时间" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item 
-              v-if="form.frequency === 'weekly'" 
-              label="执行星期" 
-              prop="weekDays"
-            >
+            <el-form-item v-if="form.frequency === 'weekly'" label="执行星期" prop="weekDays">
               <el-checkbox-group v-model="form.weekDays">
                 <el-checkbox label="1">周一</el-checkbox>
                 <el-checkbox label="2">周二</el-checkbox>
@@ -192,17 +140,9 @@
               </el-checkbox-group>
             </el-form-item>
 
-            <el-form-item 
-              v-if="form.frequency === 'monthly'" 
-              label="执行日期" 
-              prop="monthDays"
-            >
+            <el-form-item v-if="form.frequency === 'monthly'" label="执行日期" prop="monthDays">
               <el-checkbox-group v-model="form.monthDays">
-                <el-checkbox 
-                  v-for="day in 31" 
-                  :key="day" 
-                  :label="String(day)"
-                >
+                <el-checkbox v-for="day in 31" :key="day" :label="String(day)">
                   {{ day }}号
                 </el-checkbox>
               </el-checkbox-group>
@@ -214,12 +154,7 @@
           <el-col :span="12">
             <el-form-item label="负责人" prop="responsibleId">
               <el-select v-model="form.responsibleId" placeholder="请选择负责人" filterable>
-                <el-option
-                  v-for="user in userList"
-                  :key="user.id"
-                  :label="user.nickName"
-                  :value="user.id"
-                />
+                <el-option v-for="user in userList" :key="user.id" :label="user.nickName" :value="user.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -239,18 +174,8 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="通知人员" prop="notifyUserIds">
-              <el-select 
-                v-model="form.notifyUserIds" 
-                placeholder="请选择通知人员" 
-                multiple 
-                filterable
-              >
-                <el-option
-                  v-for="user in userList"
-                  :key="user.id"
-                  :label="user.nickName"
-                  :value="user.id"
-                />
+              <el-select v-model="form.notifyUserIds" placeholder="请选择通知人员" multiple filterable>
+                <el-option v-for="user in userList" :key="user.id" :label="user.nickName" :value="user.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -259,12 +184,7 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
-              <el-input
-                v-model="form.remark"
-                type="textarea"
-                :rows="3"
-                placeholder="请输入备注信息"
-              />
+              <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注信息" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -290,10 +210,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { inspectionPlanApi } from '@/api/inspection'
-import { listUser } from '@/api/system/user'
+// 修正导入路径，原 '@/api/inspection' 不存在
+import { inspectionPlanApi } from '@/api/business'
 import { FLOORS } from './constants'
-import { parseTime } from '@/utils'
 
 const router = useRouter()
 const loading = ref(false)
@@ -303,7 +222,7 @@ const open = ref(false)
 const title = ref('')
 const queryRef = ref()
 const formRef = ref()
-const userList = ref([])
+const userList = ref([]) // 负责人/用户下拉数据
 
 // 查询参数
 const queryParams = reactive({
@@ -348,7 +267,7 @@ const rules = {
     { required: true, message: '请选择负责人', trigger: 'change' }
   ],
   weekDays: [
-    { 
+    {
       validator: (rule, value, callback) => {
         if (form.value.frequency === 'weekly' && (!value || value.length === 0)) {
           callback(new Error('请选择执行星期'))
@@ -419,7 +338,7 @@ const handleAdd = () => {
 // 修改
 const handleUpdate = async (row) => {
   reset()
-  const id = row.id
+  const _id = row.id
   // 获取详情
   form.value = { ...row }
   open.value = true
@@ -433,7 +352,7 @@ const handleDelete = async (row) => {
     cancelButtonText: '取消',
     type: 'warning'
   })
-  
+
   await inspectionPlanApi.delete(row.id)
   ElMessage.success('删除成功')
   getList()
@@ -444,7 +363,7 @@ const handleStatusChange = async (row) => {
   try {
     await inspectionPlanApi.toggle(row.id, row.enabled)
     ElMessage.success(row.enabled ? '启用成功' : '停用成功')
-  } catch (error) {
+  } catch {
     row.enabled = !row.enabled
   }
 }
@@ -469,7 +388,7 @@ const handleFrequencyChange = () => {
 // 提交表单
 const submitForm = async () => {
   await formRef.value?.validate()
-  
+
   if (form.value.id) {
     await inspectionPlanApi.update(form.value.id, form.value)
     ElMessage.success('修改成功')
@@ -477,7 +396,7 @@ const submitForm = async () => {
     await inspectionPlanApi.create(form.value)
     ElMessage.success('新增成功')
   }
-  
+
   open.value = false
   getList()
 }
@@ -551,7 +470,7 @@ onMounted(async () => {
   // 加载用户列表
   // const res = await listUser()
   // userList.value = res.rows
-  
+
   // 模拟数据
   userList.value = [
     { id: 1, nickName: '张三' },

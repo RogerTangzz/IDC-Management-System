@@ -1,44 +1,38 @@
-import request from '@/utils/request'
+import { get, post, put, del } from '@/utils/request'
 
 // 查询岗位列表
-export function listPost(query) {
-  return request({
-    url: '/system/post/list',
-    method: 'get',
-    params: query
-  })
-}
+/**
+ * 岗位列表
+ * @param {object} query
+ * @returns {Promise<ApiResult<PageResult<Post>>>}
+ */
+export function listPost(query) { return get('/system/post/list', query) }
 
 // 查询岗位详细
-export function getPost(postId) {
-  return request({
-    url: '/system/post/' + postId,
-    method: 'get'
-  })
-}
+/**
+ * 岗位详情
+ * @param {number|string} postId
+ * @returns {Promise<ApiResult<Post>>}
+ */
+export function getPost(postId) { return get('/system/post/' + postId) }
 
 // 新增岗位
-export function addPost(data) {
-  return request({
-    url: '/system/post',
-    method: 'post',
-    data: data
-  })
-}
+/**
+ * 新增岗位
+ * @param {Partial<Post>} data
+ */
+export function addPost(data) { return post('/system/post', data) }
 
 // 修改岗位
-export function updatePost(data) {
-  return request({
-    url: '/system/post',
-    method: 'put',
-    data: data
-  })
-}
+/**
+ * 修改岗位
+ * @param {Partial<Post>} data
+ */
+export function updatePost(data) { return put('/system/post', data) }
 
 // 删除岗位
-export function delPost(postId) {
-  return request({
-    url: '/system/post/' + postId,
-    method: 'delete'
-  })
-}
+/**
+ * 删除岗位
+ * @param {number|string} postId
+ */
+export function delPost(postId) { return del('/system/post/' + postId) }

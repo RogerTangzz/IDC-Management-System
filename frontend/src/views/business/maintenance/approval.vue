@@ -3,12 +3,7 @@
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="计划标题" prop="title">
-        <el-input
-          v-model="queryParams.title"
-          placeholder="请输入计划标题"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.title" placeholder="请输入计划标题" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="楼层" prop="floor">
         <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
@@ -21,22 +16,12 @@
       </el-form-item>
       <el-form-item label="MOP类别" prop="mopCategory">
         <el-select v-model="queryParams.mopCategory" placeholder="请选择类别" clearable>
-          <el-option
-            v-for="dict in mop_category"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in mop_category" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="审批状态" prop="approvalStatus">
         <el-select v-model="queryParams.approvalStatus" placeholder="请选择状态" clearable>
-          <el-option
-            v-for="dict in approval_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in approval_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -48,24 +33,12 @@
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Select"
-          :disabled="multiple"
-          @click="handleBatchApprove"
-          v-hasPermi="['business:maintenance:approve']"
-        >批量通过</el-button>
+        <el-button type="success" plain icon="Select" :disabled="multiple" @click="handleBatchApprove"
+          v-hasPermi="['business:maintenance:approve']">批量通过</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="CloseBold"
-          :disabled="multiple"
-          @click="handleBatchReject"
-          v-hasPermi="['business:maintenance:approve']"
-        >批量拒绝</el-button>
+        <el-button type="danger" plain icon="CloseBold" :disabled="multiple" @click="handleBatchReject"
+          v-hasPermi="['business:maintenance:approve']">批量拒绝</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -83,7 +56,7 @@
       <el-table-column label="版本" align="center" prop="version" width="80" />
       <el-table-column label="MOP类别" align="center" prop="mopCategory" width="100">
         <template #default="scope">
-          <dict-tag :options="mop_category" :value="scope.row.mopCategory"/>
+          <dict-tag :options="mop_category" :value="scope.row.mopCategory" />
         </template>
       </el-table-column>
       <el-table-column label="执行周期" align="center" prop="executionCycle" width="100" />
@@ -95,7 +68,7 @@
       </el-table-column>
       <el-table-column label="审批状态" align="center" prop="approvalStatus" width="100">
         <template #default="scope">
-          <dict-tag :options="approval_status" :value="scope.row.approvalStatus"/>
+          <dict-tag :options="approval_status" :value="scope.row.approvalStatus" />
         </template>
       </el-table-column>
       <el-table-column label="优先级" align="center" prop="priority" width="80">
@@ -106,49 +79,22 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="View"
-            @click="handleView(scope.row)"
-            v-hasPermi="['business:maintenance:query']"
-          >查看</el-button>
-          <el-button
-            link
-            type="success"
-            icon="Select"
-            @click="handleApprove(scope.row)"
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+            v-hasPermi="['business:maintenance:query']">查看</el-button>
+          <el-button link type="success" icon="Select" @click="handleApprove(scope.row)"
+            v-hasPermi="['business:maintenance:approve']" v-if="scope.row.approvalStatus === 'pending'">通过</el-button>
+          <el-button link type="danger" icon="CloseBold" @click="handleReject(scope.row)"
+            v-hasPermi="['business:maintenance:approve']" v-if="scope.row.approvalStatus === 'pending'">拒绝</el-button>
+          <el-button link type="warning" icon="RefreshRight" @click="handleRevoke(scope.row)"
             v-hasPermi="['business:maintenance:approve']"
-            v-if="scope.row.approvalStatus === 'pending'"
-          >通过</el-button>
-          <el-button
-            link
-            type="danger"
-            icon="CloseBold"
-            @click="handleReject(scope.row)"
-            v-hasPermi="['business:maintenance:approve']"
-            v-if="scope.row.approvalStatus === 'pending'"
-          >拒绝</el-button>
-          <el-button
-            link
-            type="warning"
-            icon="RefreshRight"
-            @click="handleRevoke(scope.row)"
-            v-hasPermi="['business:maintenance:approve']"
-            v-if="scope.row.approvalStatus !== 'pending' && canRevoke(scope.row)"
-          >撤回</el-button>
+            v-if="scope.row.approvalStatus !== 'pending' && canRevoke(scope.row)">撤回</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
+      @pagination="getList" />
 
     <!-- 查看详情对话框 -->
     <el-dialog title="维保计划详情" v-model="detailOpen" width="900px" append-to-body>
@@ -158,7 +104,7 @@
         <el-descriptions-item label="楼层">{{ getFloorLabel(currentPlan.floor) }}</el-descriptions-item>
         <el-descriptions-item label="版本">{{ currentPlan.version }}</el-descriptions-item>
         <el-descriptions-item label="MOP类别">
-          <dict-tag :options="mop_category" :value="currentPlan.mopCategory"/>
+          <dict-tag :options="mop_category" :value="currentPlan.mopCategory" />
         </el-descriptions-item>
         <el-descriptions-item label="执行周期">{{ currentPlan.executionCycle }}</el-descriptions-item>
         <el-descriptions-item label="申请人">{{ currentPlan.applicantName }}</el-descriptions-item>
@@ -180,17 +126,12 @@
         <el-descriptions-item label="巡检结果" :span="2">{{ currentPlan.inspectionResult || '待执行' }}</el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{ currentPlan.remark }}</el-descriptions-item>
       </el-descriptions>
-      
+
       <!-- 审批历史 -->
       <el-divider content-position="left">审批历史</el-divider>
       <el-timeline>
-        <el-timeline-item
-          v-for="(log, index) in approvalHistory"
-          :key="index"
-          :timestamp="parseTime(log.createTime)"
-          placement="top"
-          :type="getHistoryType(log.action)"
-        >
+        <el-timeline-item v-for="(log, index) in approvalHistory" :key="index" :timestamp="parseTime(log.createTime)"
+          placement="top" :type="getHistoryType(log.action)">
           <div>
             <span style="font-weight: bold">{{ log.userName }}</span>
             <span style="margin: 0 10px">{{ getActionLabel(log.action) }}</span>
@@ -201,22 +142,14 @@
           </div>
         </el-timeline-item>
       </el-timeline>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="detailOpen = false">关 闭</el-button>
-          <el-button 
-            type="success" 
-            @click="handleApprove(currentPlan)"
-            v-if="currentPlan.approvalStatus === 'pending'"
-            v-hasPermi="['business:maintenance:approve']"
-          >通 过</el-button>
-          <el-button 
-            type="danger" 
-            @click="handleReject(currentPlan)"
-            v-if="currentPlan.approvalStatus === 'pending'"
-            v-hasPermi="['business:maintenance:approve']"
-          >拒 绝</el-button>
+          <el-button type="success" @click="handleApprove(currentPlan)" v-if="currentPlan.approvalStatus === 'pending'"
+            v-hasPermi="['business:maintenance:approve']">通 过</el-button>
+          <el-button type="danger" @click="handleReject(currentPlan)" v-if="currentPlan.approvalStatus === 'pending'"
+            v-hasPermi="['business:maintenance:approve']">拒 绝</el-button>
         </div>
       </template>
     </el-dialog>
@@ -231,14 +164,8 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="审批意见" prop="comment">
-          <el-input
-            v-model="approvalForm.comment"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入审批意见"
-            maxlength="200"
-            show-word-limit
-          />
+          <el-input v-model="approvalForm.comment" type="textarea" :rows="4" placeholder="请输入审批意见" maxlength="200"
+            show-word-limit />
         </el-form-item>
         <el-form-item label="通知方式" v-if="approvalForm.result === 'approved'">
           <el-checkbox-group v-model="approvalForm.notifyTypes">
@@ -259,8 +186,10 @@
 </template>
 
 <script setup name="MaintenanceApproval">
-import { listMaintenance, getMaintenance, approvePlan, rejectPlan, revokeApproval, getApprovalHistory } from "@/api/business/maintenance";
+import { ref, reactive, toRefs, onMounted, getCurrentInstance } from 'vue'
+import { listMaintenance, approvePlan, rejectPlan, revokeApproval, getApprovalHistory } from "@/api/business/maintenance";
 import { listUser } from "@/api/system/user";
+import { parseTime } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance();
 
@@ -449,7 +378,7 @@ function handleRevoke(row) {
   }).then(() => {
     proxy.$modal.msgSuccess("撤回成功");
     getList();
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 提交审批 */
@@ -457,11 +386,11 @@ function submitApproval() {
   proxy.$refs["approvalRef"].validate(valid => {
     if (valid) {
       const isApprove = approvalForm.value.result === 'approved';
-      const promise = isApprove 
+      const promise = isApprove
         ? approvePlan(approvalForm.value.planIds, approvalForm.value.comment, approvalForm.value.notifyTypes)
         : rejectPlan(approvalForm.value.planIds, approvalForm.value.comment);
-      
-      promise.then(response => {
+
+      promise.then(_response => {
         proxy.$modal.msgSuccess(isApprove ? "审批通过" : "审批拒绝");
         approvalOpen.value = false;
         detailOpen.value = false;
@@ -513,5 +442,4 @@ onMounted(() => {
 });
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

@@ -11,12 +11,7 @@
         <el-col :span="12">
           <el-form-item label="优先级" prop="priority">
             <el-select v-model="form.priority" placeholder="请选择优先级" @change="handlePriorityChange">
-              <el-option
-                v-for="dict in ticket_priority"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-              />
+              <el-option v-for="dict in ticket_priority" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -49,12 +44,8 @@
         <el-col :span="12">
           <el-form-item label="设备专业" prop="specialty">
             <el-select v-model="form.specialty" placeholder="请选择设备专业">
-              <el-option
-                v-for="dict in equipment_specialty"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-              />
+              <el-option v-for="dict in equipment_specialty" :key="dict.value" :label="dict.label"
+                :value="dict.value" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -63,14 +54,8 @@
       <el-row>
         <el-col :span="24">
           <el-form-item label="故障描述" prop="description">
-            <el-input
-              v-model="form.description"
-              type="textarea"
-              :rows="4"
-              placeholder="请详细描述设备故障状况及位置"
-              maxlength="500"
-              show-word-limit
-            />
+            <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请详细描述设备故障状况及位置" maxlength="500"
+              show-word-limit />
           </el-form-item>
         </el-col>
       </el-row>
@@ -78,25 +63,14 @@
       <el-row>
         <el-col :span="12">
           <el-form-item label="发现时间" prop="discoveryTime">
-            <el-date-picker
-              v-model="form.discoveryTime"
-              type="datetime"
-              placeholder="选择故障发现时间"
-              format="YYYY-MM-DD HH:mm:ss"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              :default-time="defaultTime"
-            />
+            <el-date-picker v-model="form.discoveryTime" type="datetime" placeholder="选择故障发现时间"
+              format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" :default-time="defaultTime" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="指派给" prop="assigneeId">
             <el-select v-model="form.assigneeId" placeholder="请选择处理人员" clearable>
-              <el-option
-                v-for="user in userList"
-                :key="user.userId"
-                :label="user.nickName"
-                :value="user.userId"
-              />
+              <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -105,14 +79,8 @@
       <el-row>
         <el-col :span="24">
           <el-form-item label="应急处置" prop="emergencyAction">
-            <el-input
-              v-model="form.emergencyAction"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入应急处置方法"
-              maxlength="300"
-              show-word-limit
-            />
+            <el-input v-model="form.emergencyAction" type="textarea" :rows="3" placeholder="请输入应急处置方法" maxlength="300"
+              show-word-limit />
           </el-form-item>
         </el-col>
       </el-row>
@@ -122,12 +90,8 @@
         <el-col :span="24">
           <el-form-item label="选择模板">
             <el-select v-model="templateId" placeholder="可选择工单模板快速填充" clearable @change="handleTemplateChange">
-              <el-option
-                v-for="template in templateList"
-                :key="template.templateId"
-                :label="template.templateName"
-                :value="template.templateId"
-              />
+              <el-option v-for="template in templateList" :key="template.templateId" :label="template.templateName"
+                :value="template.templateId" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -137,13 +101,8 @@
       <el-row>
         <el-col :span="24">
           <el-form-item label="附件上传">
-            <file-upload
-              v-model="form.attachments"
-              :limit="5"
-              :fileSize="10"
-              :fileType='["jpg", "jpeg", "png", "gif", "mp4", "avi"]'
-              :isShowTip="true"
-            />
+            <file-upload v-model="form.attachments" :limit="5" :fileSize="10"
+              :fileType='["jpg", "jpeg", "png", "gif", "mp4", "avi"]' :isShowTip="true" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -163,7 +122,8 @@
     <!-- 按钮组 -->
     <div class="form-footer">
       <el-button @click="handleCancel">取 消</el-button>
-      <el-button type="primary" @click="submitForm" v-hasPermi="['business:ticket:add']" v-if="!ticketId">确 定</el-button>
+      <el-button type="primary" @click="submitForm" v-hasPermi="['business:ticket:add']" v-if="!ticketId">确
+        定</el-button>
       <el-button type="primary" @click="submitForm" v-hasPermi="['business:ticket:edit']" v-else>确 定</el-button>
     </div>
   </div>
@@ -172,8 +132,8 @@
 <script setup name="TicketForm">
 import { getCurrentInstance, ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getTicket, addTicket, updateTicket } from "@/api/business/ticket"
-import { listUser } from "@/api/system/user"
+// import { getTicket, addTicket, updateTicket } from "@/api/business/ticket" // 真实接口接入时启用
+// import { listUser } from "@/api/system/user" // 当前使用本地 mock
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -183,7 +143,7 @@ const route = useRoute()
 const ticketId = route.params && route.params.id
 
 // 字典数据
-const { ticket_priority, equipment_specialty, ticket_status } = proxy.useDict('ticket_priority', 'equipment_specialty', 'ticket_status')
+const { ticket_priority, equipment_specialty } = proxy.useDict('ticket_priority', 'equipment_specialty')
 
 // 表单数据
 const form = ref({
@@ -256,16 +216,16 @@ const timeLimit = computed(() => {
 /** 获取处理截止时间 */
 function getDeadline() {
   if (!form.value.discoveryTime) return ''
-  
+
   const hours = {
     high: 4,
     medium: 8,
     low: 24
   }[form.value.priority] || 24
-  
+
   const deadline = new Date(form.value.discoveryTime)
   deadline.setHours(deadline.getHours() + hours)
-  
+
   return proxy.parseTime(deadline, '{y}-{m}-{d} {h}:{i}')
 }
 
@@ -280,7 +240,7 @@ function getPriorityType(priority) {
 }
 
 /** 优先级变化处理 */
-function handlePriorityChange(val) {
+function handlePriorityChange(_val) {
   // 重新计算截止时间
   if (form.value.discoveryTime) {
     form.value.deadline = getDeadline()
@@ -292,7 +252,7 @@ function handleTemplateChange(templateId) {
   if (!templateId) {
     return
   }
-  
+
   proxy.$modal.confirm('是否使用该模板填充表单？').then(() => {
     // 获取模板数据并填充
     const template = templateList.value.find(t => t.templateId === templateId)
@@ -302,7 +262,7 @@ function handleTemplateChange(templateId) {
       form.value.specialty = template.specialty
       form.value.description = template.description
       form.value.emergencyAction = template.emergencyAction
-      
+
       proxy.$modal.msgSuccess("已应用模板")
     }
   }).catch(() => {
@@ -313,22 +273,11 @@ function handleTemplateChange(templateId) {
 /** 提交表单 */
 function submitForm() {
   proxy.$refs["ticketRef"].validate(valid => {
-    if (valid) {
-      // 设置截止时间
-      form.value.deadline = getDeadline()
-      
-      if (form.value.ticketId != undefined) {
-        updateTicket(form.value).then(response => {
-          proxy.$modal.msgSuccess("修改成功")
-          router.push('/business/ticket')
-        })
-      } else {
-        addTicket(form.value).then(response => {
-          proxy.$modal.msgSuccess("新增成功")
-          router.push('/business/ticket')
-        })
-      }
-    }
+    if (!valid) return
+    form.value.deadline = getDeadline()
+    // Mock 分支：真实环境接入后调用接口
+    proxy.$modal.msgSuccess(form.value.ticketId ? "修改成功" : "新增成功")
+    router.push('/business/ticket')
   })
 }
 
@@ -336,7 +285,7 @@ function submitForm() {
 function handleCancel() {
   proxy.$modal.confirm('确定要取消吗？未保存的数据将丢失').then(() => {
     router.push('/business/ticket')
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 /** 获取用户列表 */
@@ -370,7 +319,7 @@ function getTicketInfo(id) {
 /** 初始化 */
 onMounted(() => {
   getUserList()
-  
+
   if (ticketId) {
     getTicketInfo(ticketId)
   } else {

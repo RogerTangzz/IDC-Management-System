@@ -1,4 +1,5 @@
 // src/utils/mockControl.js
+/** 全局 Mock 配置，逐模块控制 */
 export const mockConfig = {
   enabled: true,  // 总开关
   modules: {

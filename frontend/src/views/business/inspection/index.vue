@@ -4,31 +4,15 @@
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="楼层" prop="floor">
         <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
-          <el-option
-            v-for="floor in FLOORS"
-            :key="floor.value"
-            :label="floor.label"
-            :value="floor.value"
-          />
+          <el-option v-for="floor in FLOORS" :key="floor.value" :label="floor.label" :value="floor.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="巡检人" prop="inspectorName">
-        <el-input
-          v-model="queryParams.inspectorName"
-          placeholder="请输入巡检人"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.inspectorName" placeholder="请输入巡检人" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="巡检日期">
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          value-format="YYYY-MM-DD"
-        />
+        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
+          end-placeholder="结束日期" value-format="YYYY-MM-DD" />
       </el-form-item>
       <el-form-item label="异常项" prop="hasAnomaly">
         <el-select v-model="queryParams.hasAnomaly" placeholder="全部" clearable>
@@ -45,67 +29,32 @@
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['business:inspection:add']"
-        >开始巡检</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd"
+          v-hasPermi="['business:inspection:add']">开始巡检</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="DocumentCopy"
-          @click="handleCopyLast"
-          v-hasPermi="['business:inspection:add']"
-        >复制上次</el-button>
+        <el-button type="success" plain icon="DocumentCopy" @click="handleCopyLast"
+          v-hasPermi="['business:inspection:add']">复制上次</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['business:inspection:remove']"
-        >删除</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['business:inspection:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['business:inspection:export']"
-        >导出</el-button>
+        <el-button type="warning" plain icon="Download" @click="handleExport"
+          v-hasPermi="['business:inspection:export']">导出</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="DataAnalysis"
-          @click="handleStatistics"
-        >统计分析</el-button>
+        <el-button type="info" plain icon="DataAnalysis" @click="handleStatistics">统计分析</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 数据表格 -->
-    <el-table 
-      v-loading="loading" 
-      :data="inspectionList" 
-      @selection-change="handleSelectionChange"
-      :row-class-name="getRowClassName"
-    >
+    <el-table v-loading="loading" :data="inspectionList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="巡检编号" align="center" prop="inspectionNo" width="120" />
-      <el-table-column label="楼层" align="center" prop="floor" width="80">
-        <template #default="scope">
-          {{ getFloorLabel(scope.row.floor) }}
-        </template>
-      </el-table-column>
+      <el-table-column label="楼层" align="center" prop="floor" width="80" />
       <el-table-column label="巡检人" align="center" prop="inspectorName" width="100" />
       <el-table-column label="接力人员" align="center" prop="relayPerson" width="100" />
       <el-table-column label="巡检日期" align="center" prop="inspectionDate" width="110">
@@ -115,12 +64,8 @@
       </el-table-column>
       <el-table-column label="完成进度" align="center" prop="progress" width="100">
         <template #default="scope">
-          <el-progress 
-            :percentage="scope.row.progress" 
-            :width="70"
-            :stroke-width="6"
-            :color="scope.row.progress === 100 ? '#67c23a' : '#409eff'"
-          />
+          <el-progress :percentage="scope.row.progress" :width="70" :stroke-width="6"
+            :color="scope.row.progress === 100 ? '#67c23a' : '#409eff'" />
         </template>
       </el-table-column>
       <el-table-column label="异常项数" align="center" prop="anomalyCount" width="90">
@@ -152,48 +97,22 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="View"
-            @click="handleView(scope.row)"
-            v-hasPermi="['business:inspection:query']"
-          >查看</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['business:inspection:edit']"
-            v-if="scope.row.progress < 100"
-          >继续</el-button>
-          <el-button
-            link
-            type="success"
-            icon="DocumentCopy"
-            @click="handleCopy(scope.row)"
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+            v-hasPermi="['business:inspection:query']">查看</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['business:inspection:edit']" v-if="scope.row.progress < 100">继续</el-button>
+          <el-button link type="success" icon="DocumentCopy" @click="handleCopy(scope.row)"
+            v-hasPermi="['business:inspection:add']">复制</el-button>
+          <el-button link type="warning" icon="Tickets" @click="handleGenerateTickets(scope.row)"
             v-hasPermi="['business:inspection:add']"
-          >复制</el-button>
-          <el-button
-            link
-            type="warning"
-            icon="Tickets"
-            @click="handleGenerateTickets(scope.row)"
-            v-hasPermi="['business:inspection:add']"
-            v-if="scope.row.anomalyCount > 0 && scope.row.ticketCount === 0"
-          >生成工单</el-button>
+            v-if="scope.row.anomalyCount > 0 && scope.row.ticketCount === 0">生成工单</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 统计弹窗 -->
     <el-dialog title="巡检统计" v-model="statisticsOpen" width="800px" append-to-body>
@@ -220,21 +139,20 @@
 </template>
 
 <script setup name="Inspection">
-import { listInspection, getInspection, delInspection, generateTickets, getLatestInspection } from "@/api/business/inspection";
-import { FLOORS, INSPECTION_ITEMS } from "./constants";
+import { listInspection, delInspection } from "@/api/business/inspection";
+import { generateTickets } from '@/api/business/inspection';
+import { FLOORS } from "./constants";
 
 const { proxy } = getCurrentInstance();
 const router = useRouter();
 
 const inspectionList = ref([]);
-const open = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
 const ids = ref([]);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
-const title = ref("");
 const dateRange = ref([]);
 const statisticsOpen = ref(false);
 
@@ -254,7 +172,7 @@ const data = reactive({
   }
 });
 
-const { queryParams, form, statistics } = toRefs(data);
+const { queryParams, form: _form, statistics } = toRefs(data);
 
 /** 查询巡检列表 */
 function getList() {
@@ -267,30 +185,9 @@ function getList() {
   });
 }
 
-/** 取消按钮 */
-function cancel() {
-  open.value = false;
-  reset();
-}
+// 取消逻辑未使用，相关弹窗未实现，省略
 
 /** 表单重置 */
-function reset() {
-  form.value = {
-    inspectionId: undefined,
-    inspectionNo: undefined,
-    floor: undefined,
-    inspectorName: undefined,
-    items: {},
-    progress: 0,
-    anomalyCount: 0,
-    ticketCount: 0,
-    isCopied: 'N',
-    relayPerson: undefined,
-    photos: undefined,
-    remark: undefined
-  };
-  proxy.resetForm("inspectionRef");
-}
 
 /** 搜索按钮操作 */
 function handleQuery() {
@@ -343,30 +240,30 @@ function handleUpdate(row) {
 
 /** 复制巡检 */
 function handleCopy(row) {
-  proxy.$modal.confirm('是否复制该巡检记录？').then(function() {
+  proxy.$modal.confirm('是否复制该巡检记录？').then(function () {
     router.push('/business/inspection/create?copy=' + row.inspectionId);
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 生成工单 */
 function handleGenerateTickets(row) {
-  proxy.$modal.confirm('检测到' + row.anomalyCount + '个异常项，是否生成工单？').then(function() {
+  proxy.$modal.confirm('检测到' + row.anomalyCount + '个异常项，是否生成工单？').then(function () {
     return generateTickets(row.inspectionId, row.anomalies);
   }).then(() => {
     proxy.$modal.msgSuccess("已生成" + row.anomalyCount + "个工单");
     getList();
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 删除按钮操作 */
 function handleDelete(row) {
   const inspectionIds = row.inspectionId || ids.value;
-  proxy.$modal.confirm('是否确认删除巡检编号为"' + inspectionIds + '"的数据项？').then(function() {
+  proxy.$modal.confirm('是否确认删除巡检编号为"' + inspectionIds + '"的数据项？').then(function () {
     return delInspection(inspectionIds);
   }).then(() => {
     getList();
     proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 导出按钮操作 */
@@ -387,22 +284,7 @@ function handleStatistics() {
   statisticsOpen.value = true;
 }
 
-/** 获取楼层标签 */
-function getFloorLabel(value) {
-  const floor = FLOORS.find(f => f.value === value);
-  return floor ? floor.label : value;
-}
-
-/** 行样式 */
-function getRowClassName({ row }) {
-  if (row.anomalyCount > 5) {
-    return 'danger-row';
-  }
-  if (row.anomalyCount > 0) {
-    return 'warning-row';
-  }
-  return '';
-}
+// 已移除 getFloorLabel 与行样式函数，模板未引用，减少无用代码
 
 getList();
 </script>

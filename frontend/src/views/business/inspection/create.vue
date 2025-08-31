@@ -4,25 +4,15 @@
     <el-card class="mb20">
       <template #header>
         <span>巡检基本信息</span>
-        <el-button 
-          v-if="!inspectionId"
-          type="info" 
-          style="float: right"
-          @click="handleCopyLast"
-        >复制上次巡检</el-button>
+        <el-button v-if="!inspectionId" type="info" style="float: right" @click="handleCopyLast">复制上次巡检</el-button>
       </template>
-      
+
       <el-form ref="inspectionRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
             <el-form-item label="巡检日期" prop="inspectionDate">
-              <el-date-picker
-                v-model="form.inspectionDate"
-                type="date"
-                placeholder="选择日期"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-              />
+              <el-date-picker v-model="form.inspectionDate" type="date" placeholder="选择日期" format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -50,11 +40,7 @@
     <el-card class="mb20">
       <div class="progress-info">
         <span>巡检进度：</span>
-        <el-progress 
-          :percentage="progress" 
-          :status="progress === 100 ? 'success' : ''"
-          style="width: 400px"
-        />
+        <el-progress :percentage="progress" :status="progress === 100 ? 'success' : ''" style="width: 400px" />
         <span class="ml10">{{ completedCount }}/{{ totalCount }}项</span>
       </div>
     </el-card>
@@ -64,7 +50,7 @@
       <template #header>
         <span>巡检项目</span>
       </template>
-      
+
       <el-tabs v-model="activeTab">
         <el-tab-pane label="1楼（22项）" name="floor1">
           <div class="inspection-items">
@@ -82,21 +68,15 @@
                     <el-radio :label="true">正常</el-radio>
                     <el-radio :label="false">异常</el-radio>
                   </el-radio-group>
-                  <el-input-number
-                    v-else-if="item.type === 'number'"
-                    v-model="form.items.floor1[item.id]"
-                    :min="item.min"
-                    :max="item.max"
-                    :precision="2"
-                    :controls-position="'right'"
-                  />
+                  <el-input-number v-else-if="item.type === 'number'" v-model="form.items.floor1[item.id]"
+                    :min="item.min" :max="item.max" :precision="2" :controls-position="'right'" />
                   <span v-if="item.type === 'number'" class="ml10">{{ item.unit }}</span>
                 </div>
               </div>
             </div>
           </div>
         </el-tab-pane>
-        
+
         <el-tab-pane label="2楼（18项）" name="floor2">
           <div class="inspection-items">
             <div v-for="(item, index) in INSPECTION_ITEMS.floor2" :key="item.id" class="inspection-item">
@@ -113,7 +93,7 @@
             </div>
           </div>
         </el-tab-pane>
-        
+
         <el-tab-pane label="3楼（13项）" name="floor3">
           <div class="inspection-items">
             <div v-for="(item, index) in INSPECTION_ITEMS.floor3" :key="item.id" class="inspection-item">
@@ -130,7 +110,7 @@
             </div>
           </div>
         </el-tab-pane>
-        
+
         <el-tab-pane label="4楼（3项）" name="floor4">
           <div class="inspection-items">
             <div v-for="(item, index) in INSPECTION_ITEMS.floor4" :key="item.id" class="inspection-item">
@@ -147,13 +127,8 @@
                     <el-radio :label="true">正常</el-radio>
                     <el-radio :label="false">异常</el-radio>
                   </el-radio-group>
-                  <el-input-number
-                    v-else-if="item.type === 'number'"
-                    v-model="form.items.floor4[item.id]"
-                    :min="item.min"
-                    :max="item.max"
-                    :precision="0"
-                  />
+                  <el-input-number v-else-if="item.type === 'number'" v-model="form.items.floor4[item.id]"
+                    :min="item.min" :max="item.max" :precision="0" />
                   <span v-if="item.type === 'number'" class="ml10">{{ item.unit }}</span>
                 </div>
               </div>
@@ -202,7 +177,7 @@
 </template>
 
 <script setup name="InspectionCreate">
-import { ref, reactive, computed, onMounted, getCurrentInstance } from 'vue'
+import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INSPECTION_ITEMS, anomalyDetectionRules, anomalyPriorityRules } from './constants'
 import { addInspection, updateInspection, getInspection, getLatestInspection, generateTickets } from '@/api/business/inspection'
@@ -278,22 +253,22 @@ function handleCopyLast() {
 // 检测异常
 function detectAnomalies() {
   const detectedAnomalies = []
-  
+
   Object.keys(INSPECTION_ITEMS).forEach(floor => {
     const items = INSPECTION_ITEMS[floor]
     const values = form.value.items[floor]
-    
+
     items.forEach(item => {
       const value = values[item.id]
       if (value === undefined || value === null) return
-      
+
       let isAnomaly = false
       if (item.type === 'boolean') {
         isAnomaly = anomalyDetectionRules.boolean(value)
       } else if (item.type === 'number' && anomalyDetectionRules.number[item.id]) {
         isAnomaly = anomalyDetectionRules.number[item.id](value)
       }
-      
+
       if (isAnomaly) {
         detectedAnomalies.push({
           floor: floor.replace('floor', '') + '楼',
@@ -305,7 +280,7 @@ function detectAnomalies() {
       }
     })
   })
-  
+
   return detectedAnomalies
 }
 
@@ -325,7 +300,7 @@ function handleSubmit() {
     if (valid) {
       // 检测异常
       anomalies.value = detectAnomalies()
-      
+
       if (anomalies.value.length > 0) {
         anomalyDialogVisible.value = true
       } else {
@@ -342,7 +317,7 @@ function saveInspection() {
     anomalyCount: anomalies.value.length,
     progress: progress.value
   }
-  
+
   if (inspectionId.value) {
     updateInspection(data).then(() => {
       proxy.$modal.msgSuccess('修改成功')
@@ -363,7 +338,7 @@ function confirmAnomalies() {
       proxy.$modal.msgSuccess(`已生成 ${response.data.length} 个工单`)
     })
   }
-  
+
   anomalyDialogVisible.value = false
   saveInspection()
 }
@@ -425,11 +400,11 @@ onMounted(() => {
     display: flex;
     padding: 15px;
     border-bottom: 1px solid #ebeef5;
-    
+
     &:hover {
       background-color: #f5f7fa;
     }
-    
+
     .item-index {
       width: 40px;
       height: 40px;
@@ -442,16 +417,16 @@ onMounted(() => {
       font-weight: bold;
       margin-right: 20px;
     }
-    
+
     .item-content {
       flex: 1;
-      
+
       .item-label {
         margin-bottom: 10px;
         font-size: 14px;
         font-weight: 500;
       }
-      
+
       .item-input {
         display: flex;
         align-items: center;

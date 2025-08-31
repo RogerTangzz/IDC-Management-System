@@ -3,12 +3,7 @@
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="标题" prop="title">
-        <el-input
-          v-model="queryParams.title"
-          placeholder="请输入计划标题"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.title" placeholder="请输入计划标题" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="楼层" prop="floor">
         <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
@@ -21,43 +16,22 @@
       </el-form-item>
       <el-form-item label="MOP类别" prop="mopCategory">
         <el-select v-model="queryParams.mopCategory" placeholder="请选择类别" clearable>
-          <el-option
-            v-for="dict in mop_category"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in mop_category" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="审核状态" prop="approvalStatus">
         <el-select v-model="queryParams.approvalStatus" placeholder="请选择状态" clearable>
-          <el-option
-            v-for="dict in approval_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in approval_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="执行状态" prop="executionStatus">
         <el-select v-model="queryParams.executionStatus" placeholder="请选择状态" clearable>
-          <el-option
-            v-for="dict in execution_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in execution_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="计划时间">
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          value-format="YYYY-MM-DD"
-        />
+        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
+          end-placeholder="结束日期" value-format="YYYY-MM-DD" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -68,59 +42,27 @@
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['business:maintenance:add']"
-        >新建计划</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd"
+          v-hasPermi="['business:maintenance:add']">新建计划</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="DocumentCopy"
-          @click="handleCopyLast"
-          v-hasPermi="['business:maintenance:add']"
-        >复制上次</el-button>
+        <el-button type="success" plain icon="DocumentCopy" @click="handleCopyLast"
+          v-hasPermi="['business:maintenance:add']">复制上次</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['business:maintenance:edit']"
-        >修改</el-button>
+        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['business:maintenance:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['business:maintenance:remove']"
-        >删除</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['business:maintenance:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['business:maintenance:export']"
-        >导出</el-button>
+        <el-button type="warning" plain icon="Download" @click="handleExport"
+          v-hasPermi="['business:maintenance:export']">导出</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="Calendar"
-          @click="handleCalendar"
-        >日历视图</el-button>
+        <el-button type="info" plain icon="Calendar" @click="handleCalendar">日历视图</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -138,18 +80,18 @@
       <el-table-column label="版本" align="center" prop="version" width="80" />
       <el-table-column label="MOP类别" align="center" prop="mopCategory" width="100">
         <template #default="scope">
-          <dict-tag :options="mop_category" :value="scope.row.mopCategory"/>
+          <dict-tag :options="mop_category" :value="scope.row.mopCategory" />
         </template>
       </el-table-column>
       <el-table-column label="执行周期" align="center" prop="executionCycle" width="100" />
       <el-table-column label="审核状态" align="center" prop="approvalStatus" width="100">
         <template #default="scope">
-          <dict-tag :options="approval_status" :value="scope.row.approvalStatus"/>
+          <dict-tag :options="approval_status" :value="scope.row.approvalStatus" />
         </template>
       </el-table-column>
       <el-table-column label="执行状态" align="center" prop="executionStatus" width="100">
         <template #default="scope">
-          <dict-tag :options="execution_status" :value="scope.row.executionStatus"/>
+          <dict-tag :options="execution_status" :value="scope.row.executionStatus" />
         </template>
       </el-table-column>
       <el-table-column label="审核人" align="center" prop="approverName" width="100" />
@@ -168,88 +110,40 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="240">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="View"
-            @click="handleView(scope.row)"
-            v-hasPermi="['business:maintenance:query']"
-          >查看</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['business:maintenance:edit']"
-            v-if="scope.row.approvalStatus !== 'approved'"
-          >修改</el-button>
-          <el-button
-            link
-            type="success"
-            icon="DocumentCopy"
-            @click="handleCopy(scope.row)"
-            v-hasPermi="['business:maintenance:add']"
-          >复制</el-button>
-          <el-button
-            link
-            type="warning"
-            icon="Promotion"
-            @click="handleSubmit(scope.row)"
-            v-hasPermi="['business:maintenance:edit']"
-            v-if="scope.row.approvalStatus === 'draft'"
-          >提交</el-button>
-          <el-button
-            link
-            type="success"
-            icon="Select"
-            @click="handleApprove(scope.row)"
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+            v-hasPermi="['business:maintenance:query']">查看</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus !== 'approved'">修改</el-button>
+          <el-button link type="success" icon="DocumentCopy" @click="handleCopy(scope.row)"
+            v-hasPermi="['business:maintenance:add']">复制</el-button>
+          <el-button link type="warning" icon="Promotion" @click="handleSubmit(scope.row)"
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus === 'draft'">提交</el-button>
+          <el-button link type="success" icon="Select" @click="handleApprove(scope.row)"
             v-hasPermi="['business:maintenance:approve']"
-            v-if="scope.row.approvalStatus === 'pending' && canApprove"
-          >审核</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="VideoPlay"
-            @click="handleExecute(scope.row)"
+            v-if="scope.row.approvalStatus === 'pending' && canApprove">审核</el-button>
+          <el-button link type="primary" icon="VideoPlay" @click="handleExecute(scope.row)"
             v-hasPermi="['business:maintenance:execute']"
-            v-if="scope.row.approvalStatus === 'approved' && scope.row.executionStatus === 'pending'"
-          >执行</el-button>
-          <el-button
-            link
-            type="warning"
-            icon="Tickets"
-            @click="handleGenerateTicket(scope.row)"
-            v-hasPermi="['business:maintenance:ticket']"
-            v-if="scope.row.approvalStatus === 'approved'"
-          >生成工单</el-button>
+            v-if="scope.row.approvalStatus === 'approved' && scope.row.executionStatus === 'pending'">执行</el-button>
+          <el-button link type="warning" icon="Tickets" @click="handleGenerateTicket(scope.row)"
+            v-hasPermi="['business:maintenance:ticket']" v-if="scope.row.approvalStatus === 'approved'">生成工单</el-button>
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 分页 -->
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
+      @pagination="getList" />
 
     <!-- 提交审核对话框 -->
     <el-dialog title="提交审核" v-model="submitOpen" width="500px" append-to-body>
       <el-form ref="submitRef" :model="submitForm" :rules="submitRules" label-width="80px">
         <el-form-item label="审核人" prop="approverId">
           <el-select v-model="submitForm.approverId" placeholder="请选择审核人">
-            <el-option
-              v-for="user in approverList"
-              :key="user.userId"
-              :label="user.nickName"
-              :value="user.userId"
-            />
+            <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="submitForm.remark" type="textarea" :rows="3" placeholder="请输入备注"/>
+          <el-input v-model="submitForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -270,7 +164,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="审核意见" prop="comment">
-          <el-input v-model="approveForm.comment" type="textarea" :rows="3" placeholder="请输入审核意见"/>
+          <el-input v-model="approveForm.comment" type="textarea" :rows="3" placeholder="请输入审核意见" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -284,15 +178,21 @@
 </template>
 
 <script setup name="MaintenancePlan">
-import { listMaintenance, getMaintenance, delMaintenance, addMaintenance, updateMaintenance, 
-         copyLastPlan, getLatestPlan, submitApproval, approvePlan, rejectPlan, 
-         generateTicket, startExecution, getApproverList } from "@/api/business/maintenance";
+import { ref, reactive, toRefs, onMounted, getCurrentInstance } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  listMaintenance, delMaintenance, copyLastPlan, submitApproval, approvePlan, rejectPlan,
+  generateTicket, startExecution, getApproverList
+} from "@/api/business/maintenance";
+import { parseTime } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance();
 const router = useRouter();
 
 const maintenanceList = ref([]);
-const open = ref(false);
+// 用于缓存计划列表的引用，供复制最后一次计划等操作
+const planList = ref([]);
+// removed unused open ref
 const submitOpen = ref(false);
 const approveOpen = ref(false);
 const loading = ref(true);
@@ -301,7 +201,7 @@ const ids = ref([]);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
-const title = ref("");
+// removed unused title ref
 const dateRange = ref([]);
 const approverList = ref([]);
 const canApprove = ref(false);
@@ -310,7 +210,6 @@ const canApprove = ref(false);
 const { mop_category, approval_status, execution_status } = proxy.useDict('mop_category', 'approval_status', 'execution_status');
 
 const data = reactive({
-  form: {},
   queryParams: {
     pageNum: 1,
     pageSize: 10,
@@ -332,7 +231,7 @@ const data = reactive({
   }
 });
 
-const { queryParams, form, submitForm, approveForm } = toRefs(data);
+const { queryParams, form: _form, submitForm, approveForm } = toRefs(data);
 
 // 表单验证
 const submitRules = {
@@ -349,6 +248,7 @@ function getList() {
   let params = proxy.addDateRange(queryParams.value, dateRange.value);
   listMaintenance(params).then(response => {
     maintenanceList.value = response.rows;
+    planList.value = [...response.rows];
     total.value = response.total;
     loading.value = false;
   });
@@ -429,13 +329,13 @@ function handleCopy(row) {
   }).then(() => {
     proxy.$modal.msgSuccess("复制成功");
     getList();
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 提交审核 */
 function handleSubmit(row) {
-  getApproverList().then(response => {
-    approverList.value = response.rows;
+  getApproverList().then(_response => {
+    approverList.value = _response.rows;
     submitForm.value.planId = row.planId;
     submitForm.value.approverId = undefined;
     submitForm.value.remark = '';
@@ -447,7 +347,7 @@ function handleSubmit(row) {
 function submitForApproval() {
   proxy.$refs["submitRef"].validate(valid => {
     if (valid) {
-      submitApproval(submitForm.value.planId, submitForm.value.approverId).then(response => {
+      submitApproval(submitForm.value.planId, submitForm.value.approverId).then(_response => {
         proxy.$modal.msgSuccess("提交成功");
         submitOpen.value = false;
         getList();
@@ -469,13 +369,13 @@ function submitApprovalResult() {
   proxy.$refs["approveRef"].validate(valid => {
     if (valid) {
       if (approveForm.value.result === 'approved') {
-        approvePlan(approveForm.value.planId, approveForm.value.comment).then(response => {
+        approvePlan(approveForm.value.planId, approveForm.value.comment).then(() => {
           proxy.$modal.msgSuccess("审核通过");
           approveOpen.value = false;
           getList();
         });
       } else {
-        rejectPlan(approveForm.value.planId, approveForm.value.comment).then(response => {
+        rejectPlan(approveForm.value.planId, approveForm.value.comment).then(() => {
           proxy.$modal.msgSuccess("审核拒绝");
           approveOpen.value = false;
           getList();
@@ -492,7 +392,7 @@ function handleExecute(row) {
   }).then(() => {
     proxy.$modal.msgSuccess("已开始执行");
     getList();
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 生成工单 */
@@ -502,18 +402,18 @@ function handleGenerateTicket(row) {
   }).then(() => {
     proxy.$modal.msgSuccess("工单生成成功");
     getList();
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 删除按钮操作 */
 function handleDelete(row) {
   const planIds = row.planId || ids.value;
-  proxy.$modal.confirm('是否确认删除维保计划编号为"' + planIds + '"的数据项？').then(function() {
+  proxy.$modal.confirm('是否确认删除维保计划编号为"' + planIds + '"的数据项？').then(function () {
     return delMaintenance(planIds);
   }).then(() => {
     getList();
     proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 导出按钮操作 */
@@ -536,5 +436,4 @@ onMounted(() => {
 });
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

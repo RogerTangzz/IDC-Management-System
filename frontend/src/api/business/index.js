@@ -3,7 +3,7 @@
  * 后续接后端时，把 return 换成真实 request 即可
  */
 export const inspectionPlanApi = {
-  async listDueReminders(params = {}) {
+  async listDueReminders(_params = {}) {
     // TODO: 接后端时改为真实请求：
     // return request({ url: '/inspection/plan/due', method: 'get', params })
     return { rows: [], total: 0 }

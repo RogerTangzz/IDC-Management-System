@@ -49,6 +49,13 @@ router.beforeEach((to, from, next) => {
           })
         })
       } else {
+        const permissionStore = usePermissionStore()
+        if (!permissionStore.routes.length) {
+          permissionStore.generateRoutes().then(() => {
+            next({ ...to, replace: true })
+          })
+          return
+        }
         next()
       }
     }

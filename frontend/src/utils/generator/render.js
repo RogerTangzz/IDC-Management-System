@@ -20,12 +20,6 @@ const isNotProps = makeMap(
   'layout,prepend,regList,tag,document,changeTag,defaultValue'
 )
 
-function useVModel(props, emit) {
-  return {
-    modelValue: props.defaultValue,
-    'onUpdate:modelValue': (val) => emit('update:modelValue', val),
-  }
-}
 const componentChild = {
   'el-button': {
     default(h, conf, key) {
@@ -33,7 +27,7 @@ const componentChild = {
     },
   },
   'el-select': {
-    options(h, conf, key) {
+    options(h, conf, _key) {
       return conf.options.map(item => h(resolveComponent('el-option'), {
         label: item.label,
         value: item.value,
@@ -41,7 +35,7 @@ const componentChild = {
     }
   },
   'el-radio-group': {
-    options(h, conf, key) {
+    options(h, conf, _key) {
       return conf.optionType === 'button' ? conf.options.map(item => h(resolveComponent('el-checkbox-button'), {
         label: item.value,
       }, () => item.label)) : conf.options.map(item => h(resolveComponent('el-radio'), {
@@ -51,7 +45,7 @@ const componentChild = {
     }
   },
   'el-checkbox-group': {
-    options(h, conf, key) {
+    options(h, conf, _key) {
       return conf.optionType === 'button' ? conf.options.map(item => h(resolveComponent('el-checkbox-button'), {
         label: item.value,
       }, () => item.label)) : conf.options.map(item => h(resolveComponent('el-checkbox'), {
@@ -61,7 +55,7 @@ const componentChild = {
     }
   },
   'el-upload': {
-    'list-type': (h, conf, key) => {
+    'list-type': (h, conf, _key) => {
       const option = {}
       // if (conf.showTip) {
       //   tip = h('div', {
@@ -82,7 +76,7 @@ const componentChild = {
 }
 const componentSlot = {
   'el-upload': {
-    'tip': (h, conf, key) => {
+    'tip': (h, conf, _key) => {
       if (conf.showTip) {
         return () => h('div', {
           class: "el-upload__tip"
@@ -132,10 +126,10 @@ export default defineComponent({
         dataObject.props[key] = val
       }
     })
-    if(children.length > 0){
+    if (children.length > 0) {
       slot.default = () => children
     }
-    
+
     return h(resolveComponent(this.conf.tag),
       {
         modelValue: this.$attrs.modelValue,

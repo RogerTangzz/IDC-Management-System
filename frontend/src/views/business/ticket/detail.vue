@@ -20,21 +20,17 @@
           <span class="text-primary">{{ form.ticketNo }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="工单状态">
-          <dict-tag :options="ticket_status" :value="form.status"/>
+          <dict-tag :options="ticket_status" :value="form.status" />
         </el-descriptions-item>
         <el-descriptions-item label="优先级">
-          <dict-tag :options="ticket_priority" :value="form.priority"/>
+          <dict-tag :options="ticket_priority" :value="form.priority" />
         </el-descriptions-item>
         <el-descriptions-item label="工单标题" :span="3">
           {{ form.title }}
         </el-descriptions-item>
         <el-descriptions-item label="处理时限">
-          <el-countdown 
-            v-if="form.status !== 'completed' && form.status !== 'closed'"
-            :value="form.deadline" 
-            format="HH:mm:ss"
-            @finish="handleTimeout"
-          />
+          <el-countdown v-if="form.status !== 'completed' && form.status !== 'closed'" :value="form.deadline"
+            format="HH:mm:ss" @finish="handleTimeout" />
           <span v-else>{{ parseTime(form.deadline) }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="剩余时间">
@@ -73,7 +69,7 @@
           {{ form.equipment }}
         </el-descriptions-item>
         <el-descriptions-item label="设备专业">
-          <dict-tag :options="equipment_specialty" :value="form.specialty"/>
+          <dict-tag :options="equipment_specialty" :value="form.specialty" />
         </el-descriptions-item>
         <el-descriptions-item label="设备位置" :span="2">
           {{ form.location || '-' }}
@@ -117,7 +113,9 @@
           <div class="attachment-list">
             <div v-for="(file, index) in attachmentList" :key="index" class="attachment-item">
               <el-link :href="file.url" target="_blank" :underline="false">
-                <el-icon><Document /></el-icon>
+                <el-icon>
+                  <Document />
+                </el-icon>
                 {{ file.name }}
               </el-link>
             </div>
@@ -132,13 +130,8 @@
         </template>
         <el-descriptions-item label="">
           <el-timeline>
-            <el-timeline-item
-              v-for="(log, index) in logList"
-              :key="index"
-              :timestamp="parseTime(log.createTime)"
-              placement="top"
-              :type="log.type"
-            >
+            <el-timeline-item v-for="(log, index) in logList" :key="index" :timestamp="parseTime(log.createTime)"
+              placement="top" :type="log.type">
               <div class="log-content">
                 <span class="log-user">{{ log.userName }}</span>
                 <span class="log-action">{{ log.action }}</span>
@@ -151,56 +144,24 @@
 
       <!-- 操作按钮 -->
       <div class="action-buttons">
-        <el-button 
-          type="primary" 
-          icon="Edit" 
-          @click="handleEdit"
-          v-hasPermi="['business:ticket:edit']"
-          v-if="form.status !== 'closed'"
-        >编辑</el-button>
-        
-        <el-button 
-          type="success" 
-          icon="User" 
-          @click="handleAssign"
-          v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'pending'"
-        >指派</el-button>
-        
-        <el-button 
-          type="warning" 
-          icon="VideoPlay" 
-          @click="handleStart"
-          v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'assigned'"
-        >开始处理</el-button>
-        
-        <el-button 
-          type="success" 
-          icon="CircleCheck" 
-          @click="handleComplete"
-          v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'processing'"
-        >完成工单</el-button>
-        
-        <el-button 
-          type="danger" 
-          icon="CircleClose" 
-          @click="handleCloseTicket"
-          v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'completed'"
-        >关闭工单</el-button>
-        
-        <el-button 
-          type="info" 
-          icon="Printer" 
-          @click="handlePrint"
-        >打印</el-button>
-        
-        <el-button 
-          icon="Back" 
-          @click="handleClose"
-        >返回</el-button>
+        <el-button type="primary" icon="Edit" @click="handleEdit" v-hasPermi="['business:ticket:edit']"
+          v-if="form.status !== 'closed'">编辑</el-button>
+
+        <el-button type="success" icon="User" @click="handleAssign" v-hasPermi="['business:ticket:edit']"
+          v-if="form.status === 'pending'">指派</el-button>
+
+        <el-button type="warning" icon="VideoPlay" @click="handleStart" v-hasPermi="['business:ticket:edit']"
+          v-if="form.status === 'assigned'">开始处理</el-button>
+
+        <el-button type="success" icon="CircleCheck" @click="handleComplete" v-hasPermi="['business:ticket:edit']"
+          v-if="form.status === 'processing'">完成工单</el-button>
+
+        <el-button type="danger" icon="CircleClose" @click="handleCloseTicket" v-hasPermi="['business:ticket:edit']"
+          v-if="form.status === 'completed'">关闭工单</el-button>
+
+        <el-button type="info" icon="Printer" @click="handlePrint">打印</el-button>
+
+        <el-button icon="Back" @click="handleClose">返回</el-button>
       </div>
     </el-card>
 
@@ -209,16 +170,11 @@
       <el-form ref="assignRef" :model="assignForm" :rules="assignRules" label-width="80px">
         <el-form-item label="指派给" prop="assigneeId">
           <el-select v-model="assignForm.assigneeId" placeholder="请选择处理人员">
-            <el-option
-              v-for="user in userList"
-              :key="user.userId"
-              :label="user.nickName"
-              :value="user.userId"
-            />
+            <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="assignForm.remark" type="textarea" :rows="3" placeholder="请输入备注"/>
+          <el-input v-model="assignForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -233,7 +189,7 @@
     <el-dialog title="完成工单" v-model="completeOpen" width="600px" append-to-body>
       <el-form ref="completeRef" :model="completeForm" :rules="completeRules" label-width="100px">
         <el-form-item label="处理方法" prop="solution">
-          <el-input v-model="completeForm.solution" type="textarea" :rows="4" placeholder="请输入处理方法"/>
+          <el-input v-model="completeForm.solution" type="textarea" :rows="4" placeholder="请输入处理方法" />
         </el-form-item>
         <el-form-item label="处理结果" prop="result">
           <el-radio-group v-model="completeForm.result">
@@ -243,7 +199,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="completeForm.remark" type="textarea" :rows="3" placeholder="请输入备注"/>
+          <el-input v-model="completeForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -259,8 +215,8 @@
 <script setup name="TicketDetail">
 import { getCurrentInstance, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getTicket, updateTicket } from "@/api/business/ticket"
-import { listUser } from "@/api/system/user"
+// import { getTicket, updateTicket } from "@/api/business/ticket" // 后端集成后恢复
+// import { listUser } from "@/api/system/user" // 当前使用本地 mock
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -302,26 +258,23 @@ const completeRules = {
 async function getDetail() {
   if (!ticketId) return
   loading.value = true
-  try {
-    const res = await getTicket(ticketId)
-    const data = res?.data || res
-    form.value = data
-    logList.value = (data.logs || []).map(l => ({
-      createTime: l.createTime,
-      userName: l.userName,
-      action: l.action,
-      remark: l.remark,
-      type: l.type || 'primary'
-    }))
-    attachmentList.value = (data.attachments || []).map(f => ({
-      name: f.name || f.fileName,
-      url: f.url || f.fileUrl
-    }))
-  } catch (e) {
-    proxy.$modal && proxy.$modal.msgError('获取工单详情失败')
-  } finally {
+  // Mock 数据
+  setTimeout(() => {
+    form.value = {
+      ticketId,
+      ticketNo: 'TK' + ticketId,
+      title: '示例工单',
+      status: 'pending',
+      priority: 'medium',
+      reporter: '张三',
+      createTime: new Date(),
+      discoveryTime: new Date(),
+      deadline: new Date(Date.now() + 4 * 60 * 60 * 1000)
+    }
+    logList.value = []
+    attachmentList.value = []
     loading.value = false
-  }
+  }, 200)
 }
 
 /** 获取剩余时间 */
@@ -332,11 +285,11 @@ function getRemainTime() {
   const now = new Date()
   const deadline = new Date(form.value.deadline)
   const diff = deadline - now
-  
+
   if (diff <= 0) {
     return '已超时'
   }
-  
+
   const hours = Math.floor(diff / (1000 * 60 * 60))
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
   return `${hours}小时${minutes}分钟`
@@ -388,7 +341,7 @@ function handleStart() {
     proxy.$modal.msgSuccess("已开始处理")
     form.value.status = 'processing'
     getDetail()
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 /** 完成工单 */
@@ -419,7 +372,7 @@ function handleCloseTicket() {
     proxy.$modal.msgSuccess("工单已关闭")
     form.value.status = 'closed'
     getDetail()
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 /** 打印 */
@@ -452,7 +405,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   .title {
     font-size: 16px;
     font-weight: bold;
@@ -490,6 +443,7 @@ onMounted(() => {
     font-weight: bold;
     margin-right: 10px;
   }
+
   .log-remark {
     margin-top: 5px;
     color: #909399;

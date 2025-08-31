@@ -1,32 +1,15 @@
 <!-- src/views/ticket/components/AssignDialog.vue -->
 <template>
-  <el-dialog 
-    v-model="dialogVisible" 
-    title="工单指派" 
-    width="500px"
-    append-to-body
-  >
+  <el-dialog v-model="dialogVisible" title="工单指派" width="500px" append-to-body>
     <div v-if="ticketIds.length > 0" class="ticket-info">
-      <el-alert 
-        :title="`您正在指派 ${ticketIds.length} 个工单`" 
-        type="info" 
-        :closable="false"
-      />
+      <el-alert :title="`您正在指派 ${ticketIds.length} 个工单`" type="info" :closable="false" />
     </div>
 
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="margin-top: 20px">
       <el-form-item label="指派给" prop="assigneeId">
-        <el-select 
-          v-model="form.assigneeId" 
-          placeholder="请选择工程师"
-          filterable
-        >
-          <el-option
-            v-for="user in engineerList"
-            :key="user.id"
-            :label="`${user.name} (${user.role})`"
-            :value="user.id"
-          >
+        <el-select v-model="form.assigneeId" placeholder="请选择工程师" filterable>
+          <el-option v-for="user in engineerList" :key="user.id" :label="`${user.name} (${user.role})`"
+            :value="user.id">
             <span style="float: left">{{ user.name }}</span>
             <span style="float: right; color: #8492a6; font-size: 13px">
               {{ user.workload || 0 }} 个待处理
@@ -45,12 +28,7 @@
       </el-form-item>
 
       <el-form-item label="指派说明" prop="comment">
-        <el-input
-          v-model="form.comment"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入指派说明（可选）"
-        />
+        <el-input v-model="form.comment" type="textarea" :rows="3" placeholder="请输入指派说明（可选）" />
       </el-form-item>
 
       <el-form-item label="通知方式" prop="notifyMethod">
@@ -76,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ticketApi } from '@/api/ticket'
 import { userApi } from '@/api/system/user'
@@ -117,7 +95,7 @@ const loadEngineerList = async () => {
     // 获取工程师列表
     const res = await userApi.list({ role: 'engineer' })
     engineerList.value = res.data || []
-    
+
     // 获取每个工程师的工作量
     for (const engineer of engineerList.value) {
       const workloadRes = await ticketApi.getWorkload(engineer.id)
@@ -136,10 +114,10 @@ const loadEngineerList = async () => {
 // 确认指派
 const handleConfirm = async () => {
   await formRef.value?.validate()
-  
+
   loading.value = true
   try {
-// 构建指派数据
+    // 构建指派数据
     const assignData = {
       ticketIds: ticketIds.value,
       assigneeId: form.assigneeId,
@@ -147,15 +125,15 @@ const handleConfirm = async () => {
       notifyMethod: form.notifyMethod,
       notifyNow: form.notifyNow
     }
-    
+
     // 如果选择了修改优先级
     if (form.priority !== 'keep') {
       assignData.priority = form.priority
     }
-    
+
     // 调用批量指派接口
     await ticketApi.batchAssign(assignData)
-    
+
     ElMessage.success(`成功指派 ${ticketIds.value.length} 个工单`)
     dialogVisible.value = false
     emit('success')
@@ -175,7 +153,7 @@ const handleCancel = () => {
 
 // 重置表单
 const reset = () => {
-form.assigneeId = undefined
+  form.assigneeId = undefined
   form.priority = 'keep'
   form.comment = ''
   form.notifyMethod = ['system']

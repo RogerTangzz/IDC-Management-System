@@ -3,12 +3,7 @@
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="计划标题" prop="title">
-        <el-input
-          v-model="queryParams.title"
-          placeholder="请输入计划标题"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.title" placeholder="请输入计划标题" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="楼层" prop="floor">
         <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
@@ -21,23 +16,12 @@
       </el-form-item>
       <el-form-item label="执行状态" prop="executionStatus">
         <el-select v-model="queryParams.executionStatus" placeholder="请选择状态" clearable>
-          <el-option
-            v-for="dict in execution_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in execution_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="执行时间">
-        <el-date-picker
-          v-model="dateRange"
-          value-format="YYYY-MM-DD"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        />
+        <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD" type="daterange" range-separator="至"
+          start-placeholder="开始日期" end-placeholder="结束日期" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -48,31 +32,15 @@
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="VideoPlay"
-          :disabled="multiple"
-          @click="handleBatchExecute"
-          v-hasPermi="['business:maintenance:execute']"
-        >批量执行</el-button>
+        <el-button type="primary" plain icon="VideoPlay" :disabled="multiple" @click="handleBatchExecute"
+          v-hasPermi="['business:maintenance:execute']">批量执行</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['business:maintenance:export']"
-        >导出</el-button>
+        <el-button type="warning" plain icon="Download" @click="handleExport"
+          v-hasPermi="['business:maintenance:export']">导出</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="Document"
-          @click="handleReport"
-        >生成报告</el-button>
+        <el-button type="info" plain icon="Document" @click="handleReport">生成报告</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -90,7 +58,7 @@
       <el-table-column label="版本" align="center" prop="version" width="80" />
       <el-table-column label="MOP类别" align="center" prop="mopCategory" width="100">
         <template #default="scope">
-          <dict-tag :options="mop_category" :value="scope.row.mopCategory"/>
+          <dict-tag :options="mop_category" :value="scope.row.mopCategory" />
         </template>
       </el-table-column>
       <el-table-column label="执行人" align="center" prop="executorName" width="100" />
@@ -110,7 +78,7 @@
       </el-table-column>
       <el-table-column label="执行状态" align="center" prop="executionStatus" width="100">
         <template #default="scope">
-          <dict-tag :options="execution_status" :value="scope.row.executionStatus"/>
+          <dict-tag :options="execution_status" :value="scope.row.executionStatus" />
         </template>
       </el-table-column>
       <el-table-column label="执行结果" align="center" prop="executionResult" width="100">
@@ -122,49 +90,21 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="220">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="View"
-            @click="handleView(scope.row)"
-            v-hasPermi="['business:maintenance:query']"
-          >查看</el-button>
-          <el-button
-            v-if="scope.row.executionStatus === 'pending'"
-            link
-            type="success"
-            icon="VideoPlay"
-            @click="handleExecute(scope.row)"
-            v-hasPermi="['business:maintenance:execute']"
-          >执行</el-button>
-          <el-button
-            v-if="scope.row.executionStatus === 'executing'"
-            link
-            type="warning"
-            icon="Check"
-            @click="handleComplete(scope.row)"
-            v-hasPermi="['business:maintenance:execute']"
-          >完成</el-button>
-          <el-button
-            v-if="scope.row.executionResult === 'abnormal'"
-            link
-            type="danger"
-            icon="Tickets"
-            @click="handleCreateTicket(scope.row)"
-            v-hasPermi="['business:ticket:add']"
-          >生成工单</el-button>
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+            v-hasPermi="['business:maintenance:query']">查看</el-button>
+          <el-button v-if="scope.row.executionStatus === 'pending'" link type="success" icon="VideoPlay"
+            @click="handleExecute(scope.row)" v-hasPermi="['business:maintenance:execute']">执行</el-button>
+          <el-button v-if="scope.row.executionStatus === 'executing'" link type="warning" icon="Check"
+            @click="handleComplete(scope.row)" v-hasPermi="['business:maintenance:execute']">完成</el-button>
+          <el-button v-if="scope.row.executionResult === 'abnormal'" link type="danger" icon="Tickets"
+            @click="handleCreateTicket(scope.row)" v-hasPermi="['business:ticket:add']">生成工单</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
+      @pagination="getList" />
 
     <!-- 执行记录对话框 -->
     <el-dialog :title="dialogTitle" v-model="executeOpen" width="700px" append-to-body>
@@ -173,24 +113,14 @@
           <el-col :span="12">
             <el-form-item label="执行人" prop="executorId">
               <el-select v-model="executeForm.executorId" placeholder="请选择执行人">
-                <el-option
-                  v-for="user in userList"
-                  :key="user.userId"
-                  :label="user.nickName"
-                  :value="user.userId"
-                />
+                <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="执行时间" prop="executionTime">
-              <el-date-picker
-                v-model="executeForm.executionTime"
-                type="datetime"
-                placeholder="选择执行时间"
-                format="YYYY-MM-DD HH:mm:ss"
-                value-format="YYYY-MM-DD HH:mm:ss"
-              />
+              <el-date-picker v-model="executeForm.executionTime" type="datetime" placeholder="选择执行时间"
+                format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -201,36 +131,18 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="异常描述" v-if="executeForm.executionResult === 'abnormal'" prop="abnormalDescription">
-          <el-input
-            v-model="executeForm.abnormalDescription"
-            type="textarea"
-            :rows="3"
-            placeholder="请描述异常情况"
-            maxlength="500"
-            show-word-limit
-          />
+          <el-input v-model="executeForm.abnormalDescription" type="textarea" :rows="3" placeholder="请描述异常情况"
+            maxlength="500" show-word-limit />
         </el-form-item>
         <el-form-item label="执行记录" prop="executionRecord">
-          <el-input
-            v-model="executeForm.executionRecord"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入执行记录"
-            maxlength="1000"
-            show-word-limit
-          />
+          <el-input v-model="executeForm.executionRecord" type="textarea" :rows="4" placeholder="请输入执行记录"
+            maxlength="1000" show-word-limit />
         </el-form-item>
         <el-form-item label="现场照片">
-          <image-upload 
-            v-model="executeForm.photos"
-            :limit="6"
-          />
+          <image-upload v-model="executeForm.photos" :limit="6" />
         </el-form-item>
         <el-form-item label="附件">
-          <file-upload 
-            v-model="executeForm.attachments"
-            :limit="3"
-          />
+          <file-upload v-model="executeForm.attachments" :limit="3" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -249,7 +161,7 @@
         <el-descriptions-item label="楼层">{{ getFloorLabel(currentRecord.floor) }}</el-descriptions-item>
         <el-descriptions-item label="版本">{{ currentRecord.version }}</el-descriptions-item>
         <el-descriptions-item label="MOP类别">
-          <dict-tag :options="mop_category" :value="currentRecord.mopCategory"/>
+          <dict-tag :options="mop_category" :value="currentRecord.mopCategory" />
         </el-descriptions-item>
         <el-descriptions-item label="执行人">{{ currentRecord.executorName }}</el-descriptions-item>
         <el-descriptions-item label="计划时间">{{ parseTime(currentRecord.planExecutionTime) }}</el-descriptions-item>
@@ -257,7 +169,7 @@
           {{ parseTime(currentRecord.actualExecutionTime) || '未执行' }}
         </el-descriptions-item>
         <el-descriptions-item label="执行状态">
-          <dict-tag :options="execution_status" :value="currentRecord.executionStatus"/>
+          <dict-tag :options="execution_status" :value="currentRecord.executionStatus" />
         </el-descriptions-item>
         <el-descriptions-item label="执行结果">
           <el-tag :type="currentRecord.executionResult === 'normal' ? 'success' : 'danger'">
@@ -266,22 +178,19 @@
         </el-descriptions-item>
         <el-descriptions-item label="执行记录" :span="2">{{ currentRecord.executionRecord }}</el-descriptions-item>
         <el-descriptions-item label="异常描述" :span="2" v-if="currentRecord.abnormalDescription">
-          <el-alert
-            :title="currentRecord.abnormalDescription"
-            type="warning"
-            :closable="false"
-          />
+          <el-alert :title="currentRecord.abnormalDescription" type="warning" :closable="false" />
         </el-descriptions-item>
         <el-descriptions-item label="现场照片" :span="2" v-if="currentRecord.photos && currentRecord.photos.length > 0">
           <image-preview :src-list="currentRecord.photos" />
         </el-descriptions-item>
-        <el-descriptions-item label="附件" :span="2" v-if="currentRecord.attachments && currentRecord.attachments.length > 0">
+        <el-descriptions-item label="附件" :span="2"
+          v-if="currentRecord.attachments && currentRecord.attachments.length > 0">
           <div v-for="(file, index) in currentRecord.attachments" :key="index">
             <el-link type="primary" :href="file.url" target="_blank">{{ file.name }}</el-link>
           </div>
         </el-descriptions-item>
       </el-descriptions>
-      
+
       <!-- 执行步骤检查清单 -->
       <el-divider content-position="left">执行步骤检查</el-divider>
       <el-table :data="currentRecord.checkList" v-if="currentRecord.checkList">
@@ -297,7 +206,7 @@
         </el-table-column>
         <el-table-column label="备注" prop="remark" />
       </el-table>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="detailOpen = false">关 闭</el-button>
@@ -448,8 +357,8 @@ function handleExecute(row) {
 /** 完成操作 */
 function handleComplete(row) {
   reset();
-  getExecution(row.executionId).then(response => {
-    executeForm.value = response.data;
+  getExecution(row.executionId).then(_response => {
+    executeForm.value = _response.data;
     dialogTitle.value = `完成维保计划：${row.title}`;
     executeOpen.value = true;
   });
@@ -465,7 +374,7 @@ function handleBatchExecute() {
     // 批量执行逻辑
     proxy.$modal.msgSuccess("已开始批量执行");
     getList();
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 提交执行记录 */
@@ -474,14 +383,14 @@ function submitExecute() {
     if (valid) {
       if (executeForm.value.executionId) {
         // 完成执行
-        completeExecution(executeForm.value).then(response => {
+        completeExecution(executeForm.value).then(_response => {
           proxy.$modal.msgSuccess("执行记录已保存");
           executeOpen.value = false;
           getList();
         });
       } else {
         // 开始执行
-        startExecution(executeForm.value).then(response => {
+        startExecution(executeForm.value).then(_response => {
           proxy.$modal.msgSuccess("已开始执行");
           executeOpen.value = false;
           getList();
@@ -498,7 +407,7 @@ function handleCreateTicket(row) {
   }).then(() => {
     proxy.$modal.msgSuccess("工单生成成功");
     router.push('/business/ticket');
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 生成报告 */
@@ -549,5 +458,4 @@ onMounted(() => {
 });
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

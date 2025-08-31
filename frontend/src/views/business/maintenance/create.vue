@@ -4,7 +4,7 @@
       <template #header>
         <span>新建维保计划</span>
       </template>
-      
+
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <!-- 基础信息 -->
         <el-row>
@@ -48,18 +48,18 @@
 
         <!-- MOP信息 -->
         <el-divider content-position="left">MOP信息</el-divider>
-        
+
         <el-form-item label="MOP名称" prop="mopName">
           <el-input v-model="form.mopName" placeholder="请输入MOP名称" />
         </el-form-item>
-        
+
         <el-form-item label="MOP目的" prop="mopPurpose">
           <el-input v-model="form.mopPurpose" type="textarea" :rows="3" placeholder="请输入MOP目的" />
         </el-form-item>
 
         <!-- 执行周期 -->
         <el-divider content-position="left">执行周期</el-divider>
-        
+
         <el-row>
           <el-col :span="12">
             <el-form-item label="执行频次" prop="executionFrequency">
@@ -81,24 +81,16 @@
           <el-col :span="12">
             <el-form-item label="审核人" prop="approverId">
               <el-select v-model="form.approverId" placeholder="请选择审核人">
-                <el-option
-                  v-for="user in approverList"
-                  :key="user.userId"
-                  :label="user.nickName"
-                  :value="user.userId"
-                />
+                <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName"
+                  :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="执行审核人" prop="executorId">
               <el-select v-model="form.executorId" placeholder="请选择执行审核人">
-                <el-option
-                  v-for="user in approverList"
-                  :key="user.userId"
-                  :label="user.nickName"
-                  :value="user.userId"
-                />
+                <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName"
+                  :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -106,37 +98,32 @@
 
         <el-form-item label="通知人员" prop="notifyUsers">
           <el-select v-model="form.notifyUsers" multiple placeholder="请选择通知人员">
-            <el-option
-              v-for="user in userList"
-              :key="user.userId"
-              :label="user.nickName"
-              :value="user.userId"
-            />
+            <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
 
         <!-- 工具材料 -->
         <el-divider content-position="left">工具材料</el-divider>
-        
+
         <el-form-item label="工具仪表" prop="tools">
           <el-input v-model="form.tools" type="textarea" :rows="2" placeholder="请输入所需工具仪表" />
         </el-form-item>
-        
+
         <el-form-item label="材料" prop="materials">
           <el-input v-model="form.materials" type="textarea" :rows="2" placeholder="请输入所需材料" />
         </el-form-item>
-        
+
         <el-form-item label="安全(PPE)" prop="safety">
           <el-input v-model="form.safety" type="textarea" :rows="2" placeholder="请输入个人防护装备要求" />
         </el-form-item>
-        
+
         <el-form-item label="特殊工具" prop="specialTools">
           <el-input v-model="form.specialTools" type="textarea" :rows="2" placeholder="请输入所需特殊工具或配件" />
         </el-form-item>
 
         <!-- 执行步骤 -->
         <el-divider content-position="left">执行步骤</el-divider>
-        
+
         <el-form-item label="步骤内容" prop="steps">
           <el-input v-model="form.steps" type="textarea" :rows="5" placeholder="请输入执行步骤" />
         </el-form-item>
@@ -160,12 +147,8 @@
         <!-- 生成的表格 -->
         <el-form-item v-if="tableData.length > 0">
           <el-table :data="tableData" border>
-            <el-table-column
-              v-for="(col, index) in tableCols"
-              :key="index"
-              :label="`列${index + 1}`"
-              :prop="`col${index}`"
-            >
+            <el-table-column v-for="(col, index) in tableCols" :key="index" :label="`列${index + 1}`"
+              :prop="`col${index}`">
               <template #default="scope">
                 <el-input v-model="scope.row[`col${index}`]" />
               </template>
@@ -175,11 +158,11 @@
 
         <!-- 其他信息 -->
         <el-divider content-position="left">其他信息</el-divider>
-        
+
         <el-form-item label="巡检结果" prop="inspectionResult">
           <el-input v-model="form.inspectionResult" type="textarea" :rows="3" placeholder="请输入巡检结果" />
         </el-form-item>
-        
+
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
@@ -199,18 +182,16 @@
 <script setup name="MaintenanceCreate">
 import { getCurrentInstance, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { addMaintenance, getLatestPlan, submitApproval, getApproverList } from '@/api/business/maintenance'
-import { listUser } from '@/api/system/user'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 
 const formRef = ref(null)
-const approverList = ref([])
-const userList = ref([])
 const tableRows = ref(6)
 const tableCols = ref(7)
 const tableData = ref([])
+const approverList = ref([]) // 审批人下拉
+const userList = ref([]) // 用户选择下拉
 
 // 表单数据
 const form = ref({
@@ -247,7 +228,7 @@ const rules = {
 function generateTable() {
   const rows = parseInt(tableRows.value) || 6
   const cols = parseInt(tableCols.value) || 7
-  
+
   tableData.value = []
   for (let i = 0; i < rows; i++) {
     const row = {}

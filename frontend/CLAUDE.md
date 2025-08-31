@@ -1,12 +1,33 @@
-基于当前规范文档，以下是完整更新版的 **CLAUDE.md v2.2**：
+基于当前规范文档，以下是更新后的 **CLAUDE.md v2.3**（新增 TypeScript 迁移与测试基线策略）：
 
 ```markdown
-# CLAUDE.md — 智能开发助手规范 v2.2（RuoYi-Vue3 前端）
+# CLAUDE.md — 智能开发助手规范 v2.3（RuoYi-Vue3 前端）
 
-版本: 2.2.0
+版本: 2.3.0
 适用范围: RuoYi-Vue3 (Vue 3 + Element Plus + Vite) 前端项目
 核心目标: 提供精准的架构决策、高质量的代码生成、智能的开发辅助
-更新日期: 2024-08-30
+更新日期: 2025-08-31
+
+本版新增：TypeScript 渐进式迁移规范、Mock/真实后端双通道策略、登录响应非统一结构兼容指引、Vitest 基线与覆盖率门禁、动态路由与权限过滤回归测试要点。
+
+> 若与旧版有差异，以本版本约定为准；CLAUDE-IDC.md 为业务扩展规范，需配合阅读。
+
+---
+
+## -1. 版本 2.3 增量摘要（快速阅读）
+| 主题 | 变更 | 要求 |
+|------|------|------|
+| TypeScript 迁移 | 统一使用 `ESNext` + `moduleResolution: Bundler`，禁止 NodeNext | 新增文件默认 .ts / .d.ts |
+| Store 转换 | JS store 采用“同名 .ts + legacy .js 透传”过渡 | 保持导入路径不变 |
+| Mock 策略 | `import '../mock'` 集中于 `utils/request.ts`，计划引入 `VITE_ENABLE_MOCK` 开关 | 生产禁用 mock |
+| 登录兼容 | 支持 `{code,msg,token}` 与 `{code,msg,data:{token}}` / 顶层 user 信息 | 新接口尽量统一成 data 包裹 |
+| getInfo 兼容 | 兼容顶层 `{user,roles,permissions}` 与 data 包裹 | 编写新接口：保持 data 包裹一致 |
+| 权限过滤 | 允许无 roles/permissions 的公共路由保留 | 测试覆盖公共路由存在性 |
+| 测试基线 | Vitest + jsdom；Pinia / 组件关键 mock | 新增模块需≥1正向+1异常用例 |
+| 覆盖率 | 初始总线阈值：lines 60 / branches 50；差异文件≥80% | CI Gate（规划中） |
+| 调试标记 | 登录流程保留 `window.__lastLoginResponse` / `__lastLoginError` | 禁止生产泄露敏感信息（后续移除） |
+
+---
 
 ## 0. 快速决策树
 
@@ -30,6 +51,29 @@
 ├── 业务工具 → src/utils/business/{service}.js
 └── 静态资源 → src/assets/{type}/
 ```
+
+### 0.3 TypeScript 迁移优先级
+```
+优先级层级：
+1. 基础核心：utils/request.ts, store/modules/permission.ts, store/modules/user.ts
+2. 路由定义：router/*.ts 与业务模块 route meta
+3. 业务 API：src/api/** （统一导出函数 + 类型）
+4. 领域工具：utils/business/**
+5. 视图复用组件：components/** （逐步引入 props/emit 类型）
+6. 页面视图：views/** （低频改动末尾迁移）
+```
+
+迁移策略：
+1. “最小可闭环”：每次只迁一个可独立编译区块（如单个 store + 其依赖类型）。
+2. JS 同名透传：保留原 JS 文件 → `export * from './xxx.ts'`（或默认导出透传）确保第三方/旧路径不破坏。
+3. 类型声明集中：新建 `src/types/` 子目录：`api/`、`domain/`、`dto/`、`shim/`；逐步拆分临时内联接口。
+4. 避免“全局 any”污染：仅在过渡期用 `// TODO: refine type` 注记，不使用 `declare module '*';` 粗暴兜底。
+5. 提交前执行：`npx tsc --noEmit` + lint + vitest。
+
+反模式（禁止）：
+- 大批量同时迁移视图 + store + api → 难以定位回归。
+- 为压制错误加 `as any` / `@ts-ignore` 大面积覆盖。
+- 在视图中定义后端返回结构（应放入 types/api/）。
 
 ## 1. 项目环境与依赖
 
@@ -59,6 +103,26 @@ VITE_APP_ENV=production
 VITE_APP_BASE_API=https://api.domain.com
 VITE_BUILD_COMPRESS=gzip
 ```
+
+### 1.3 TS 配置关键点（v2.3 新增）
+```jsonc
+// tsconfig.json 关键字段
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler", // 适配 Vite
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "useDefineForClassFields": true,
+    "strict": true,
+    "baseUrl": "./src",
+    "paths": { "@/*": ["./src/*"] }
+  }
+}
+```
+
+说明：暂不启用 `skipLibCheck: false` 强化阶段；完成 80% 迁移后再收紧。
 
 ## 2. 目录结构与职责边界（RuoYi规范版）
 
@@ -148,6 +212,16 @@ form.vue     // 表单页
 // 常量文件：kebab-case 或 camelCase
 constants.js
 dict-data.js
+```
+
+### 2.3 类型目录建议（v2.3 新增）
+```
+src/types/
+  api/          # 后端接口响应/请求 DTO
+  domain/       # 领域模型（Ticket, Inspection 等）
+  dto/          # 视图层组合/表单 DTO
+  shim/         # 第三方库缺失声明（逐步减少）
+  index.d.ts    # 汇总导出（可选）
 ```
 
 ## 3. RuoYi规范API模板
@@ -297,6 +371,19 @@ export function approvePlan(planId, comment) {
 }
 ```
 
+### 3.4 API 类型模式（v2.3 新增）
+```ts
+// src/types/api/common.ts
+export interface ApiResult<T = any> { code: number; msg: string; data: T }
+export interface PageResult<T = any> { code?: number; msg?: string; total: number; rows: T[] }
+
+// 登录返回兼容：
+export type LoginRaw = { code: number; msg: string; token?: string; data?: { token: string } }
+export function extractToken(resp: LoginRaw): string | undefined {
+  return resp.token ?? resp.data?.token
+}
+```
+
 ## 4. RuoYi组件使用规范
 
 ### 4.1 必须使用的RuoYi组件
@@ -406,6 +493,23 @@ function submitForm() {
 }
 ```
 
+### 5.3 登录/鉴权响应兼容指引（v2.3 新增）
+背景：历史接口 `/login` 返回 `{code,msg,token}`；新规范统一 `{code,msg,data:{token}}`；`/getInfo` 可能顶层直接返回 `user` 字段。
+
+前端策略：
+```ts
+// user store 登录处理
+const raw = await login(...)
+const token = raw.token ?? raw.data?.token
+if (!token) throw new Error('登录响应缺少 token')
+
+// getInfo 处理
+const info = await getInfo()
+const payload = info.data?.user ? info.data : info // 兼容顶层
+```
+
+迁移完成后：后端统一改造 `/login` → data 包裹；前端移除兼容分支并增加一条版本迁移记录。
+
 ## 6. 业务服务集成
 
 ### 6.1 业务服务注册
@@ -467,6 +571,12 @@ console.log('[TicketEscalation] 服务已启动，间隔(ms)：', interval)
 console.error('[InspectionAPI] 生成工单失败', error)
 ```
 
+### 7.3 调试辅助变量（v2.3 新增）
+| 变量 | 说明 | 清理策略 |
+|------|------|----------|
+| window.__lastLoginResponse | 最近一次 login 成功/失败原始响应 | 上线前移除 |
+| window.__lastLoginError | 最近一次 login 抛出的错误对象 | 上线前移除 |
+
 ## 8. 性能优化建议
 
 ### 8.1 组件优化
@@ -511,7 +621,55 @@ def convert_to_utf8(file_path):
 - 确保导入导出名称一致
 - 检查路径是否正确
 
+### 9.4 Mock 与真实后端切换（v2.3 新增）
+现状：`import '../mock'` 位于 `utils/request.ts` 顶部 → 所有请求被 MockJS 拦截。
+
+改进计划：
+1. 新增环境变量：`VITE_ENABLE_MOCK=true|false`
+2. 条件导入：
+```ts
+// request.ts
+if (import.meta.env.VITE_ENABLE_MOCK === 'true') {
+  import('../mock')
+}
+```
+3. 生产构建：`.env.production` 设为 `false`。
+4. 测试：单元测试默认关闭 Mock，只在需要时局部 mock。
+
+风险提示：Mock 与真实接口字段差异会导致隐藏型 runtime bug，应逐步收敛至共享类型定义（在 `types/api/` 里复用）。
+
+### 10. 覆盖率与质量控制策略（v2.3 新增）
+前端测试 & 覆盖率体系：
+1. 全局基线：在 `vitest.config.js` 设定 lines/functions/statements 60%，branches 50%。
+2. Diff Gate：PR 中执行 `npm run coverage:diff`，所有变更文件行覆盖率需 >= 80%，否则 CI 失败。
+3. 分组统计：`npm run coverage:groups` 输出 business-services / permission / store / components / other 各组覆盖率；核心组（business-services, permission）目标 80%+。
+4. 升级节奏：连续 10 次合并的移动平均达到阈值后提升基线（例：60→65→70）。
+5. 约束：禁止无断言或与被测实现重复逻辑的“装饰性”测试；新增逻辑必须包含至少一个失败/异常分支断言。
+6. 后端：已在父 POM 引入 JaCoCo，`mvn verify` 生成 `target/site/jacoco` 报告，后续可接 Codecov/Sonar 汇总前后端。
+7. 后续拓展：可添加 nightly Mutation（Stryker）仅针对高价值模块；在脚本中增加 per-group 阈值自动 fail。
+
+辅助脚本：
+- `frontend/scripts/coverage-diff.js`：解析 lcov.info 与 git diff 计算变更文件覆盖率。
+- `frontend/scripts/coverage-groups.js`：分类聚合覆盖率输出。
+- README.md：对外公开策略、徽章与升级流程。
+
+推荐优先补测模块：
+- `utils/business/ticketEscalation.js` 逾期升级边界与错误处理。
+- `utils/business/inspectionAnomaly.js` 严重度分级与批量工单失败分支。
+- 路由权限过滤（permission / 动态路由合并）。
+
+
 ## 更新日志
+
+### v2.3.0 (2025-08-31)
+- 新增：TypeScript 迁移优先级与过渡模式（JS 透传策略）
+- 新增：登录 + getInfo 响应兼容方案与统一化指引
+- 新增：API 类型模式（ApiResult / PageResult / extractToken）
+- 新增：Mock 可配置化步骤与风险说明
+- 新增：调试辅助变量规范与清理策略
+- 新增：TS 配置关键点与类型目录建议
+- 强化：覆盖率门禁与最小测试基线说明
+- 强化：错误处理章节补充登录兼容 5.3
 
 ### v2.2.0 (2024-08-30)
 - 新增：特殊业务API模板

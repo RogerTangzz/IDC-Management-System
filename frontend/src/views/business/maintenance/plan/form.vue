@@ -3,24 +3,12 @@
     <el-card>
       <template #header>
         <span>{{ title }}</span>
-        <el-button 
-          v-if="!planId && !isCopy"
-          link
-          type="primary"
-          style="float: right"
-          @click="handleCopyLast"
-        >
+        <el-button v-if="!planId && !isCopy" link type="primary" style="float: right" @click="handleCopyLast">
           复制上次计划
         </el-button>
       </template>
 
-      <el-form 
-        ref="maintenanceRef" 
-        :model="form" 
-        :rules="rules" 
-        label-width="140px"
-        :disabled="loading"
-      >
+      <el-form ref="maintenanceRef" :model="form" :rules="rules" label-width="140px" :disabled="loading">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="标题" prop="title">
@@ -51,29 +39,15 @@
           <el-col :span="8">
             <el-form-item label="MOP类别" prop="mopCategory">
               <el-select v-model="form.mopCategory" placeholder="请选择">
-                <el-option
-                  v-for="dict in mop_category"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                />
+                <el-option v-for="dict in mop_category" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="执行周期" prop="executionCycle">
-              <el-input-number
-                v-model="form.executionFrequency"
-                :min="1"
-                :max="365"
-                placeholder="频次"
-                style="width: 100px"
-              />
-              <el-select 
-                v-model="form.executionUnit" 
-                placeholder="单位"
-                style="width: 100px; margin-left: 10px"
-              >
+              <el-input-number v-model="form.executionFrequency" :min="1" :max="365" placeholder="频次"
+                style="width: 100px" />
+              <el-select v-model="form.executionUnit" placeholder="单位" style="width: 100px; margin-left: 10px">
                 <el-option label="次/月" value="monthly" />
                 <el-option label="次/季" value="quarterly" />
                 <el-option label="次/年" value="yearly" />
@@ -83,12 +57,8 @@
           <el-col :span="8">
             <el-form-item label="审核人" prop="approverId">
               <el-select v-model="form.approverId" placeholder="请选择审核人">
-                <el-option
-                  v-for="user in approverList"
-                  :key="user.userId"
-                  :label="user.nickName"
-                  :value="user.userId"
-                />
+                <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName"
+                  :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -102,31 +72,16 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="通知相关人员" prop="notifyUsers">
-              <el-select 
-                v-model="form.notifyUsers" 
-                multiple 
-                placeholder="请选择通知人员"
-              >
-                <el-option
-                  v-for="user in userList"
-                  :key="user.userId"
-                  :label="user.nickName"
-                  :value="user.userId"
-                />
+              <el-select v-model="form.notifyUsers" multiple placeholder="请选择通知人员">
+                <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item label="MOP目的" prop="mopPurpose">
-          <el-input
-            v-model="form.mopPurpose"
-            type="textarea"
-            :rows="3"
-            placeholder="请说明维保目的"
-            maxlength="500"
-            show-word-limit
-          />
+          <el-input v-model="form.mopPurpose" type="textarea" :rows="3" placeholder="请说明维保目的" maxlength="500"
+            show-word-limit />
         </el-form-item>
 
         <el-divider content-position="left">执行信息</el-divider>
@@ -134,22 +89,12 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="工具仪表" prop="tools">
-              <el-input
-                v-model="form.tools"
-                type="textarea"
-                :rows="2"
-                placeholder="列举所需工具"
-              />
+              <el-input v-model="form.tools" type="textarea" :rows="2" placeholder="列举所需工具" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="材料" prop="materials">
-              <el-input
-                v-model="form.materials"
-                type="textarea"
-                :rows="2"
-                placeholder="列举所需材料"
-              />
+              <el-input v-model="form.materials" type="textarea" :rows="2" placeholder="列举所需材料" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -157,28 +102,18 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="安全（PPE）" prop="safety">
-              <el-input
-                v-model="form.safety"
-                type="textarea"
-                :rows="2"
-                placeholder="个人防护装备要求"
-              />
+              <el-input v-model="form.safety" type="textarea" :rows="2" placeholder="个人防护装备要求" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="特殊工具" prop="specialTools">
-              <el-input
-                v-model="form.specialTools"
-                type="textarea"
-                :rows="2"
-                placeholder="所需配件"
-              />
+              <el-input v-model="form.specialTools" type="textarea" :rows="2" placeholder="所需配件" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item label="执行步骤" prop="steps">
-          <editor v-model="form.steps" :min-height="192"/>
+          <editor v-model="form.steps" :min-height="192" />
         </el-form-item>
 
         <!-- 创建表格功能 -->
@@ -196,12 +131,8 @@
           </el-row>
           <div v-if="tableData.length > 0" class="table-editor">
             <el-table :data="tableData" border style="margin-top: 10px">
-              <el-table-column
-                v-for="(col, index) in tableCols"
-                :key="index"
-                :prop="`col${index}`"
-                :label="`列${index + 1}`"
-              >
+              <el-table-column v-for="(col, index) in tableCols" :key="index" :prop="`col${index}`"
+                :label="`列${index + 1}`">
                 <template #default="scope">
                   <el-input v-model="scope.row[`col${index}`]" />
                 </template>
@@ -213,34 +144,19 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="巡检结果" prop="inspectionResult">
-              <el-input
-                v-model="form.inspectionResult"
-                type="textarea"
-                :rows="3"
-                placeholder="巡检结果记录"
-              />
+              <el-input v-model="form.inspectionResult" type="textarea" :rows="3" placeholder="巡检结果记录" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="备注" prop="remark">
-              <el-input
-                v-model="form.remark"
-                type="textarea"
-                :rows="3"
-                placeholder="备注信息"
-              />
+              <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="备注信息" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item label="执行审核人" prop="executorId">
           <el-select v-model="form.executorId" placeholder="请选择执行审核人">
-            <el-option
-              v-for="user in approverList"
-              :key="user.userId"
-              :label="user.nickName"
-              :value="user.userId"
-            />
+            <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
 
@@ -256,7 +172,9 @@
 </template>
 
 <script setup name="MaintenanceForm">
-import { getMaintenance, addMaintenance, updateMaintenance, getLatestPlan, getApproverList, getNotifyUserList } from "@/api/business/maintenance";
+import { ref, computed, onMounted, getCurrentInstance } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getMaintenance, addMaintenance, updateMaintenance, getLatestPlan, getApproverList } from "@/api/business/maintenance";
 import { listUser } from "@/api/system/user";
 import Editor from '@/components/Editor';
 
@@ -385,11 +303,11 @@ function handleCopyLast() {
       proxy.$modal.msgWarning('没有可复制的计划');
       return;
     }
-    
+
     proxy.$modal.confirm(`是否复制计划"${response.data.title}"？`).then(() => {
       copyPlan(response.data.planId);
       proxy.$modal.msgSuccess('已复制上次计划');
-    }).catch(() => {});
+    }).catch(() => { });
   });
 }
 
@@ -424,19 +342,19 @@ function submitForm() {
     if (valid) {
       // 组合执行周期
       form.value.executionCycle = `${form.value.executionFrequency}${form.value.executionUnit}`;
-      
+
       // 处理表格数据
       if (tableData.value.length > 0) {
         form.value.steps += '\n' + JSON.stringify(tableData.value);
       }
-      
+
       if (form.value.planId != undefined) {
-        updateMaintenance(form.value).then(response => {
+        updateMaintenance(form.value).then(() => {
           proxy.$modal.msgSuccess("修改成功");
           router.push('/business/maintenance/plan');
         });
       } else {
-        addMaintenance(form.value).then(response => {
+        addMaintenance(form.value).then(() => {
           proxy.$modal.msgSuccess("新增成功");
           router.push('/business/maintenance/plan');
         });
@@ -449,7 +367,7 @@ function submitForm() {
 function handleCancel() {
   proxy.$modal.confirm('确定要取消吗？未保存的数据将丢失').then(() => {
     router.push('/business/maintenance/plan');
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 获取用户列表 */
@@ -470,7 +388,7 @@ function getApproversList() {
 onMounted(() => {
   getUserList();
   getApproversList();
-  
+
   if (planId) {
     getPlanDetail(planId);
   } else if (copyId) {

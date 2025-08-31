@@ -1,8 +1,8 @@
 <template>
   <div :class="classObj" class="app-wrapper" :style="{ '--current-color': theme }">
-    <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside"/>
-    <sidebar v-if="!sidebar.hide" class="sidebar-container" />
-    <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide }" class="main-container">
+    <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
+    <Sidebar v-if="!sidebarState.hide" class="sidebar-container" />
+    <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebarState.hide }" class="main-container">
       <div :class="{ 'fixed-header': fixedHeader }">
         <navbar @setLayout="setLayout" />
         <tags-view v-if="needTagsView" />
@@ -15,8 +15,8 @@
 
 <script setup>
 import { useWindowSize } from '@vueuse/core'
-import Sidebar from './components/Sidebar/index.vue'
 import { AppMain, Navbar, Settings, TagsView } from './components'
+import Sidebar from './components/Sidebar'
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'
 // 引入业务服务
@@ -27,24 +27,23 @@ import inspectionAnomaly from '@/utils/business/inspectionAnomaly'
 const { proxy } = getCurrentInstance()
 const settingsStore = useSettingsStore()
 const theme = computed(() => settingsStore.theme)
-const sideTheme = computed(() => settingsStore.sideTheme)
-const sidebar = computed(() => useAppStore().sidebar)
+const sidebarState = computed(() => useAppStore().sidebar)
 const device = computed(() => useAppStore().device)
 const needTagsView = computed(() => settingsStore.tagsView)
 const fixedHeader = computed(() => settingsStore.fixedHeader)
 
 const classObj = computed(() => ({
-  hideSidebar: !sidebar.value.opened,
-  openSidebar: sidebar.value.opened,
-  withoutAnimation: sidebar.value.withoutAnimation,
+  hideSidebar: !sidebarState.value.opened,
+  openSidebar: sidebarState.value.opened,
+  withoutAnimation: sidebarState.value.withoutAnimation,
   mobile: device.value === 'mobile'
 }))
 
-const { width, height } = useWindowSize()
+const { width } = useWindowSize()
 const WIDTH = 992 // refer to Bootstrap's responsive design
 
 watch(() => device.value, () => {
-  if (device.value === 'mobile' && sidebar.value.opened) {
+  if (device.value === 'mobile' && sidebarState.value.opened) {
     useAppStore().closeSideBar({ withoutAnimation: false })
   }
 })
@@ -71,27 +70,28 @@ function setLayout() {
 onMounted(() => {
   // 检查用户权限，决定是否启动服务
   const userPermissions = proxy.$auth.getPermissions()
-  
+
   // 工单自动升级服务（需要工单管理权限）
   if (userPermissions.includes('business:ticket:edit') || userPermissions.includes('*:*:*')) {
     ticketEscalation.init(proxy)
     ticketEscalation.start()
     console.log('[系统服务] 工单自动升级服务已启动')
   }
-  
+
   // 维保提醒服务（需要维保管理权限）
   if (userPermissions.includes('business:maintenance:query') || userPermissions.includes('*:*:*')) {
     maintenanceReminder.init(proxy)
     maintenanceReminder.start()
     console.log('[系统服务] 维保提醒服务已启动')
   }
-  
+
   // 导出巡检异常服务供全局使用
   window.$inspectionAnomaly = inspectionAnomaly
   console.log('[系统服务] 巡检异常检测服务已加载')
-  
+
   // 在开发环境打印服务状态
-  if (process.env.NODE_ENV === 'development') {
+  // 使用 Vite 环境变量
+  if (import.meta.env.DEV) {
     window.$services = {
       ticketEscalation,
       maintenanceReminder,
@@ -108,13 +108,13 @@ onBeforeUnmount(() => {
     ticketEscalation.stop()
     console.log('[系统服务] 工单自动升级服务已停止')
   }
-  
+
   // 停止维保提醒服务
   if (maintenanceReminder.getStatus().isRunning) {
     maintenanceReminder.stop()
     console.log('[系统服务] 维保提醒服务已停止')
   }
-  
+
   // 清理全局服务引用
   if (window.$inspectionAnomaly) {
     delete window.$inspectionAnomaly
@@ -154,6 +154,33 @@ document.addEventListener('visibilitychange', () => {
     position: fixed;
     top: 0;
   }
+}
+
+.sidebar-container {
+  position: relative;
+  width: 210px;
+  float: left;
+  height: 100%;
+  transition: width 0.28s;
+  z-index: 1001;
+}
+
+.sidebarHide .sidebar-container {
+  width: 0 !important;
+}
+
+.main-container {
+  min-height: 100%;
+  transition: margin-left 0.28s;
+  margin-left: 210px;
+}
+
+.hideSidebar .main-container {
+  margin-left: 54px;
+}
+
+.sidebarHide .main-container {
+  margin-left: 0;
 }
 
 .drawer-bg {

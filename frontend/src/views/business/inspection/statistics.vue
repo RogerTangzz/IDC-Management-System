@@ -4,25 +4,13 @@
     <el-card class="filter-card">
       <el-form :inline="true">
         <el-form-item label="统计时间">
-          <el-date-picker
-            v-model="dateRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            :shortcuts="shortcuts"
-            @change="handleDateChange"
-          />
+          <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
+            end-placeholder="结束日期" :shortcuts="shortcuts" @change="handleDateChange" />
         </el-form-item>
         <el-form-item label="楼层">
           <el-select v-model="selectedFloor" placeholder="全部楼层" clearable @change="handleFloorChange">
             <el-option label="全部楼层" value="" />
-            <el-option
-              v-for="floor in FLOORS"
-              :key="floor.value"
-              :label="floor.label"
-              :value="floor.value"
-            />
+            <el-option v-for="floor in FLOORS" :key="floor.value" :label="floor.label" :value="floor.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -43,7 +31,9 @@
             <div class="footer-item">
               <span>较上期</span>
               <span class="green">
-                <el-icon><CaretTop /></el-icon>
+                <el-icon>
+                  <CaretTop />
+                </el-icon>
                 12%
               </span>
             </div>
@@ -80,7 +70,9 @@
             <div class="footer-item">
               <span>较上期</span>
               <span class="green">
-                <el-icon><CaretBottom /></el-icon>
+                <el-icon>
+                  <CaretBottom />
+                </el-icon>
                 8%
               </span>
             </div>
@@ -184,12 +176,8 @@
         <el-table-column prop="completed" label="完成次数" width="90" align="center" />
         <el-table-column prop="completionRate" label="完成率" width="100" align="center">
           <template #default="scope">
-            <el-progress 
-              :percentage="scope.row.completionRate" 
-              :text-inside="true"
-              :stroke-width="18"
-              :status="getProgressStatus(scope.row.completionRate)"
-            />
+            <el-progress :percentage="scope.row.completionRate" :text-inside="true" :stroke-width="18"
+              :status="getProgressStatus(scope.row.completionRate)" />
           </template>
         </el-table-column>
         <el-table-column prop="avgDuration" label="平均时长" width="100" align="center">
@@ -213,7 +201,6 @@ import { ElMessage } from 'element-plus'
 import { CaretTop, CaretBottom } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { FLOORS } from './constants'
-import { parseTime } from '@/utils'
 
 // 数据状态
 const dateRange = ref([
@@ -539,7 +526,7 @@ const initWorkloadChart = () => {
 const generateDateLabels = (type) => {
   const labels = []
   const count = type === 'day' ? 7 : type === 'week' ? 4 : 12
-  
+
   for (let i = count - 1; i >= 0; i--) {
     const date = new Date()
     if (type === 'day') {
@@ -642,7 +629,7 @@ onMounted(async () => {
   initFloorChart()
   initAnomalyChart()
   initWorkloadChart()
-  
+
   window.addEventListener('resize', handleResize)
 })
 
@@ -671,53 +658,53 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .inspection-statistics {
   padding: 20px;
-  
+
   .filter-card {
     margin-bottom: 20px;
   }
-  
+
   .statistics-cards {
     margin-bottom: 20px;
-    
+
     .el-card {
       margin-bottom: 20px;
     }
-    
+
     .statistic-footer {
       margin-top: 10px;
-      
+
       .footer-item {
         display: flex;
         justify-content: space-between;
         font-size: 14px;
-        
+
         .green {
           color: #67c23a;
           display: flex;
           align-items: center;
         }
-        
+
         .red {
           color: #f56c6c;
         }
       }
     }
   }
-  
+
   .chart-card {
     margin-bottom: 20px;
-    
+
     .chart-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .chart-container {
       height: 350px;
     }
   }
-  
+
   .table-card {
     margin-bottom: 20px;
   }

@@ -15,7 +15,8 @@
         <el-form v-show="currentTab === 'field' && showField" size="default" label-width="90px" label-position="top"
           style="">
           <el-form-item v-if="activeData.changeTag" label="组件类型">
-            <el-select v-model="activeData.tagIcon" placeholder="请选择组件类型" :style="{ width: '100%' }" @change="tagChange">
+            <el-select v-model="activeData.tagIcon" placeholder="请选择组件类型" :style="{ width: '100%' }"
+              @change="tagChange">
               <el-option-group v-for="group in tagList" :key="group.label" :label="group.label">
                 <el-option v-for="item in group.options" :key="item.label" :label="item.label" :value="item.tagIcon">
                   <svg-icon class="node-icon" :icon-class="item.tagIcon" style="margin-right: 10px;" />
@@ -136,9 +137,7 @@
           </el-form-item>
           <el-form-item v-if="activeData.maxlength !== undefined" label="最多输入">
             <el-input v-model="activeData.maxlength" placeholder="请输入字符长度">
-              <template slot="append">
-                个字符
-              </template>
+              <template #append>个字符</template>
             </el-input>
           </el-form-item>
           <el-form-item v-if="activeData['active-text'] !== undefined" label="开启提示">
@@ -177,11 +176,13 @@
           </el-form-item>
           <el-form-item v-if="activeData.fileSize !== undefined" label="文件大小">
             <el-input v-model.number="activeData.fileSize" placeholder="请输入文件大小">
-              <el-select slot="append" v-model="activeData.sizeUnit" :style="{ width: '66px' }">
-                <el-option label="KB" value="KB" />
-                <el-option label="MB" value="MB" />
-                <el-option label="GB" value="GB" />
-              </el-select>
+              <template #append>
+                <el-select v-model="activeData.sizeUnit" :style="{ width: '66px' }">
+                  <el-option label="KB" value="KB" />
+                  <el-option label="MB" value="MB" />
+                  <el-option label="GB" value="GB" />
+                </el-select>
+              </template>
             </el-input>
           </el-form-item>
           <el-form-item v-if="activeData.action !== undefined" label="上传地址">
@@ -574,7 +575,7 @@ const data = reactive({
     }
   ],
   layoutTreeProps: {
-    label(data, node) {
+    label(data, _node) {
       return data.componentName || `${data.label}: ${data.vModel}`
     }
   }
@@ -626,11 +627,11 @@ function addTreeItem() {
   currentNode.value = props.activeData.options
 }
 
-function renderContent(h, { node, data, store }) {
+function renderContent(h, { node: _node, data: _data, store: _store }) {
   return h('div', {
     class: "custom-tree-node"
   }, [
-    h('span', node.label),
+    h('span', _node.label),
     h('span', {
       class: "node-operation"
     }, [
@@ -639,7 +640,7 @@ function renderContent(h, { node, data, store }) {
         icon: "Plus",
         underline: false,
         onClick: () => {
-          append(data)
+          append(_data)
 
         }
       }),
@@ -649,7 +650,7 @@ function renderContent(h, { node, data, store }) {
         underline: false,
         style: "margin-left: 5px;",
         onClick: () => {
-          remove(node, data)
+          remove(_node, _data)
         }
       })
     ])

@@ -1,17 +1,34 @@
-基于当前项目进展，这是更新后的 **CLAUDE-IDC.md v2.1**：
+基于当前项目进展，这是更新后的 **CLAUDE-IDC.md v2.2**（同步 TS 迁移与登录兼容策略）：
 
 ```markdown
-# CLAUDE-IDC.md — IDC运维管理系统开发扩展规范 v2.1
+# CLAUDE-IDC.md — IDC运维管理系统开发扩展规范 v2.2
 
-版本: 2.1.0
-基础规范: CLAUDE.md v2.2
+版本: 2.2.0
+基础规范: CLAUDE.md v2.3
 适用项目: IDC运维管理系统（基于RuoYi-Vue3）
 核心目标: 将业务逻辑精准映射到RuoYi规范的技术实现
-更新日期: 2024-08-30
+更新日期: 2025-08-31
+
+本版新增：Auth / Permission Store TypeScript 迁移、登录/用户信息接口兼容指引、Mock 启用策略、模块状态刷新、测试与类型治理路线。
+
+---
+
+## -1. 2.2 版本增量速览
+| 范畴 | 更新 | 动作建议 |
+|------|------|----------|
+| 登录流程 | 兼容顶层 token 与 data.token | 后端统一后移除兼容分支 |
+| 用户信息 | 兼容顶层 user/roles 与 data.user | 统一返回 data 包裹 |
+| Store | user / permission 已迁移 TS | 新增 store 统一使用泛型 State 接口 |
+| Mock 策略 | 暂集中导入；计划 env 控制 | 添加 VITE_ENABLE_MOCK 开关 |
+| 模块状态 | ticket/inspection 核心可用 | maintenance 优先补齐导入/审批流 |
+| 测试 | 基线覆盖 permission + 动态加载 | 新增 login / getInfo 断言 |
+| 类型治理 | 暂有内联 DTO | 抽离到 src/types/api 与 domain |
+
+---
 
 ## 0. 快速导航与开发状态
 
-### 0.1 模块开发优先级与状态
+### 0.1 模块开发优先级与状态（刷新）
 ```javascript
 const moduleStatus = {
   // P0 核心模块
@@ -25,9 +42,9 @@ const moduleStatus = {
   },
   inspection: {
     priority: 'P0',
-    api: '✅ 接口规范已定义 + 补充generateTickets',
-    create: '✅ create.vue已完成',
-    list: '⚠️ 编码问题已修复，待功能验证',
+    api: '✅ 接口规范已定义 + generateTickets',
+    create: '✅ create.vue 已完成',
+    list: '✅ 列表渲染通过基本校验',
     detail: '⏳ 待开发',
     constants: '✅ 56项配置完整'
   },
@@ -62,7 +79,7 @@ const moduleStatus = {
 | 资产管理 | /business/asset | /business/asset | views/business/asset | business:asset: |
 | 知识库 | /business/knowledge | /business/knowledge | views/business/knowledge | business:knowledge: |
 
-### 0.3 当前问题追踪
+### 0.3 当前问题追踪（更新）
 ```javascript
 const currentIssues = {
   resolved: [
@@ -72,15 +89,31 @@ const currentIssues = {
     '✅ 业务服务启动 - 三大服务正常运行'
   ],
   pending: [
-    '⚠️ API导出缺失 - assignTickets, generateTickets已补充',
-    '⚠️ 维保模块导入错误 - maintenanceApi不存在',
-    '⏳ 后端接口未实现 - 需要创建Controller和Service',
-    '⏳ 数据库表未创建 - 需要执行SQL脚本'
+    '⚠️ 维保模块导入错误 - maintenance import 仍需校验真实接口',
+    '⚠️ 登录 / getInfo 后端结构未统一 (需统一 data 包裹)',
+    '⏳ 后端业务 Controller & Service 待实现',
+    '⏳ 数据库业务表 + 索引部署脚本待执行'
   ]
 }
 ```
 
+### 0.4 测试用例优先级 (新增)
+```
+P0: 登录(token 解析两种结构) / getInfo 顶层与 data 包裹 / 动态路由保留公共路由 / 权限过滤（含无权限路由）
+P1: 工单指派 assignTickets 成功/失败 / 巡检生成工单 generateTickets
+P2: 维保计划审批流（草稿→待审核→已批准→执行中→已完成）状态机正确性
+```
+
 ## 1. 业务领域模型定义
+
+### 1.0 类型与数据契约策略 (新增)
+| 分类 | 存放目录 | 说明 |
+|------|----------|------|
+| 后端响应包装 | `types/api/common.ts` | ApiResult / PageResult |
+| 认证相关 | `types/api/auth.ts` | LoginResp / extractToken |
+| 领域实体 | `types/domain/*.ts` | Ticket / Inspection / MaintenancePlan |
+| 复合表单 DTO | `types/dto/*.ts` | FilterForm / EditPayload |
+| 临时兼容 | 不允许新建（集中迁移） | 逐步消除 inline interface |
 
 ### 1.1 核心实体关系
 ```javascript
@@ -420,6 +453,19 @@ export function getApproverList() {
 }
 ```
 
+### 2.4 登录 / 用户信息接口兼容说明 (新增)
+```
+现状：
+- /login: { code, msg, token } 或 { code, msg, data: { token } }
+- /getInfo: { code, msg, user, roles, permissions } 或 { code, msg, data: { user, roles, permissions } }
+
+前端已在 user store 中做兼容：
+- 登录：token = resp.token ?? resp.data?.token
+- 用户信息：payload = resp.data?.user ? resp.data : resp
+
+后端统一目标：均返回 data 包裹（计划 v2.3.1 之后移除兼容逻辑）
+```
+
 ## 3. 巡检核心配置（56项完整配置）
 
 [保持原有的56项配置不变]
@@ -550,6 +596,14 @@ class ServiceManager {
 export default new ServiceManager()
 ```
 
+### 5.2 服务测试策略 (新增)
+| 服务 | 关键行为 | 测试点 |
+|------|----------|--------|
+| ticketEscalation | 逾期扫描 | 模拟不同优先级与时间边界 |
+| inspectionAnomaly | 异常→工单生成 | 多异常合并生成次数 |
+| maintenanceReminder | 即将到期提醒 | Cron 触发窗口正确性 |
+
+
 [其他章节保持原有内容，根据需要更新状态]
 
 ## 7. 开发任务清单（更新版）
@@ -590,8 +644,14 @@ const pendingTasks = [
     assignee: 'frontend'
   },
   {
+    module: 'auth',
+    task: '统一 /login /getInfo 返回结构(data 包裹)',
+    priority: 'P0',
+    assignee: 'backend'
+  },
+  {
     module: 'backend',
-    task: '实现Controller接口',
+    task: '实现业务 Controller 接口 (ticket/inspection/maintenance)',
     priority: 'P0',
     assignee: 'backend'
   },
@@ -616,9 +676,9 @@ const pendingTasks = [
 ```javascript
 const frontendTests = {
   routing: [
-    '✅ 路由加载正常',
-    '✅ 菜单显示正确',
-    '⏳ 权限控制验证'
+  '✅ 路由加载正常',
+  '✅ 菜单显示正确',
+  '⏳ 权限控制验证（公共路由保留）'
   ],
   pages: [
     '✅ 工单列表页显示',
@@ -656,6 +716,17 @@ const backendTests = {
   }
 }
 ```
+
+### 8.3 认证链路测试要点 (新增)
+| 步骤 | 输入 | 期望 |
+|------|------|------|
+| login raw token | {code,token} | store.token 写入；setToken 调用一次 |
+| login wrapped | {code,data:{token}} | 同上 |
+| login missing | {code, msg} 无 token | 抛出 '登录响应缺少 token' |
+| getInfo top-level | {user,roles} | roles/permissions 正确写入 |
+| getInfo wrapped | {data:{user,roles}} | 同上 |
+| getInfo missing user | {code, msg} | 抛出 '响应缺少 user 字段' |
+
 
 ## 9. 部署配置（生产环境）
 
@@ -708,6 +779,13 @@ volumes:
 ```
 
 ## 更新日志
+### v2.2.0 (2025-08-31)
+- 新增：登录 / 用户信息响应兼容章节
+- 新增：服务测试策略 / 认证链路测试要点
+- 新增：类型与数据契约策略
+- 更新：模块状态 & 待办清单
+- 更新：问题追踪与优先级
+- 调整：inspection 列表状态为通过基本校验
 
 ### v2.1.0 (2024-08-30)
 - 解决：文件编码问题全部修复

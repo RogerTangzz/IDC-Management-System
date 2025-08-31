@@ -5,19 +5,10 @@
     <el-card class="search-card">
       <el-form :model="queryParams" ref="queryRef" :inline="true">
         <el-form-item label="计划名称" prop="planName">
-          <el-input
-            v-model="queryParams.planName"
-            placeholder="请输入计划名称"
-            clearable
-            @keyup.enter="handleQuery"
-          />
+          <el-input v-model="queryParams.planName" placeholder="请输入计划名称" clearable @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="执行人" prop="executorName">
-          <el-input
-            v-model="queryParams.executorName"
-            placeholder="请输入执行人"
-            clearable
-          />
+          <el-input v-model="queryParams.executorName" placeholder="请输入执行人" clearable />
         </el-form-item>
         <el-form-item label="执行状态" prop="status">
           <el-select v-model="queryParams.status" placeholder="全部" clearable>
@@ -27,15 +18,8 @@
           </el-select>
         </el-form-item>
         <el-form-item label="执行时间">
-          <el-date-picker
-            v-model="dateRange"
-            type="daterange"
-            value-format="YYYY-MM-DD"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            @change="handleDateChange"
-          />
+          <el-date-picker v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至"
+            start-placeholder="开始日期" end-placeholder="结束日期" @change="handleDateChange" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -53,12 +37,7 @@
         </div>
       </template>
 
-      <el-table
-        v-loading="loading"
-        :data="executionList"
-        border
-        stripe
-      >
+      <el-table v-loading="loading" :data="executionList" border stripe>
         <el-table-column label="执行编号" prop="executionNo" width="120" align="center" />
         <el-table-column label="计划名称" prop="planName" min-width="200" show-overflow-tooltip />
         <el-table-column label="执行人" prop="executorName" width="100" align="center" />
@@ -97,18 +76,12 @@
             <el-button link type="primary" size="small" @click="handleDetail(scope.row)">
               查看详情
             </el-button>
-            <el-button
-              v-if="scope.row.status === 'executing'"
-              link type="success" size="small"
-              @click="handleComplete(scope.row)"
-            >
+            <el-button v-if="scope.row.status === 'executing'" link type="success" size="small"
+              @click="handleComplete(scope.row)">
               完成执行
             </el-button>
-            <el-button
-              v-if="scope.row.status === 'executing'"
-              link type="danger" size="small"
-              @click="handleAbort(scope.row)"
-            >
+            <el-button v-if="scope.row.status === 'executing'" link type="danger" size="small"
+              @click="handleAbort(scope.row)">
               中止执行
             </el-button>
           </template>
@@ -116,13 +89,8 @@
       </el-table>
 
       <!-- 分页 -->
-      <pagination
-        v-show="total > 0"
-        :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-      />
+      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize" @pagination="getList" />
     </el-card>
 
     <!-- 完成执行对话框 -->
@@ -135,28 +103,13 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="执行说明" prop="description">
-          <el-input
-            v-model="completeForm.description"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入执行说明"
-          />
+          <el-input v-model="completeForm.description" type="textarea" :rows="4" placeholder="请输入执行说明" />
         </el-form-item>
         <el-form-item label="发现问题" prop="issues">
-          <el-input
-            v-model="completeForm.issues"
-            type="textarea"
-            :rows="3"
-            placeholder="如有问题请描述"
-          />
+          <el-input v-model="completeForm.issues" type="textarea" :rows="3" placeholder="如有问题请描述" />
         </el-form-item>
         <el-form-item label="处理措施" prop="actions">
-          <el-input
-            v-model="completeForm.actions"
-            type="textarea"
-            :rows="3"
-            placeholder="采取的处理措施"
-          />
+          <el-input v-model="completeForm.actions" type="textarea" :rows="3" placeholder="采取的处理措施" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -170,8 +123,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { maintenancePlanApi } from '@/api/maintenance/plan'
-import { parseTime } from '@/utils'
+// 移除未使用的 maintenancePlanApi 与 parseTime 引入
 
 // 状态
 const loading = ref(false)
@@ -242,7 +194,7 @@ const getList = async () => {
       total.value = mockData.length
       loading.value = false
     }, 500)
-  } catch (error) {
+  } catch {
     loading.value = false
   }
 }
@@ -293,34 +245,34 @@ const handleComplete = (row) => {
 // 提交完成
 const submitComplete = async () => {
   await completeFormRef.value?.validate()
-  
+
   try {
     // await maintenancePlanApi.completeExecution(currentExecution.value.id, completeForm)
     ElMessage.success('执行完成')
     completeDialogVisible.value = false
     getList()
-  } catch (error) {
-    console.error('完成执行失败:', error)
+  } catch {
+    // 完成执行失败
   }
 }
 
 // 中止执行
-const handleAbort = async (row) => {
+const handleAbort = async (_row) => {
   await ElMessageBox.confirm('确定中止此次执行？', '警告', { type: 'warning' })
-  
+
   try {
     // await maintenancePlanApi.abortExecution(row.id)
     ElMessage.success('已中止执行')
     getList()
-  } catch (error) {
-    console.error('中止失败:', error)
+  } catch {
+    // 中止失败
   }
 }
 
 // 导出
 const handleExport = async () => {
   await ElMessageBox.confirm('确定导出执行记录？', '确认', { type: 'info' })
-  
+
   try {
     // const res = await maintenancePlanApi.exportExecution(queryParams)
     ElMessage.success('导出成功')
@@ -357,11 +309,11 @@ onMounted(() => {
 <style scoped lang="scss">
 .maintenance-execution-list {
   padding: 20px;
-  
+
   .search-card {
     margin-bottom: 20px;
   }
-  
+
   .table-card {
     .card-header {
       display: flex;

@@ -45,7 +45,7 @@ const emit = defineEmits(['update'])
 const props = defineProps({
     cron: {
         type: Object,
-        default: {
+        default: () => ({
             second: "*",
             min: "*",
             hour: "*",
@@ -53,7 +53,7 @@ const props = defineProps({
             month: "*",
             week: "?",
             year: ""
-        }
+        })
     },
     check: {
         type: Function,
@@ -72,16 +72,13 @@ const average02 = ref(1)
 const checkboxList = ref([])
 const checkCopy = ref([fullYear])
 
-const cycleTotal = computed(() => {
-    cycle01.value = props.check(cycle01.value, fullYear, maxFullYear - 1)
-    cycle02.value = props.check(cycle02.value, cycle01.value + 1, maxFullYear)
-    return cycle01.value + '-' + cycle02.value
-})
-const averageTotal = computed(() => {
-    average01.value = props.check(average01.value, fullYear, maxFullYear - 1)
-    average02.value = props.check(average02.value, 1, 10)
-    return average01.value + '/' + average02.value
-})
+watch(cycle01, () => { cycle01.value = props.check(cycle01.value, fullYear, maxFullYear - 1) })
+watch([cycle02, cycle01], () => { cycle02.value = props.check(cycle02.value, cycle01.value + 1, maxFullYear) })
+watch(average01, () => { average01.value = props.check(average01.value, fullYear, maxFullYear - 1) })
+watch(average02, () => { average02.value = props.check(average02.value, 1, 10) })
+
+const cycleTotal = computed(() => cycle01.value + '-' + cycle02.value)
+const averageTotal = computed(() => average01.value + '/' + average02.value)
 const checkboxString = computed(() => {
     return checkboxList.value.join(',')
 })

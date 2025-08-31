@@ -1,9 +1,8 @@
-import request from '@/utils/request'
+import { get } from '@/utils/request'
 
 // 获取服务信息
-export function getServer() {
-  return request({
-    url: '/monitor/server',
-    method: 'get'
-  })
-}
+/**
+ * 服务监控信息
+ * @returns {Promise<ApiResult<ServerStatus>>}
+ */
+export function getServer() { return get('/monitor/server') }

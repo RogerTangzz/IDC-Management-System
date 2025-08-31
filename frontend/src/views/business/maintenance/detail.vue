@@ -29,7 +29,7 @@
           {{ form.version }}
         </el-descriptions-item>
         <el-descriptions-item label="MOP类别">
-          <dict-tag :options="mop_category" :value="form.mopCategory"/>
+          <dict-tag :options="mop_category" :value="form.mopCategory" />
         </el-descriptions-item>
         <el-descriptions-item label="审核状态">
           <el-tag :type="getApprovalType(form.approvalStatus)">
@@ -169,70 +169,30 @@
 
       <!-- 操作按钮 -->
       <div class="action-buttons">
-        <el-button 
-          type="primary" 
-          icon="Edit" 
-          @click="handleEdit"
-          v-hasPermi="['business:maintenance:edit']"
-          v-if="form.approvalStatus === 'draft'"
-        >编辑</el-button>
-        
-        <el-button 
-          type="success" 
-          icon="Select" 
-          @click="handleSubmitApproval"
-          v-hasPermi="['business:maintenance:edit']"
-          v-if="form.approvalStatus === 'draft'"
-        >提交审核</el-button>
-        
-        <el-button 
-          type="success" 
-          icon="CircleCheck" 
-          @click="handleApprove"
+        <el-button type="primary" icon="Edit" @click="handleEdit" v-hasPermi="['business:maintenance:edit']"
+          v-if="form.approvalStatus === 'draft'">编辑</el-button>
+
+        <el-button type="success" icon="Select" @click="handleSubmitApproval" v-hasPermi="['business:maintenance:edit']"
+          v-if="form.approvalStatus === 'draft'">提交审核</el-button>
+
+        <el-button type="success" icon="CircleCheck" @click="handleApprove"
           v-hasPermi="['business:maintenance:approve']"
-          v-if="form.approvalStatus === 'pending' && canApprove"
-        >审核通过</el-button>
-        
-        <el-button 
-          type="danger" 
-          icon="CircleClose" 
-          @click="handleReject"
-          v-hasPermi="['business:maintenance:approve']"
-          v-if="form.approvalStatus === 'pending' && canApprove"
-        >审核拒绝</el-button>
-        
-        <el-button 
-          type="warning" 
-          icon="VideoPlay" 
-          @click="handleExecute"
-          v-hasPermi="['business:maintenance:execute']"
-          v-if="form.approvalStatus === 'approved' && form.executionStatus === 'pending'"
-        >开始执行</el-button>
-        
-        <el-button 
-          type="primary" 
-          icon="Ticket" 
-          @click="handleGenerateTicket"
-          v-hasPermi="['business:maintenance:edit']"
-          v-if="form.executionStatus === 'executing'"
-        >生成工单</el-button>
-        
-        <el-button 
-          type="info" 
-          icon="CopyDocument" 
-          @click="handleCopy"
-        >复制计划</el-button>
-        
-        <el-button 
-          type="info" 
-          icon="Printer" 
-          @click="handlePrint"
-        >打印</el-button>
-        
-        <el-button 
-          icon="Back" 
-          @click="handleClose"
-        >返回</el-button>
+          v-if="form.approvalStatus === 'pending' && canApprove">审核通过</el-button>
+
+        <el-button type="danger" icon="CircleClose" @click="handleReject" v-hasPermi="['business:maintenance:approve']"
+          v-if="form.approvalStatus === 'pending' && canApprove">审核拒绝</el-button>
+
+        <el-button type="warning" icon="VideoPlay" @click="handleExecute" v-hasPermi="['business:maintenance:execute']"
+          v-if="form.approvalStatus === 'approved' && form.executionStatus === 'pending'">开始执行</el-button>
+
+        <el-button type="primary" icon="Ticket" @click="handleGenerateTicket" v-hasPermi="['business:maintenance:edit']"
+          v-if="form.executionStatus === 'executing'">生成工单</el-button>
+
+        <el-button type="info" icon="CopyDocument" @click="handleCopy">复制计划</el-button>
+
+        <el-button type="info" icon="Printer" @click="handlePrint">打印</el-button>
+
+        <el-button icon="Back" @click="handleClose">返回</el-button>
       </div>
     </el-card>
 
@@ -241,16 +201,11 @@
       <el-form ref="submitRef" :model="submitForm" :rules="submitRules" label-width="80px">
         <el-form-item label="审核人" prop="approverId">
           <el-select v-model="submitForm.approverId" placeholder="请选择审核人">
-            <el-option
-              v-for="user in approverList"
-              :key="user.userId"
-              :label="user.nickName"
-              :value="user.userId"
-            />
+            <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
         <el-form-item label="说明" prop="remark">
-          <el-input v-model="submitForm.remark" type="textarea" :rows="3" placeholder="请输入说明"/>
+          <el-input v-model="submitForm.remark" type="textarea" :rows="3" placeholder="请输入说明" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -265,7 +220,7 @@
     <el-dialog :title="approvalTitle" v-model="approvalOpen" width="500px" append-to-body>
       <el-form ref="approvalRef" :model="approvalForm" :rules="approvalRules" label-width="80px">
         <el-form-item label="审核意见" prop="comment">
-          <el-input v-model="approvalForm.comment" type="textarea" :rows="4" placeholder="请输入审核意见"/>
+          <el-input v-model="approvalForm.comment" type="textarea" :rows="4" placeholder="请输入审核意见" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -281,7 +236,6 @@
 <script setup name="MaintenanceDetail">
 import { getCurrentInstance, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getMaintenance, submitApproval as submitApprovalApi, approvePlan, rejectPlan, startExecution, generateTicket, getApproverList } from '@/api/business/maintenance'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -353,13 +307,13 @@ function getDetail() {
     specialTools: '专用检测仪',
     steps: '1. 检查设备外观\n2. 测试运行状态\n3. 记录数据\n4. 清洁保养\n5. 更换耗材',
     createTime: new Date(),
-    nextExecutionTime: new Date(Date.now() + 30*24*60*60*1000)
+    nextExecutionTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   }
-  
+
   notifyUserList.value = ['张三', '李四', '王五']
-  
+
   executionList.value = []
-  
+
   loading.value = false
 }
 
@@ -545,7 +499,7 @@ getDetail()
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   .title {
     font-size: 16px;
     font-weight: bold;

@@ -1,18 +1,6 @@
 <template>
-  <el-dialog 
-    :title="dialogTitle" 
-    v-model="dialogVisible"
-    width="800px" 
-    append-to-body
-    :close-on-click-modal="false"
-  >
-    <el-form 
-      ref="formRef" 
-      :model="form" 
-      :rules="rules" 
-      :disabled="mode === 'view'"
-      label-width="100px"
-    >
+  <el-dialog :title="dialogTitle" v-model="dialogVisible" width="800px" append-to-body :close-on-click-modal="false">
+    <el-form ref="formRef" :model="form" :rules="rules" :disabled="mode === 'view'" label-width="100px">
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="工单标题" prop="title">
@@ -22,54 +10,30 @@
         <el-col :span="12">
           <el-form-item label="优先级" prop="priority">
             <el-select v-model="form.priority" placeholder="请选择优先级">
-              <el-option
-                v-for="item in Object.values(TICKET_PRIORITY)"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
+              <el-option v-for="item in Object.values(TICKET_PRIORITY)" :key="item.value" :label="item.label"
+                :value="item.value" />
             </el-select>
           </el-form-item>
         </el-col>
       </el-row>
-      
+
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="使用模板" prop="templateId" v-if="mode === 'create'">
-            <el-select 
-              v-model="form.templateId" 
-              placeholder="选择模板（可选）"
-              clearable
-              @change="handleTemplateChange"
-            >
-              <el-option
-                v-for="item in templates"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id"
-              />
+            <el-select v-model="form.templateId" placeholder="选择模板（可选）" clearable @change="handleTemplateChange">
+              <el-option v-for="item in templates" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="处理时限" prop="deadline">
-            <el-date-picker
-              v-model="form.deadline"
-              type="datetime"
-              placeholder="选择处理时限"
-              :disabled="true"
-            />
+            <el-date-picker v-model="form.deadline" type="datetime" placeholder="选择处理时限" :disabled="true" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-form-item label="故障描述" prop="description">
-        <el-input
-          v-model="form.description"
-          type="textarea"
-          :rows="4"
-          placeholder="请详细描述故障情况"
-        />
+        <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请详细描述故障情况" />
       </el-form-item>
 
       <el-row :gutter="20">
@@ -94,12 +58,8 @@
         <el-col :span="12">
           <el-form-item label="设备专业" prop="equipmentSpecialty">
             <el-select v-model="form.equipmentSpecialty" placeholder="请选择设备专业">
-              <el-option
-                v-for="item in EQUIPMENT_SPECIALTY"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
+              <el-option v-for="item in EQUIPMENT_SPECIALTY" :key="item.value" :label="item.label"
+                :value="item.value" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -110,39 +70,22 @@
       </el-form-item>
 
       <el-form-item label="故障时间" prop="faultTime">
-        <el-date-picker
-          v-model="form.faultTime"
-          type="datetime"
-          placeholder="选择故障发现时间"
-          value-format="YYYY-MM-DD HH:mm:ss"
-        />
+        <el-date-picker v-model="form.faultTime" type="datetime" placeholder="选择故障发现时间"
+          value-format="YYYY-MM-DD HH:mm:ss" />
       </el-form-item>
 
       <el-form-item label="应急处置" prop="emergencyMeasure">
-        <el-input
-          v-model="form.emergencyMeasure"
-          type="textarea"
-          :rows="3"
-          placeholder="请描述应急处置方法"
-        />
+        <el-input v-model="form.emergencyMeasure" type="textarea" :rows="3" placeholder="请描述应急处置方法" />
       </el-form-item>
 
       <el-form-item label="附件" prop="attachments">
-        <el-upload
-          :action="uploadUrl"
-          :headers="uploadHeaders"
-          :file-list="fileList"
-          :on-success="handleUploadSuccess"
-          :on-remove="handleRemove"
-          :before-upload="beforeUpload"
-          multiple
-          :limit="5"
-        >
+        <el-upload :action="uploadUrl" :headers="uploadHeaders" :file-list="fileList" :on-success="handleUploadSuccess"
+          :on-remove="handleRemove" :before-upload="beforeUpload" multiple :limit="5">
           <el-button type="primary">点击上传</el-button>
           <template #tip>
             <div class="el-upload__tip">支持jpg/png/pdf文件，单个文件不超过10MB</div>
           </template>
-<!-- src/views/ticket/components/TicketForm.vue -->
+          <!-- src/views/ticket/components/TicketForm.vue -->
 
         </el-upload>
       </el-form-item>
@@ -152,7 +95,7 @@
       </el-form-item>
     </el-form>
 
-    
+
   </el-dialog>
 </template>
 
@@ -252,20 +195,20 @@ watch(() => form.priority, (val) => {
 
 // 打开对话框
 const open = async (id, openMode = 'create') => {
-dialogVisible.value = true
+  dialogVisible.value = true
   mode.value = openMode
   reset()
-  
+
   // 加载模板列表
   if (mode.value === 'create') {
-try {
+    try {
       const res = await ticketTemplateApi.list()
       templates.value = res.data || []
-    } catch (error) {
+    } catch {
       templates.value = []
     }
   }
-  
+
   // 加载工单详情
   if (id) {
     loading.value = true
@@ -282,10 +225,10 @@ try {
 // 选择模板
 const handleTemplateChange = async (templateId) => {
   if (!templateId) return
-  
+
   const res = await ticketTemplateApi.get(templateId)
   const template = res.data
-  
+
   // 填充模板数据
   form.title = template.title
   form.priority = template.priority
@@ -295,11 +238,11 @@ const handleTemplateChange = async (templateId) => {
 }
 
 // 文件上传成功
-const handleUploadSuccess = (response, file) => {
-  if (response.code === 200) {
+const handleUploadSuccess = (_response, file) => {
+  if (_response.code === 200) {
     form.attachments.push({
       name: file.name,
-      url: response.data.url
+      url: _response.data.url
     })
   }
 }
@@ -323,9 +266,9 @@ const beforeUpload = (file) => {
 }
 
 // 提交表单
-const submitForm = async () => {
+const _submitForm = async () => {
   await formRef.value?.validate()
-  
+
   loading.value = true
   try {
     if (form.id) {
@@ -335,8 +278,8 @@ const submitForm = async () => {
       await ticketApi.create(form)
       ElMessage.success('新建成功')
     }
-    
-dialogVisible.value = false
+
+    dialogVisible.value = false
     emit('success')
   } finally {
     loading.value = false
@@ -344,8 +287,8 @@ dialogVisible.value = false
 }
 
 // 取消
-const cancel = () => {
-dialogVisible.value = false
+const _cancel = () => {
+  dialogVisible.value = false
   reset()
 }
 

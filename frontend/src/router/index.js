@@ -1,6 +1,6 @@
 import { createWebHistory, createRouter } from 'vue-router'
 /* Layout */
-import Layout from '@/layout'
+import Layout from '@/layout/index.vue'
 // 导入业务路由模块
 import businessRoutes from './modules/business'
 

@@ -3,12 +3,7 @@
     <!-- 搜索区域 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="计划名称" prop="title">
-        <el-input
-          v-model="queryParams.title"
-          placeholder="请输入计划名称"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.title" placeholder="请输入计划名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="楼层" prop="floor">
         <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
@@ -48,14 +43,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="时间范围" prop="dateRange">
-        <el-date-picker
-          v-model="dateRange"
-          value-format="YYYY-MM-DD"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        />
+        <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD" type="daterange" range-separator="-"
+          start-placeholder="开始日期" end-placeholder="结束日期" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -66,31 +55,16 @@
     <!-- 工具栏 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['business:maintenance:add']"
-        >新建维保计划</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd"
+          v-hasPermi="['business:maintenance:add']">新建维保计划</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="CopyDocument"
-          @click="handleCopyLast"
-          v-hasPermi="['business:maintenance:add']"
-        >复制上次计划</el-button>
+        <el-button type="info" plain icon="CopyDocument" @click="handleCopyLast"
+          v-hasPermi="['business:maintenance:add']">复制上次计划</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['business:maintenance:export']"
-        >导出</el-button>
+        <el-button type="success" plain icon="Download" @click="handleExport"
+          v-hasPermi="['business:maintenance:export']">导出</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -114,20 +88,14 @@
       <el-table-column label="执行周期" align="center" prop="executionCycle" width="100" />
       <el-table-column label="审核状态" align="center" prop="approvalStatus" width="100">
         <template #default="scope">
-          <el-tag 
-            :type="getApprovalStatusType(scope.row.approvalStatus)"
-            disable-transitions
-          >
+          <el-tag :type="getApprovalStatusType(scope.row.approvalStatus)" disable-transitions>
             {{ getApprovalStatusLabel(scope.row.approvalStatus) }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="执行状态" align="center" prop="executionStatus" width="100">
         <template #default="scope">
-          <el-tag 
-            :type="getExecutionStatusType(scope.row.executionStatus)"
-            disable-transitions
-          >
+          <el-tag :type="getExecutionStatusType(scope.row.executionStatus)" disable-transitions>
             {{ getExecutionStatusLabel(scope.row.executionStatus) }}
           </el-tag>
         </template>
@@ -145,69 +113,31 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="240" fixed="right">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="View"
-            @click="handleView(scope.row)"
-            v-hasPermi="['business:maintenance:query']"
-          >详情</el-button>
-          <el-button
-            link
-            type="primary"
-            icon="Edit"
-            @click="handleUpdate(scope.row)"
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+            v-hasPermi="['business:maintenance:query']">详情</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus === 'draft'">编辑</el-button>
+          <el-button link type="success" icon="Check" @click="handleSubmitApproval(scope.row)"
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus === 'draft'">提交审核</el-button>
+          <el-button link type="warning" icon="Document" @click="handleGenerateTicket(scope.row)"
             v-hasPermi="['business:maintenance:edit']"
-            v-if="scope.row.approvalStatus === 'draft'"
-          >编辑</el-button>
-          <el-button
-            link
-            type="success"
-            icon="Check"
-            @click="handleSubmitApproval(scope.row)"
-            v-hasPermi="['business:maintenance:edit']"
-            v-if="scope.row.approvalStatus === 'draft'"
-          >提交审核</el-button>
-          <el-button
-            link
-            type="warning"
-            icon="Document"
-            @click="handleGenerateTicket(scope.row)"
-            v-hasPermi="['business:maintenance:edit']"
-            v-if="scope.row.approvalStatus === 'approved' && scope.row.executionStatus === 'pending'"
-          >生成工单</el-button>
-          <el-button
-            link
-            type="danger"
-            icon="Delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['business:maintenance:remove']"
-            v-if="scope.row.approvalStatus === 'draft'"
-          >删除</el-button>
+            v-if="scope.row.approvalStatus === 'approved' && scope.row.executionStatus === 'pending'">生成工单</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['business:maintenance:remove']" v-if="scope.row.approvalStatus === 'draft'">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 提交审核对话框 -->
     <el-dialog v-model="approvalDialog" title="提交审核" width="500px" append-to-body>
       <el-form ref="approvalRef" :model="approvalForm" :rules="approvalRules" label-width="80px">
         <el-form-item label="审核人" prop="approverId">
           <el-select v-model="approvalForm.approverId" placeholder="请选择审核人">
-            <el-option
-              v-for="item in approverList"
-              :key="item.userId"
-              :label="item.nickName"
-              :value="item.userId"
-            />
+            <el-option v-for="item in approverList" :key="item.userId" :label="item.nickName" :value="item.userId" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
@@ -225,14 +155,11 @@
 </template>
 
 <script setup name="Maintenance">
-import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
+import { ref, onMounted, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
-import { parseTime } from '@/utils/ruoyi'
-import { 
+import {
   listMaintenance,
-  getMaintenance,
   delMaintenance,
-  exportMaintenance,
   submitApproval as submitApprovalApi,
   getApproverList,
   copyLastPlan,

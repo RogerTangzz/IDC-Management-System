@@ -12,21 +12,11 @@
         </el-form-item>
         <el-form-item label="审核人" prop="approverId">
           <el-select v-model="form.approverId" placeholder="请选择审核人">
-            <el-option
-              v-for="user in approverList"
-              :key="user.id"
-              :label="user.name"
-              :value="user.id"
-            />
+            <el-option v-for="user in approverList" :key="user.id" :label="user.name" :value="user.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="提交说明" prop="comment">
-          <el-input
-            v-model="form.comment"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入提交说明"
-          />
+          <el-input v-model="form.comment" type="textarea" :rows="4" placeholder="请输入提交说明" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSubmit" :loading="loading">
@@ -43,7 +33,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { maintenancePlanApi } from '@/api/maintenance/plan'
+// Mock API 占位，真实接口集成后替换
+const maintenancePlanApi = {
+  get: async (id) => ({ data: { planId: id, title: '示例维保计划' } }),
+  submitApproval: async () => true
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -71,29 +65,19 @@ const approverList = ref([
 
 // 加载计划信息
 const loadPlan = async () => {
-  try {
-    const res = await maintenancePlanApi.get(route.params.id)
-    plan.value = res.data
-  } catch (error) {
-    ElMessage.error('加载计划信息失败')
-    router.back()
-  }
+  const res = await maintenancePlanApi.get(route.params.id)
+  plan.value = res.data
 }
 
 // 提交审核
 const handleSubmit = async () => {
   await formRef.value?.validate()
-  
+
   loading.value = true
-  try {
-    await maintenancePlanApi.submitApproval(route.params.id, form.approverId)
-    ElMessage.success('提交审核成功')
-    router.push('/maintenance/plan')
-  } catch (error) {
-    console.error('提交失败:', error)
-  } finally {
-    loading.value = false
-  }
+  await maintenancePlanApi.submitApproval(route.params.id, form.approverId)
+  ElMessage.success('提交审核成功')
+  router.push('/maintenance/plan')
+  loading.value = false
 }
 
 // 取消

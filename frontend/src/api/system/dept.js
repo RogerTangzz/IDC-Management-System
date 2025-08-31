@@ -1,52 +1,46 @@
-import request from '@/utils/request'
+import { get, post, put, del } from '@/utils/request'
 
 // 查询部门列表
-export function listDept(query) {
-  return request({
-    url: '/system/dept/list',
-    method: 'get',
-    params: query
-  })
-}
+/**
+ * 部门列表
+ * @param {object} query
+ * @returns {Promise<ApiResult<Dept[]>>}
+ */
+export function listDept(query) { return get('/system/dept/list', query) }
 
 // 查询部门列表（排除节点）
-export function listDeptExcludeChild(deptId) {
-  return request({
-    url: '/system/dept/list/exclude/' + deptId,
-    method: 'get'
-  })
-}
+/**
+ * 排除指定节点后的部门列表
+ * @param {number|string} deptId
+ * @returns {Promise<ApiResult<Dept[]>>}
+ */
+export function listDeptExcludeChild(deptId) { return get('/system/dept/list/exclude/' + deptId) }
 
 // 查询部门详细
-export function getDept(deptId) {
-  return request({
-    url: '/system/dept/' + deptId,
-    method: 'get'
-  })
-}
+/**
+ * 部门详情
+ * @param {number|string} deptId
+ * @returns {Promise<ApiResult<Dept>>}
+ */
+export function getDept(deptId) { return get('/system/dept/' + deptId) }
 
 // 新增部门
-export function addDept(data) {
-  return request({
-    url: '/system/dept',
-    method: 'post',
-    data: data
-  })
-}
+/**
+ * 新增部门
+ * @param {Partial<Dept>} data
+ */
+export function addDept(data) { return post('/system/dept', data) }
 
 // 修改部门
-export function updateDept(data) {
-  return request({
-    url: '/system/dept',
-    method: 'put',
-    data: data
-  })
-}
+/**
+ * 修改部门
+ * @param {Partial<Dept>} data
+ */
+export function updateDept(data) { return put('/system/dept', data) }
 
 // 删除部门
-export function delDept(deptId) {
-  return request({
-    url: '/system/dept/' + deptId,
-    method: 'delete'
-  })
-}
+/**
+ * 删除部门
+ * @param {number|string} deptId
+ */
+export function delDept(deptId) { return del('/system/dept/' + deptId) }

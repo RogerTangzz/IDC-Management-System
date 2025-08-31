@@ -3,29 +3,14 @@
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="工单编号" prop="ticketNo">
-        <el-input
-          v-model="queryParams.ticketNo"
-          placeholder="请输入工单编号"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.ticketNo" placeholder="请输入工单编号" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="标题" prop="title">
-        <el-input
-          v-model="queryParams.title"
-          placeholder="请输入标题"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.title" placeholder="请输入标题" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-          <el-option
-            v-for="dict in ticket_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in ticket_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="优先级" prop="priority">
@@ -36,14 +21,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间">
-        <el-date-picker
-          v-model="dateRange"
-          value-format="YYYY-MM-DD"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        ></el-date-picker>
+        <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD" type="daterange" range-separator="-"
+          start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -54,52 +33,24 @@
     <!-- 操作按钮 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['business:ticket:add']"
-        >新增</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd"
+          v-hasPermi="['business:ticket:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['business:ticket:edit']"
-        >修改</el-button>
+        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['business:ticket:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['business:ticket:remove']"
-        >删除</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['business:ticket:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="User"
-          :disabled="multiple"
-          @click="handleBatchAssign"
-          v-hasPermi="['business:ticket:assign']"
-        >批量指派</el-button>
+        <el-button type="info" plain icon="User" :disabled="multiple" @click="handleBatchAssign"
+          v-hasPermi="['business:ticket:assign']">批量指派</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['business:ticket:export']"
-        >导出</el-button>
+        <el-button type="warning" plain icon="Download" @click="handleExport"
+          v-hasPermi="['business:ticket:export']">导出</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -116,9 +67,8 @@
       </el-table-column>
       <el-table-column label="优先级" align="center" prop="priority" width="80">
         <template #default="scope">
-          <el-tag 
-            :type="scope.row.priority === 'high' ? 'danger' : scope.row.priority === 'medium' ? 'warning' : 'info'"
-          >
+          <el-tag
+            :type="scope.row.priority === 'high' ? 'danger' : scope.row.priority === 'medium' ? 'warning' : 'info'">
             {{ getPriorityLabel(scope.row.priority) }}
           </el-tag>
         </template>
@@ -143,21 +93,19 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
         <template #default="scope">
-          <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['business:ticket:query']">查看</el-button>
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['business:ticket:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['business:ticket:remove']">删除</el-button>
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)"
+            v-hasPermi="['business:ticket:query']">查看</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['business:ticket:edit']">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['business:ticket:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 分页 -->
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
+      @pagination="getList" />
 
     <!-- 添加或修改工单对话框 -->
     <el-dialog :title="title" v-model="open" width="800px" append-to-body>
@@ -203,13 +151,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="发现时间" prop="discoveryTime">
-              <el-date-picker
-                v-model="form.discoveryTime"
-                type="datetime"
-                placeholder="选择故障发现时间"
-                format="YYYY-MM-DD HH:mm:ss"
-                value-format="YYYY-MM-DD HH:mm:ss"
-              />
+              <el-date-picker v-model="form.discoveryTime" type="datetime" placeholder="选择故障发现时间"
+                format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -241,12 +184,7 @@
       <el-form ref="assignRef" :model="assignForm" label-width="80px">
         <el-form-item label="指派给" prop="userId">
           <el-select v-model="assignForm.userId" placeholder="请选择处理人">
-            <el-option
-              v-for="user in userList"
-              :key="user.userId"
-              :label="user.nickName"
-              :value="user.userId"
-            />
+            <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -263,8 +201,8 @@
 <script setup name="Ticket">
 import { ref, reactive, getCurrentInstance, toRefs } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
-import { listTicket, getTicket, delTicket, addTicket, updateTicket, assignTickets } from "@/api/business/ticket"
-import { listUser } from "@/api/system/user"
+// import { listTicket, getTicket, delTicket, addTicket, updateTicket, assignTickets } from "@/api/business/ticket" // 后端集成后启用
+// import { listUser } from "@/api/system/user" // 当前使用本地 mock 数据
 import { useRouter, useRoute } from 'vue-router'
 
 const { proxy } = getCurrentInstance()
@@ -321,33 +259,33 @@ const { queryParams, form, assignForm, rules } = toRefs(data)
 /** 查询工单列表 */
 function getList() {
   loading.value = true
-  
+
   // 使用Mock数据并应用过滤
   setTimeout(() => {
     let filteredData = [...mockTickets.value]
-    
+
     // 应用搜索过滤
     if (queryParams.value.ticketNo) {
-      filteredData = filteredData.filter(item => 
+      filteredData = filteredData.filter(item =>
         item.ticketNo.toLowerCase().includes(queryParams.value.ticketNo.toLowerCase())
       )
     }
     if (queryParams.value.title) {
-      filteredData = filteredData.filter(item => 
+      filteredData = filteredData.filter(item =>
         item.title.includes(queryParams.value.title)
       )
     }
     if (queryParams.value.status) {
-      filteredData = filteredData.filter(item => 
+      filteredData = filteredData.filter(item =>
         item.status === queryParams.value.status
       )
     }
     if (queryParams.value.priority) {
-      filteredData = filteredData.filter(item => 
+      filteredData = filteredData.filter(item =>
         item.priority === queryParams.value.priority
       )
     }
-    
+
     ticketList.value = filteredData
     total.value = filteredData.length
     loading.value = false
@@ -456,7 +394,7 @@ function submitForm() {
           ticketNo: 'TK' + Date.now(),
           status: 'pending',
           createTime: parseTime(new Date()),
-          deadline: parseTime(new Date(Date.now() + 24*60*60*1000))
+          deadline: parseTime(new Date(Date.now() + 24 * 60 * 60 * 1000))
         }
         mockTickets.value.push(newTicket)
         proxy.$modal.msgSuccess("新增成功")
@@ -474,12 +412,12 @@ function submitForm() {
 /** 删除按钮操作 */
 function handleDelete(row) {
   const ticketIds = row.ticketId || ids.value
-  proxy.$modal.confirm('是否确认删除工单编号为"' + ticketIds + '"的数据项？').then(function() {
+  proxy.$modal.confirm('是否确认删除工单编号为"' + ticketIds + '"的数据项？').then(function () {
     // 从Mock数据中删除
     mockTickets.value = mockTickets.value.filter(t => !ticketIds.includes(t.ticketId))
     getList()
     proxy.$modal.msgSuccess("删除成功")
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 /** 批量指派按钮操作 */
@@ -522,7 +460,7 @@ function handleExport() {
 function getPriorityLabel(priority) {
   const map = {
     high: '高',
-    medium: '中', 
+    medium: '中',
     low: '低'
   }
   return map[priority] || priority

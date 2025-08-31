@@ -17,6 +17,10 @@ export default {
       el.addEventListener("click", handler)
       el.$destroyCopy = () => el.removeEventListener("click", handler)
     }
+  },
+  unmounted(el) {
+    // 清理事件监听，避免内存泄漏
+    el.$destroyCopy && el.$destroyCopy()
   }
 }
 
@@ -47,7 +51,9 @@ function copyTextToClipboard(input, { target = document.body } = {}) {
   let isSuccess = false
   try {
     isSuccess = document.execCommand('copy')
-  } catch { }
+  } catch {
+    // 忽略复制失败（可能由于浏览器限制）
+  }
 
   element.remove()
 

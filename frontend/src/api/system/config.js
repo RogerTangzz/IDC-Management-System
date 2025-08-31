@@ -1,60 +1,52 @@
-import request from '@/utils/request'
+import { get, post, put, del } from '@/utils/request'
 
 // 查询参数列表
-export function listConfig(query) {
-  return request({
-    url: '/system/config/list',
-    method: 'get',
-    params: query
-  })
-}
+/**
+ * 配置参数列表
+ * @param {object} query
+ * @returns {Promise<ApiResult<PageResult<Config>>>}
+ */
+export function listConfig(query) { return get('/system/config/list', query) }
 
 // 查询参数详细
-export function getConfig(configId) {
-  return request({
-    url: '/system/config/' + configId,
-    method: 'get'
-  })
-}
+/**
+ * 参数详情
+ * @param {number|string} configId
+ * @returns {Promise<ApiResult<Config>>}
+ */
+export function getConfig(configId) { return get('/system/config/' + configId) }
 
 // 根据参数键名查询参数值
-export function getConfigKey(configKey) {
-  return request({
-    url: '/system/config/configKey/' + configKey,
-    method: 'get'
-  })
-}
+/**
+ * 根据 key 获取配置值
+ * @param {string} configKey
+ * @returns {Promise<ApiResult<string>>}
+ */
+export function getConfigKey(configKey) { return get('/system/config/configKey/' + configKey) }
 
 // 新增参数配置
-export function addConfig(data) {
-  return request({
-    url: '/system/config',
-    method: 'post',
-    data: data
-  })
-}
+/**
+ * 新增参数配置
+ * @param {object} data
+ */
+export function addConfig(data) { return post('/system/config', data) }
 
 // 修改参数配置
-export function updateConfig(data) {
-  return request({
-    url: '/system/config',
-    method: 'put',
-    data: data
-  })
-}
+/**
+ * 修改参数配置
+ * @param {object} data
+ */
+export function updateConfig(data) { return put('/system/config', data) }
 
 // 删除参数配置
-export function delConfig(configId) {
-  return request({
-    url: '/system/config/' + configId,
-    method: 'delete'
-  })
-}
+/**
+ * 删除参数配置
+ * @param {number|string} configId
+ */
+export function delConfig(configId) { return del('/system/config/' + configId) }
 
 // 刷新参数缓存
-export function refreshCache() {
-  return request({
-    url: '/system/config/refreshCache',
-    method: 'delete'
-  })
-}
+/**
+ * 刷新配置缓存
+ */
+export function refreshCache() { return del('/system/config/refreshCache') }

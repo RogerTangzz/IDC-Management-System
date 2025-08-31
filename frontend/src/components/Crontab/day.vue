@@ -56,7 +56,7 @@ const emit = defineEmits(['update'])
 const props = defineProps({
     cron: {
         type: Object,
-        default: {
+        default: () => ({
             second: "*",
             min: "*",
             hour: "*",
@@ -64,7 +64,7 @@ const props = defineProps({
             month: "*",
             week: "?",
             year: "",
-        }
+        })
     },
     check: {
         type: Function,
@@ -80,20 +80,16 @@ const average02 = ref(1)
 const workday = ref(1)
 const checkboxList = ref([])
 const checkCopy = ref([1])
-const cycleTotal = computed(() => {
-    cycle01.value = props.check(cycle01.value, 1, 30)
-    cycle02.value = props.check(cycle02.value, cycle01.value + 1, 31)
-    return cycle01.value + '-' + cycle02.value
-})
-const averageTotal = computed(() => {
-    average01.value = props.check(average01.value, 1, 30)
-    average02.value = props.check(average02.value, 1, 31 - average01.value)
-    return average01.value + '/' + average02.value
-})
-const workdayTotal = computed(() => {
-    workday.value = props.check(workday.value, 1, 31)
-    return workday.value + 'W'
-})
+// clamp numeric inputs via watchers (avoid side-effects inside computed)
+watch(cycle01, () => { cycle01.value = props.check(cycle01.value, 1, 30) })
+watch([cycle02, cycle01], () => { cycle02.value = props.check(cycle02.value, cycle01.value + 1, 31) })
+watch(average01, () => { average01.value = props.check(average01.value, 1, 30) })
+watch([average02, average01], () => { average02.value = props.check(average02.value, 1, 31 - average01.value) })
+watch(workday, () => { workday.value = props.check(workday.value, 1, 31) })
+
+const cycleTotal = computed(() => cycle01.value + '-' + cycle02.value)
+const averageTotal = computed(() => average01.value + '/' + average02.value)
+const workdayTotal = computed(() => workday.value + 'W')
 const checkboxString = computed(() => {
     return checkboxList.value.join(',')
 })

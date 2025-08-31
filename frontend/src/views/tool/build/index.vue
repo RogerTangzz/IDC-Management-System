@@ -143,13 +143,13 @@ function download() {
 }
 function empty() {
   proxy.$modal.confirm('确定要清空所有组件吗？', '提示', { type: 'warning' }).then(() => {
-      idGlobal.value = 100
-      drawingList.value = []
-    }
+    idGlobal.value = 100
+    drawingList.value = []
+  }
   )
 }
 
-function onEnd(obj, a) {
+function onEnd(obj, _a) {
   if (obj.from !== obj.to) {
     activeData.value = tempActiveData
     activeId.value = idGlobal.value
@@ -264,7 +264,7 @@ function execDownload(data) {
   Download.saveAs(blob, data.fileName)
 }
 
-function execCopy(data) {
+function execCopy(_data) {
   document.getElementById('copyNode').click()
 }
 function AssembleFormData() {
@@ -294,13 +294,13 @@ watch(activeId, (val) => {
 
 onMounted(() => {
   const clipboard = new ClipboardJS('#copyNode', {
-    text: trigger => {
+    text: _trigger => {
       const codeStr = generateCode()
       ElNotification({ title: '成功', message: '代码已复制到剪切板，可粘贴。', type: 'success' })
       return codeStr
     }
   })
-  clipboard.on('error', e => {
+  clipboard.on('error', _e => {
     proxy.$modal.msgError('代码复制失败')
   })
 })
