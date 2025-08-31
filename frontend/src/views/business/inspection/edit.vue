@@ -205,7 +205,7 @@ import { getCurrentInstance, ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getInspection, updateInspection, generateTickets } from '@/api/business/inspection'
 import { listUser } from '@/api/system/user'
-import { FLOORS, INSPECTION_ITEMS } from './constants'
+import { FLOORS, INSPECTION_ITEMS, anomalyDetectionRules, anomalyPriorityRules, getAnomalyPriority } from './constants'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -280,16 +280,23 @@ const progressStatus = computed(() => {
   return 'exception'
 })
 
-// 异常项
+// 异常项（复用统一规则）
 const anomalyItems = computed(() => {
   const items = []
   currentItems.value.forEach(item => {
     const value = formItems.value[item.id]
-    if (checkAnomaly(item, value)) {
+    if (value === null || value === undefined) return
+    let isAnomaly = false
+    if (item.type === 'boolean') {
+      isAnomaly = anomalyDetectionRules.boolean(value)
+    } else if (item.type === 'number' && anomalyDetectionRules.number[item.id]) {
+      isAnomaly = anomalyDetectionRules.number[item.id](value)
+    }
+    if (isAnomaly) {
       items.push({
         ...item,
         value,
-        priority: getAnomalyPriority(item)
+        priority: determinePriority(item.label)
       })
     }
   })
@@ -336,28 +343,10 @@ function getCategoryItems(category) {
   return []
 }
 
-/** 检查是否异常 */
-function checkAnomaly(item, value) {
-  if (value === null || value === undefined) return false
-  
-  if (item.type === 'boolean') {
-    return value === false
-  }
-  
-  if (item.type === 'number' && item.min !== undefined) {
-    return value < item.min || value > item.max
-  }
-  
-  return false
-}
-
-/** 获取异常优先级 */
-function getAnomalyPriority(item) {
-  if (item.label.includes('氢气') || item.label.includes('消防')) {
-    return 'high'
-  }
-  if (item.label.includes('漏水') || item.label.includes('温度')) {
-    return 'medium'
+// 统一优先级判定（使用 constants 中的关键词映射）
+function determinePriority(label) {
+  for (const [priority, keywords] of Object.entries(anomalyPriorityRules)) {
+    if (keywords.some(k => label.includes(k))) return priority
   }
   return 'low'
 }

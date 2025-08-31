@@ -107,23 +107,54 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { maintenancePlanApi } from '@/api/maintenance/plan'
+import { getMaintenance as getMaintenancePlan } from '@/api/business/maintenance'
 import StatusTag from '@/components/Status/StatusTag.vue'
-import { parseTime } from '@/utils'
-import { getDictLabel } from '@/constants/dict'
+import { parseTime } from '@/utils/ruoyi'
+// 字典工具：使用已有的 useDict / 或后续可替换
+import { useDict } from '@/utils/dict'
+// 简单封装获取字典标签的方法（避免不存在的 '@/constants/dict' 导入错误）
+const getDictLabel = (dictType, value) => {
+  const { [dictType]: dictArr } = useDict(dictType)
+  const item = dictArr.value?.find(d => d.value === value)
+  return item ? item.label : value
+}
 
 const route = useRoute()
 const router = useRouter()
 
 const loading = ref(false)
-const plan = ref({})
+const plan = ref({
+  title: '-',
+  floor: '-',
+  version: '-',
+  mopCategory: undefined,
+  executionCycle: {},
+  // 用空字符串而非 undefined 避免子组件 status prop 类型校验警告
+  approvalStatus: '',
+  executionStatus: '',
+  approverName: '-',
+  executorName: '-',
+  mopName: '-',
+  mopPurpose: '-',
+  tools: '-',
+  materials: '-',
+  safety: '-',
+  specialTools: '-',
+  steps: '',
+  inspectionResult: '-',
+  remark: '-' 
+})
 
 // 加载详情
 const loadDetail = async () => {
   loading.value = true
   try {
-    const res = await maintenancePlanApi.get(route.params.id)
-    plan.value = res.data
+    const res = await getMaintenancePlan(route.params.planId || route.params.id)
+    const data = res?.data || res
+    plan.value = { ...plan.value, ...data }
+  } catch (e) {
+    // 500 时保持占位展示，并提示
+    console.error('加载维保计划失败', e)
   } finally {
     loading.value = false
   }
@@ -131,7 +162,7 @@ const loadDetail = async () => {
 
 // 编辑
 const handleEdit = () => {
-  router.push(`/maintenance/plan/edit/${plan.value.id}`)
+  router.push(`/business/maintenance/plan/form/${plan.value.planId || plan.value.id}`)
 }
 
 // 返回
@@ -142,8 +173,8 @@ const handleBack = () => {
 // 工具函数
 const getMOPCategoryLabel = (value) => getDictLabel('MOP_CATEGORY', value)
 const getMOPCategoryType = (value) => {
-  const map = { daily: 'success', regular: '', annual: 'warning', emergency: 'danger' }
-  return map[value] || ''
+  const map = { daily: 'success', regular: 'info', annual: 'warning', emergency: 'danger' }
+  return map[value] ? map[value] : 'info'
 }
 
 const getExecutionStatusLabel = (value) => {
@@ -151,8 +182,8 @@ const getExecutionStatusLabel = (value) => {
   return map[value] || value
 }
 const getExecutionStatusType = (value) => {
-  const map = { pending: 'warning', executing: '', completed: 'success' }
-  return map[value] || ''
+  const map = { pending: 'warning', executing: 'primary', completed: 'success' }
+  return map[value] || 'info'
 }
 
 const getApprovalType = (action) => {

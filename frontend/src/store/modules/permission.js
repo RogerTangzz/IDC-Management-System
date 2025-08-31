@@ -57,7 +57,7 @@ const usePermissionStore = defineStore(
 
 // 遍历后台传来的路由字符串，转换为组件对象
 function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
-  return asyncRouterMap.filter(route => {
+  const processed = asyncRouterMap.filter(route => {
     if (type && route.children) {
       route.children = filterChildren(route.children)
     }
@@ -75,20 +75,29 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
     }
     if (route.children != null && route.children && route.children.length) {
       route.children = filterAsyncRouter(route.children, route, type)
-    } else {
+    } else if (!route.component) {
+      // 仅在没有 component 也没有子路由时才丢弃
       delete route['children']
       delete route['redirect']
+      console.warn('[permission] 丢弃无组件叶子路由：', route.path)
+      return false
     }
     return true
   })
+  if (import.meta.env.DEV) {
+    console.debug('[permission] 处理后的异步路由：', processed.map(r => r.path))
+  }
+  return processed
 }
 
 function filterChildren(childrenMap, lastRouter = false) {
-  var children = []
+  const children = []
   childrenMap.forEach(el => {
-    el.path = lastRouter ? lastRouter.path + '/' + el.path : el.path
+    // 保持原相对 path，避免重复拼接导致匹配异常
     if (el.children && el.children.length && el.component === 'ParentView') {
-      children = children.concat(filterChildren(el.children, el))
+      // 保留 ParentView 自身，继续递归其子元素
+      el.children = filterChildren(el.children, el)
+      children.push(el)
     } else {
       children.push(el)
     }

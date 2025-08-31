@@ -240,7 +240,7 @@ import { getCurrentInstance, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getInspection, generateTickets } from "@/api/business/inspection"
 import { addTicket } from "@/api/business/ticket"
-import { FLOORS, INSPECTION_ITEMS } from "./constants"
+import { FLOORS, INSPECTION_ITEMS, anomalyDetectionRules, anomalyPriorityRules } from "./constants"
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -289,9 +289,30 @@ const filteredItems = computed(() => {
 })
 
 // 异常项
-const anomalyItems = computed(() => {
-  return inspectionItems.value.filter(item => item.isAnomaly)
-})
+const anomalyItems = computed(() => inspectionItems.value.filter(item => item.isAnomaly))
+
+function evaluateItems() {
+  inspectionItems.value = inspectionItems.value.map(item => {
+    const value = item.value
+    let isAnomaly = false
+    if (value !== null && value !== undefined) {
+      if (item.type === 'boolean') {
+        isAnomaly = anomalyDetectionRules.boolean(value)
+      } else if (item.type === 'number' && anomalyDetectionRules.number[item.id]) {
+        isAnomaly = anomalyDetectionRules.number[item.id](value)
+      }
+    }
+    if (isAnomaly) {
+      // 计算优先级
+      let priority = 'low'
+      for (const [p, keywords] of Object.entries(anomalyPriorityRules)) {
+        if (keywords.some(k => item.label.includes(k))) { priority = p; break }
+      }
+      return { ...item, isAnomaly: true, priority }
+    }
+    return { ...item, isAnomaly: false }
+  })
+}
 
 /** 获取巡检详情 */
 function getDetail() {

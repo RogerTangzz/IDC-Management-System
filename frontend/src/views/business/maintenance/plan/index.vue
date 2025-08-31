@@ -275,7 +275,7 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitApproval">确 定</el-button>
+          <el-button type="primary" @click="submitApprovalResult">确 定</el-button>
           <el-button @click="approveOpen = false">取 消</el-button>
         </div>
       </template>
@@ -402,13 +402,13 @@ function handleAdd() {
 
 /** 复制上次计划 */
 function handleCopyLast() {
-  getLatestPlan().then(response => {
-    if (response.data) {
-      router.push('/business/maintenance/plan/form?copy=' + response.data.planId);
-    } else {
-      proxy.$modal.msgWarning("暂无可复制的维保计划");
-    }
-  });
+  // 查找最后一次的计划
+  if (planList.value.length > 0) {
+    const lastPlan = planList.value.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))[0];
+    router.push('/business/maintenance/plan/form?copy=' + lastPlan.planId);
+  } else {
+    proxy.$modal.msgWarning("暂无可复制的维保计划");
+  }
 }
 
 /** 修改按钮操作 */
@@ -465,7 +465,7 @@ function handleApprove(row) {
 }
 
 /** 提交审核结果 */
-function submitApproval() {
+function submitApprovalResult() {
   proxy.$refs["approveRef"].validate(valid => {
     if (valid) {
       if (approveForm.value.result === 'approved') {

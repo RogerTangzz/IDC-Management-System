@@ -46,7 +46,7 @@ Mock.mock('/dev-api/getRouters', 'get', () => {
         name: 'Business',
         path: '/business',
         hidden: false,
-        redirect: 'noRedirect',
+        redirect: '/business/ticket/list',
         component: 'Layout',
         alwaysShow: true,
         meta: { title: '业务管理', icon: 'monitor', noCache: false },
@@ -55,8 +55,31 @@ Mock.mock('/dev-api/getRouters', 'get', () => {
             name: 'Ticket',
             path: 'ticket',
             hidden: false,
-            component: 'business/ticket/index',
-            meta: { title: '工单管理', icon: 'edit', noCache: false }
+            component: 'ParentView',
+            meta: { title: '工单管理', icon: 'edit', noCache: false },
+            children: [
+              {
+                name: 'TicketList',
+                path: 'list',
+                hidden: false,
+                component: 'business/ticket/index',
+                meta: { title: '工单列表', icon: 'edit', noCache: false }
+              },
+              {
+                name: 'TicketDetail',
+                path: 'detail/:ticketId',
+                hidden: true,
+                component: 'business/ticket/detail',
+                meta: { title: '工单详情', icon: 'view', noCache: true, activeMenu: '/business/ticket/list' }
+              },
+              {
+                name: 'TicketEdit',
+                path: 'edit/:ticketId',
+                hidden: true,
+                component: 'business/ticket/index',
+                meta: { title: '编辑工单', icon: 'edit', noCache: true, activeMenu: '/business/ticket/list' }
+              }
+            ]
           },
           {
             name: 'Inspection',
@@ -66,11 +89,46 @@ Mock.mock('/dev-api/getRouters', 'get', () => {
             meta: { title: '巡检管理', icon: 'list', noCache: false }
           },
           {
+            name: 'InspectionCreate',
+            path: 'inspection/create',
+            hidden: true,
+            component: 'business/inspection/create',
+            meta: { title: '开始巡检', icon: 'form', noCache: true }
+          },
+          {
+            name: 'InspectionEdit',
+            path: 'inspection/edit/:inspectionId',
+            hidden: true,
+            component: 'business/inspection/edit',
+            meta: { title: '继续巡检', icon: 'form', noCache: true }
+          },
+          {
+            name: 'InspectionDetail',
+            path: 'inspection/detail/:inspectionId',
+            hidden: true,
+            component: 'business/inspection/detail',
+            meta: { title: '巡检详情', icon: 'view', noCache: true }
+          },
+          {
             name: 'Maintenance',
             path: 'maintenance',
             hidden: false,
-            component: 'business/maintenance/index',
-            meta: { title: '维保计划', icon: 'date', noCache: false }
+            component: 'business/maintenance/plan/index',
+            meta: { title: '维保管理', icon: 'tool', noCache: false }
+          },
+          {
+            name: 'MaintenancePlanForm',
+            path: 'maintenance/plan/form/:planId?',
+            hidden: true,
+            component: 'business/maintenance/plan/form',
+            meta: { title: '维保计划表单', icon: 'form', noCache: true }
+          },
+          {
+            name: 'MaintenancePlanDetail',
+            path: 'maintenance/plan/detail/:planId',
+            hidden: true,
+            component: 'business/maintenance/plan/detail',
+            meta: { title: '维保计划详情', icon: 'view', noCache: true }
           }
         ]
       }
@@ -238,6 +296,66 @@ Mock.mock(RegExp('/dev-api/business/maintenance/list.*'), 'get', (options) => {
       }
     ],
     total: result.total || 1
+  }
+})
+
+// 维保计划详情（如果 business.js 中未覆盖）
+Mock.mock(/\/dev-api\/business\/maintenance\/[0-9]+$/, 'get', (options) => {
+  const id = options.url.split('/').pop()
+  return {
+    code: 200,
+    msg: 'success',
+    data: {
+      planId: Number(id),
+      planNo: 'MP' + id,
+      title: 'Mock维保计划 ' + id,
+      floor: '1',
+      version: 'V1.0',
+      mopCategory: 'monthly',
+      executionCycle: { frequency: 1, unit: '月' },
+      approvalStatus: 'draft',
+      executionStatus: 'pending',
+      approverName: '王经理',
+      executorName: '李四',
+      mopName: '设备巡检与保养',
+      mopPurpose: '保持设备良好状态',
+      tools: '扳手, 万用表',
+      materials: '清洁剂',
+      safety: '安全帽',
+      specialTools: '压力表',
+      steps: '1. 断电检查\n2. 拆检\n3. 清洁润滑\n4. 复位测试',
+      inspectionResult: '-',
+      remark: 'Mock 数据',
+      createTime: '2024-01-15 10:00:00',
+      nextExecutionTime: '2024-02-01 10:00:00',
+      approvalHistory: [
+        { id: 1, time: '2024-01-15 10:05:00', operatorName: '张三', action: 'submit', comment: '提交审核' }
+      ]
+    }
+  }
+})
+
+// 审核人列表
+Mock.mock('/dev-api/business/maintenance/approvers', 'get', () => {
+  return {
+    code: 200,
+    msg: 'success',
+    data: [
+      { userId: 1, userName: 'approver1', nickName: '审批1' },
+      { userId: 2, userName: 'approver2', nickName: '审批2' }
+    ]
+  }
+})
+
+// 通知人列表
+Mock.mock('/dev-api/business/maintenance/notifyUsers', 'get', () => {
+  return {
+    code: 200,
+    msg: 'success',
+    data: [
+      { userId: 3, userName: 'notify1', nickName: '通知1' },
+      { userId: 4, userName: 'notify2', nickName: '通知2' }
+    ]
   }
 })
 

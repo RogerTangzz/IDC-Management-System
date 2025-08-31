@@ -257,16 +257,16 @@
 </template>
 
 <script setup name="TicketDetail">
-import { getCurrentInstance, ref } from 'vue'
+import { getCurrentInstance, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getTicket, updateTicket, changeTicketStatus } from "@/api/business/ticket"
+import { getTicket, updateTicket } from "@/api/business/ticket"
 import { listUser } from "@/api/system/user"
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
 
-const ticketId = route.params && route.params.id
+const ticketId = route.params.ticketId || route.params.id
 const loading = ref(false)
 const assignOpen = ref(false)
 const completeOpen = ref(false)
@@ -299,28 +299,29 @@ const completeRules = {
 }
 
 /** 获取工单详情 */
-function getDetail() {
+async function getDetail() {
+  if (!ticketId) return
   loading.value = true
-  // Mock数据
-  form.value = {
-    ticketId: ticketId,
-    ticketNo: 'TK202501001',
-    title: '空调漏水处理',
-    status: 'pending',
-    priority: 'high',
-    equipment: '空调01',
-    reporter: '张三',
-    reporterPhone: '13800138000',
-    specialty: 'hvac',
-    location: '2楼机房',
-    description: '空调内机漏水，地面有积水',
-    createTime: new Date(),
-    deadline: new Date(Date.now() + 4*60*60*1000)
+  try {
+    const res = await getTicket(ticketId)
+    const data = res?.data || res
+    form.value = data
+    logList.value = (data.logs || []).map(l => ({
+      createTime: l.createTime,
+      userName: l.userName,
+      action: l.action,
+      remark: l.remark,
+      type: l.type || 'primary'
+    }))
+    attachmentList.value = (data.attachments || []).map(f => ({
+      name: f.name || f.fileName,
+      url: f.url || f.fileUrl
+    }))
+  } catch (e) {
+    proxy.$modal && proxy.$modal.msgError('获取工单详情失败')
+  } finally {
+    loading.value = false
   }
-  logList.value = [
-    { createTime: new Date(), userName: 'admin', action: '创建工单', type: 'primary' }
-  ]
-  loading.value = false
 }
 
 /** 获取剩余时间 */
@@ -356,7 +357,7 @@ function handleTimeout() {
 
 /** 编辑 */
 function handleEdit() {
-  router.push('/business/ticket/edit/' + ticketId)
+  router.push(`/business/ticket/edit/${ticketId}?from=detail`)
 }
 
 /** 指派 */
@@ -440,7 +441,10 @@ function getUserList() {
   ]
 }
 
-getDetail()
+onMounted(() => {
+  getDetail()
+  getUserList()
+})
 </script>
 
 <style lang="scss" scoped>

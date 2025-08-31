@@ -1,6 +1,8 @@
 import { createWebHistory, createRouter } from 'vue-router'
 /* Layout */
 import Layout from '@/layout'
+// 导入业务路由模块
+import businessRoutes from './modules/business'
 
 /**
  * Note: 路由配置项
@@ -70,111 +72,49 @@ export const constantRoutes = [
       }
     ]
   },
-  {
-    path: '/user',
-    component: Layout,
-    hidden: true,
-    redirect: 'noredirect',
-    children: [
-      {
-        path: 'profile/:activeTab?',
-        component: () => import('@/views/system/user/profile/index'),
-        name: 'Profile',
-        meta: { title: '个人中心', icon: 'user' }
-      }
-    ]
-  },
-  // 业务管理路由
-  {
-    path: '/business',
-    component: Layout,
-    redirect: '/business/ticket',
-    name: 'Business',
-    meta: { title: '业务管理', icon: 'monitor' },
-    children: [
-      {
-        path: 'ticket',
-        component: () => import('@/views/business/ticket/index'),
-        name: 'Ticket',
-        meta: { title: '工单管理', icon: 'edit' }
-      },
-      {
-        path: 'ticket/detail/:id',
-        component: () => import('@/views/business/ticket/detail'),
-        name: 'TicketDetail',
-        meta: { title: '工单详情', activeMenu: '/business/ticket' },
-        hidden: true
-      },
-      {
-        path: 'ticket/create',
-        component: () => import('@/views/business/ticket/form'),
-        name: 'TicketCreate',
-        meta: { title: '新建工单', activeMenu: '/business/ticket' },
-        hidden: true
-      },
-      {
-        path: 'ticket/edit/:id',
-        component: () => import('@/views/business/ticket/form'),
-        name: 'TicketEdit',
-        meta: { title: '编辑工单', activeMenu: '/business/ticket' },
-        hidden: true
-      },
-      {
-        path: 'inspection',
-        component: () => import('@/views/business/inspection/index'),
-        name: 'Inspection',
-        meta: { title: '巡检管理', icon: 'list' }
-      },
-      {
-        path: 'inspection/create',
-        component: () => import('@/views/business/inspection/create'),
-        name: 'InspectionCreate',
-        meta: { title: '新建巡检', activeMenu: '/business/inspection' },
-        hidden: true
-      },
-      {
-        path: 'inspection/detail/:id',
-        component: () => import('@/views/business/inspection/detail'),
-        name: 'InspectionDetail',
-        meta: { title: '巡检详情', activeMenu: '/business/inspection' },
-        hidden: true
-      },
-      {
-        path: 'inspection/edit/:id',
-        component: () => import('@/views/business/inspection/edit'),
-        name: 'InspectionEdit',
-        meta: { title: '编辑巡检', activeMenu: '/business/inspection' },
-        hidden: true
-      },
-      {
-        path: 'maintenance',
-        component: () => import('@/views/business/maintenance/index'),
-        name: 'Maintenance',
-        meta: { title: '维保计划', icon: 'date' }
-      },
-      {
-        path: 'maintenance/create',
-        component: () => import('@/views/business/maintenance/create'),
-        name: 'MaintenanceCreate',
-        meta: { title: '新建维保计划', activeMenu: '/business/maintenance' },
-        hidden: true
-      },
-      {
-        path: 'maintenance/detail/:id',
-        component: () => import('@/views/business/maintenance/detail'),
-        name: 'MaintenanceDetail',
-        meta: { title: '维保计划详情', activeMenu: '/business/maintenance' },
-        hidden: true
-      },
-      {
-        path: 'maintenance/edit/:id',
-        component: () => import('@/views/business/maintenance/edit'),
-        name: 'MaintenanceEdit',
-        meta: { title: '编辑维保计划', activeMenu: '/business/maintenance' },
-        hidden: true
-      }
-    ]
-  }
+  // {
+  //   path: '/user',
+  //   component: Layout,
+  //   hidden: true,
+  //   redirect: 'noredirect',
+  //   children: [
+  //     {
+  //       path: 'profile/:activeTab?',
+  //       component: () => import('@/views/system/user/profile/index'),
+  //       name: 'Profile',
+  //       meta: { title: '个人中心', icon: 'user' }
+  //     }
+  //   ]
+  // }
+  //,
+  // // 业务管理路由
+  // {
+  //   path: '/business',
+  //   component: Layout,
+  //   redirect: '/business/ticket',
+  //   name: 'Business',
+  //   meta: { title: '业务管理', icon: 'monitor' },
+  //   children: [
+  //     {
+  //       path: 'ticket',
+  //       component: () => import('@/views/business/ticket/index'),
+  //       name: 'Ticket',
+  //       meta: { title: '工单管理', icon: 'edit' }
+  //     },
+  //     {
+  //       path: 'inspection',
+  //       component: () => import('@/views/business/inspection/index'),
+  //       name: 'Inspection',
+  //       meta: { title: '巡检管理', icon: 'search' }
+  //     },
+  //     {
+  //       path: 'maintenance',
+  //       component: () => import('@/views/business/maintenance/plan/index'),
+  //       name: 'Maintenance',
+  //       meta: { title: '维保管理', icon: 'tool' }
+  //     }
+  //   ]
+  // }
 ]
 
 // 动态路由，基于用户权限动态去加载
@@ -248,7 +188,9 @@ export const dynamicRoutes = [
         meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
       }
     ]
-  }
+  },
+  // 将业务路由模块添加到动态路由中
+  ...businessRoutes
 ]
 
 const router = createRouter({

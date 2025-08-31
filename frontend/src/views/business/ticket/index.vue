@@ -265,10 +265,11 @@ import { ref, reactive, getCurrentInstance, toRefs } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
 import { listTicket, getTicket, delTicket, addTicket, updateTicket, assignTickets } from "@/api/business/ticket"
 import { listUser } from "@/api/system/user"
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
+const route = useRoute()
 const { ticket_status, equipment_specialty } = proxy.useDict('ticket_status', 'equipment_specialty')
 
 const ticketList = ref([])
@@ -397,17 +398,17 @@ function handleSelectionChange(selection) {
   multiple.value = !selection.length
 }
 
+/** 查看按钮操作 */
+function handleView(row) {
+  const ticketId = row.ticketId || ids.value[0]
+  router.push(`/business/ticket/detail/${ticketId}`)
+}
+
 /** 新增按钮操作 */
 function handleAdd() {
   reset()
   open.value = true
   title.value = "添加工单"
-}
-
-/** 查看按钮操作 */
-function handleView(row) {
-  const ticketId = row.ticketId
-  router.push("/business/ticket/detail/" + ticketId)
 }
 
 /** 修改按钮操作 */
@@ -419,6 +420,20 @@ function handleUpdate(row) {
     form.value = { ...ticket }
     open.value = true
     title.value = "修改工单"
+  }
+}
+
+// 若通过 /business/ticket/edit/:ticketId 进入，自动打开编辑弹窗
+if (route.name === 'TicketEdit' && route.params.ticketId) {
+  const tid = Number(route.params.ticketId)
+  const ticket = mockTickets.value.find(t => t.ticketId === tid)
+  if (ticket) {
+    form.value = { ...ticket }
+    open.value = true
+    title.value = '修改工单'
+  } else {
+    // 找不到则回列表
+    router.replace('/business/ticket/list')
   }
 }
 
@@ -448,6 +463,10 @@ function submitForm() {
       }
       open.value = false
       getList()
+      // 若来源为详情页，保存后跳回详情
+      if (route.query.from === 'detail' && form.value.ticketId) {
+        router.replace(`/business/ticket/detail/${form.value.ticketId}`)
+      }
     }
   })
 }

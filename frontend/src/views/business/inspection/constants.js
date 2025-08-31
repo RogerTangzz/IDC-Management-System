@@ -76,17 +76,32 @@ export const FLOORS = [
   { value: 'floor4', label: '4楼', itemCount: 3 }
 ]
 
-// 异常检测规则
+// （旧）异常检测规则原始实现保留，用于可能的直接调用兼容
 export const ANOMALY_RULES = {
-  // 布尔类型：false即为异常
   boolean: (value) => value === false,
-  
-  // 数值类型：超出阈值为异常
   number: (item, value) => {
-    if (item.min !== undefined && value < item.min) return true
-    if (item.max !== undefined && value > item.max) return true
+    if (item?.min !== undefined && value < item.min) return true
+    if (item?.max !== undefined && value > item.max) return true
     return false
   }
+}
+
+// create.vue 期望的结构：anomalyDetectionRules.boolean(value) 与 anomalyDetectionRules.number[itemId](value)
+// 这里动态生成每个数值型检查项的规则函数，避免在组件中手动维护。
+const numberRuleMap = {}
+Object.values(INSPECTION_ITEMS).flat().forEach(item => {
+  if (item.type === 'number') {
+    numberRuleMap[item.id] = (value) => {
+      if (item.min !== undefined && value < item.min) return true
+      if (item.max !== undefined && value > item.max) return true
+      return false
+    }
+  }
+})
+
+export const anomalyDetectionRules = {
+  boolean: (value) => value === false,
+  number: numberRuleMap
 }
 
 // 异常优先级判定
@@ -151,3 +166,5 @@ export const INDUSTRY_STANDARDS = {
   ups_load: { min: 0, max: 80, unit: '%', desc: 'UPS负载率建议值' },
   water_pressure: { min: 0.2, max: 0.6, unit: 'MPa', desc: '冷却水系统压力范围' }
 }
+// 兼容 create.vue 中命名导入 anomalyPriorityRules
+export { ANOMALY_PRIORITY as anomalyPriorityRules }

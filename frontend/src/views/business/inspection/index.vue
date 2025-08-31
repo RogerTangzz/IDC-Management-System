@@ -319,13 +319,16 @@ function handleAdd() {
 
 /** 复制上次巡检 */
 function handleCopyLast() {
-  getLatestInspection().then(response => {
-    if (response.data) {
-      router.push('/business/inspection/create?copy=' + response.data.inspectionId);
-    } else {
-      proxy.$modal.msgWarning("暂无可复制的巡检记录");
-    }
-  });
+  // 查找最后一次完成的巡检
+  const lastCompleted = inspectionList.value
+    .filter(item => item.status === 'completed')
+    .sort((a, b) => new Date(b.inspectionDate) - new Date(a.inspectionDate))[0];
+
+  if (lastCompleted) {
+    router.push('/business/inspection/create?copy=' + lastCompleted.inspectionId);
+  } else {
+    proxy.$modal.msgWarning("暂无可复制的已完成巡检记录");
+  }
 }
 
 /** 查看详情 */
