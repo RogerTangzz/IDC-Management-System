@@ -2,6 +2,7 @@ package com.ruoyi.system.mapper;
 
 import java.util.List;
 import com.ruoyi.system.domain.BizInspection;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 巡检记录Mapper接口
@@ -58,4 +59,7 @@ public interface BizInspectionMapper
      * @return 结果
      */
     public int deleteBizInspectionByInspectionIds(Long[] inspectionIds);
+
+    /** 查询当日最新巡检编号 (prefix 形如 INS20250901) */
+    String selectLatestInspectionNo(@Param("prefix") String prefix);
 }

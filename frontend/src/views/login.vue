@@ -142,19 +142,28 @@ function handleLogin() {
 }
 
 function getCode() {
-  // 开发环境跳过验证码
-  if (import.meta.env.DEV) {
+  // 可通过 VITE_CAPTCHA_BYPASS=true 显式跳过（本地专项调试时使用，默认必须获取验证码）
+  if (import.meta.env.VITE_CAPTCHA_BYPASS === 'true') {
     captchaEnabled.value = false
+    loginForm.value.code = ''
+    loginForm.value.uuid = ''
     return
   }
-  
   getCodeImg().then(res => {
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
     if (captchaEnabled.value) {
-      codeUrl.value = "data:image/gif;base64," + res.img
+      codeUrl.value = 'data:image/gif;base64,' + res.img
       loginForm.value.uuid = res.uuid
+    } else {
+      // 后端如果关闭验证码，也清空本地字段
+      loginForm.value.code = ''
+      loginForm.value.uuid = ''
     }
-  })  
+  }).catch(err => {
+    console.error('[login] 获取验证码失败', err)
+    // 失败时保持需要验证码状态，用户可点击重试
+    captchaEnabled.value = true
+  })
 }
 
 function getCookie() {

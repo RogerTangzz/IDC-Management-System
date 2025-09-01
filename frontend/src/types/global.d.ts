@@ -60,4 +60,7 @@ interface Window {
     __APP_VERSION__?: string
 }
 
+// Build-time flags
+declare const __ENABLE_MOCK__: boolean
+
 export { }

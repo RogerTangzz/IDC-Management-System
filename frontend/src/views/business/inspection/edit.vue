@@ -150,7 +150,8 @@ const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
 
-const inspectionId = route.params && route.params.id
+// 路由参数名称与定义保持一致：:inspectionId
+const inspectionId = route.params && route.params.inspectionId
 const loading = ref(false)
 const activeTab = ref('basic')
 const userList = ref([])
@@ -242,30 +243,45 @@ const anomalyItems = computed(() => {
   return items
 })
 
-/** 获取巡检详情 */
+import { getInspection, updateInspection } from '@/api/business/inspection'
+
+function parseItems(raw) {
+  if (!raw) return {}
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw) } catch { return {} }
+  }
+  return raw
+}
+
+function parsePhotos(raw) {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw) } catch { return [] }
+  }
+  return []
+}
+
+/** 获取巡检详情（真实接口） */
 function getInspectionDetail() {
+  if (!inspectionId) return
   loading.value = true
-  // Mock数据
-  setTimeout(() => {
-    form.value = {
-      inspectionId: inspectionId,
-      inspectionNo: 'INS202501001',
-      inspectionDate: '2024-01-20',
-      floor: 'floor1',
-      inspectorName: '张三',
-      relayPersonId: 2,
-      remark: '例行巡检'
+  getInspection(inspectionId).then(res => {
+    if (res.data) {
+      const data = res.data
+      form.value = {
+        inspectionId: data.inspectionId,
+        inspectionNo: data.inspectionNo,
+        inspectionDate: data.inspectionDate,
+        floor: data.floor || 'floor1',
+        inspectorName: data.inspectorName,
+        relayPersonId: data.relayPersonId,
+        remark: data.remark || '',
+  photos: parsePhotos(data.photos)
+      }
+      formItems.value = parseItems(data.items)
     }
-
-    // Mock项目数据
-    formItems.value = {
-      'oil_tank': true,
-      'electric_room': false,
-      'pump_pressure': 0.5
-    }
-
-    loading.value = false
-  }, 500)
+  }).finally(() => { loading.value = false })
 }
 
 /** 获取分类项目 */
@@ -331,7 +347,18 @@ function handleFloorChange() {
   selectedAnomalies.value = []
 }
 
-// handleItemChange 未使用，移除
+function handleItemChange(_item) {
+  // 可在此触发实时保存或统计
+}
+
+function checkAnomaly(item, value) {
+  if (value === null || value === undefined) return false
+  if (item.type === 'boolean') return anomalyDetectionRules.boolean(value)
+  if (item.type === 'number' && anomalyDetectionRules.number[item.id]) {
+    return anomalyDetectionRules.number[item.id](value)
+  }
+  return false
+}
 
 /** 禁用日期 */
 function disabledDate(time) {
@@ -345,15 +372,14 @@ function handleSave() {
       loading.value = true
       const _data = {
         ...form.value,
-        items: JSON.stringify(formItems.value),
+  items: JSON.stringify(formItems.value || {}),
+  photos: JSON.stringify(form.value.photos || []),
         anomalyCount: anomalyItems.value.length
       }
-
-      setTimeout(() => {
+      updateInspection(_data).then(() => {
         proxy.$modal.msgSuccess("保存成功")
-        loading.value = false
         router.push('/business/inspection')
-      }, 500)
+      }).finally(() => { loading.value = false })
     }
   })
 }
@@ -364,18 +390,8 @@ function handleSaveAndGenerate() {
     proxy.$modal.msgWarning("请选择要生成工单的异常项")
     return
   }
-
-  proxy.$refs.inspectionRef.validate(valid => {
-    if (valid) {
-      loading.value = true
-
-      setTimeout(() => {
-        proxy.$modal.msgSuccess(`保存成功，已生成${selectedAnomalies.value.length}个工单`)
-        loading.value = false
-        router.push('/business/inspection')
-      }, 500)
-    }
-  })
+  handleSave()
+  // TODO: 后续补充生成工单接口调用
 }
 
 /** 取消 */
@@ -395,6 +411,9 @@ onMounted(() => {
   getUserList()
   getInspectionDetail()
 })
+
+// 将需要在模板中使用但 script setup 内未直接引用的函数显式声明（避免生产构建 tree-shake）
+// checkAnomaly 已在模板使用，确保其未被摇树优化移除
 </script>
 
 <style lang="scss" scoped>

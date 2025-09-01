@@ -1,6 +1,11 @@
 // src/main.js
 import { createApp } from 'vue'
-import './mock'
+// 按需加载 mock：使用构建期常量彻底 tree-shake
+/* global __ENABLE_MOCK__ */
+if (typeof __ENABLE_MOCK__ !== 'undefined' && __ENABLE_MOCK__) {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  import('./mock').then(() => console.log('[mock] loaded')).catch(() => {})
+}
 
 import Cookies from 'js-cookie'
 

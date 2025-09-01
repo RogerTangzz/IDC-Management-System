@@ -1,12 +1,14 @@
 import type { RouteRecordRaw } from 'vue-router'
-import Layout from '@/layout/index.vue'
-import ParentView from '@/components/ParentView/index.vue'
+// 说明：直接静态 import Layout 在某些加载顺序下会与权限/路由 store 形成循环，导致 "Cannot access 'Layout' before initialization"。
+// 改为动态 lazy import，避免在模块初始化阶段访问未完成初始化的 Layout 变量。
+const Layout = () => import('@/layout/index.vue')
+const ParentView = () => import('@/components/ParentView/index.vue')
 
 // 业务管理相关嵌套路由
 const businessRoutes: RouteRecordRaw[] = [
     {
         path: '/business',
-        component: Layout,
+    component: Layout,
         redirect: '/business/ticket/list',
         name: 'Business',
         meta: { title: 'IDC运维管理', icon: 'monitor' },

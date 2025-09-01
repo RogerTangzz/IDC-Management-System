@@ -53,6 +53,26 @@ public class BizInspectionServiceImpl implements IBizInspectionService
     @Override
     public int insertBizInspection(BizInspection bizInspection)
     {
+        // 自动编号：INS + yyyyMMdd + 4位序号
+        if (bizInspection.getInspectionNo() == null || bizInspection.getInspectionNo().isEmpty()) {
+            String datePart = DateUtils.dateTimeNow("yyyyMMdd");
+            String prefix = "INS" + datePart;
+            String latest = bizInspectionMapper.selectLatestInspectionNo(prefix);
+            int nextSeq = 1;
+            if (latest != null && latest.length() >= prefix.length()) {
+                String suffix = latest.substring(prefix.length());
+                try { nextSeq = Integer.parseInt(suffix) + 1; } catch (NumberFormatException ignored) {}
+            }
+            bizInspection.setInspectionNo(prefix + String.format("%04d", nextSeq));
+        }
+        if (bizInspection.getInspectionDate() == null) {
+            // 设为当前日期
+            bizInspection.setInspectionDate(DateUtils.getNowDate());
+        }
+        // 若前端是多楼层综合巡检，floor 可能未显式填写，DB 列为 NOT NULL，给默认值
+        if (bizInspection.getFloor() == null || bizInspection.getFloor().isEmpty()) {
+            bizInspection.setFloor("all");
+        }
         bizInspection.setCreateTime(DateUtils.getNowDate());
         return bizInspectionMapper.insertBizInspection(bizInspection);
     }

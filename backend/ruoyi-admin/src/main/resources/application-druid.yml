@@ -8,7 +8,7 @@ spring:
             master:
                 url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:ry-vue}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
                 username: ${DB_USER:root}
-                password: ${DB_PASS:password}
+                password: ${DB_PASS:1314bishini}
             # 从库数据源
             slave:
                 # 从数据源开关/默认关闭

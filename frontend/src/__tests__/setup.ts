@@ -17,9 +17,3 @@ Object.defineProperty(window, 'matchMedia', {
 // (Could filter specific mock store logs later)
 
 // Provide global defineStore/storeToRefs stub if auto-import plugin didn't inject during vitest transform
-if (!(globalThis as any).defineStore) {
-    (globalThis as any).defineStore = (_id: string, options: any) => () => options
-}
-if (!(globalThis as any).storeToRefs) {
-    (globalThis as any).storeToRefs = (store: any) => store
-}

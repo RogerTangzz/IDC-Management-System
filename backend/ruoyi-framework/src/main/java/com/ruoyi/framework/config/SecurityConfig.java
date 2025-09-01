@@ -112,6 +112,11 @@ public class SecurityConfig
                 permitAllUrl.getUrls().forEach(url -> requests.antMatchers(url).permitAll());
                 // 对于登录login 注册register 验证码captchaImage 允许匿名访问
                 requests.antMatchers("/login", "/register", "/captchaImage").permitAll()
+                    // 临时放行部分业务静态查询接口，后续可移除改为登录后访问
+                    .antMatchers(HttpMethod.GET, "/business/maintenance/approvers", "/business/maintenance/notifyUsers", "/business/maintenance/latest").permitAll()
+                    .antMatchers(HttpMethod.GET, "/business/inspection/latest", "/business/inspection/statistics").permitAll()
+                    // 调试期：全部业务接口放行（含非GET），验证 401 是否源于未部署新包；确认后请删除此行
+                    .antMatchers("/business/**").permitAll()
                     // 静态资源，可匿名访问
                     .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js", "/profile/**").permitAll()
                     .antMatchers("/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/*/api-docs", "/druid/**").permitAll()

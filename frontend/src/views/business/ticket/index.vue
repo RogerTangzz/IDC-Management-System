@@ -199,7 +199,7 @@
 </template>
 
 <script setup name="Ticket">
-import { ref, reactive, getCurrentInstance, toRefs } from 'vue'
+import { ref, reactive, getCurrentInstance, toRefs, computed } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
 // import { listTicket, getTicket, delTicket, addTicket, updateTicket, assignTickets } from "@/api/business/ticket" // 后端集成后启用
 // import { listUser } from "@/api/system/user" // 当前使用本地 mock 数据
@@ -223,12 +223,10 @@ const title = ref("")
 const dateRange = ref([])
 const userList = ref([])
 
-// Mock数据存储
-const mockTickets = ref([
-  { ticketId: 1, ticketNo: 'TK202501001', title: '空调漏水处理', status: 'pending', priority: 'high', equipment: '空调01', reporter: '张三', specialty: 'hvac', createTime: '2024-01-20 10:00:00', deadline: '2024-01-21 10:00:00' },
-  { ticketId: 2, ticketNo: 'TK202501002', title: 'UPS电池更换', status: 'processing', priority: 'medium', equipment: 'UPS-A', reporter: '王五', assigneeName: '赵六', specialty: 'power', createTime: '2024-01-20 11:00:00', deadline: '2024-01-21 11:00:00' },
-  { ticketId: 3, ticketNo: 'TK202501003', title: '消防系统检测', status: 'completed', priority: 'low', equipment: '烟感器', reporter: '李四', assigneeName: '钱七', specialty: 'fire', createTime: '2024-01-19 09:00:00', deadline: '2024-01-20 09:00:00' }
-])
+// 使用全局 ticketStore（持久化）
+import { useTicketStore } from '@/store/modules/ticket'
+const ticketStore = useTicketStore()
+ticketStore.ensureSeed()
 
 const data = reactive({
   form: {},
@@ -262,7 +260,7 @@ function getList() {
 
   // 使用Mock数据并应用过滤
   setTimeout(() => {
-    let filteredData = [...mockTickets.value]
+  let filteredData = [...ticketStore.tickets]
 
     // 应用搜索过滤
     if (queryParams.value.ticketNo) {
@@ -353,7 +351,7 @@ function handleAdd() {
 function handleUpdate(row) {
   reset()
   const ticketId = row.ticketId || ids.value[0]
-  const ticket = mockTickets.value.find(t => t.ticketId === ticketId)
+  const ticket = ticketStore.getById(ticketId)
   if (ticket) {
     form.value = { ...ticket }
     open.value = true
@@ -364,7 +362,7 @@ function handleUpdate(row) {
 // 若通过 /business/ticket/edit/:ticketId 进入，自动打开编辑弹窗
 if (route.name === 'TicketEdit' && route.params.ticketId) {
   const tid = Number(route.params.ticketId)
-  const ticket = mockTickets.value.find(t => t.ticketId === tid)
+  const ticket = ticketStore.getById(tid)
   if (ticket) {
     form.value = { ...ticket }
     open.value = true
@@ -381,22 +379,15 @@ function submitForm() {
     if (valid) {
       if (form.value.ticketId != undefined) {
         // 修改
-        const index = mockTickets.value.findIndex(t => t.ticketId === form.value.ticketId)
-        if (index > -1) {
-          mockTickets.value[index] = { ...form.value }
-        }
+  ticketStore.update(form.value)
         proxy.$modal.msgSuccess("修改成功")
       } else {
-        // 新增
-        const newTicket = {
+  const newTicket = ticketStore.add({
           ...form.value,
-          ticketId: Date.now(),
-          ticketNo: 'TK' + Date.now(),
           status: 'pending',
           createTime: parseTime(new Date()),
           deadline: parseTime(new Date(Date.now() + 24 * 60 * 60 * 1000))
-        }
-        mockTickets.value.push(newTicket)
+  })
         proxy.$modal.msgSuccess("新增成功")
       }
       open.value = false
@@ -411,10 +402,9 @@ function submitForm() {
 
 /** 删除按钮操作 */
 function handleDelete(row) {
-  const ticketIds = row.ticketId || ids.value
-  proxy.$modal.confirm('是否确认删除工单编号为"' + ticketIds + '"的数据项？').then(function () {
-    // 从Mock数据中删除
-    mockTickets.value = mockTickets.value.filter(t => !ticketIds.includes(t.ticketId))
+  const targetIds = Array.isArray(ids.value) && ids.value.length > 0 && !row?.ticketId ? ids.value : [row.ticketId]
+  proxy.$modal.confirm('是否确认删除工单编号为"' + targetIds.join(',') + '"的数据项？').then(function () {
+    ticketStore.remove(targetIds)
     getList()
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => { })
@@ -440,10 +430,9 @@ function submitAssign() {
   }
   const user = userList.value.find(u => u.userId === assignForm.value.userId)
   ids.value.forEach(id => {
-    const ticket = mockTickets.value.find(t => t.ticketId === id)
+    const ticket = ticketStore.getById(id)
     if (ticket) {
-      ticket.assigneeName = user.nickName
-      ticket.status = 'assigned'
+      ticketStore.update({ ...ticket, assigneeName: user.nickName, status: 'assigned' })
     }
   })
   proxy.$modal.msgSuccess("指派成功")

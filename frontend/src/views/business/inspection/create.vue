@@ -237,11 +237,32 @@ const progress = computed(() => {
   return Math.round((completedCount.value / totalCount.value) * 100)
 })
 
+// 解析/初始化 items 结构
+function normalizeItems(raw) {
+  const blank = { floor1: {}, floor2: {}, floor3: {}, floor4: {} }
+  if (!raw) return blank
+  if (typeof raw === 'string') {
+    try { const obj = JSON.parse(raw); return { ...blank, ...obj } } catch { return blank }
+  }
+  // 若已是对象合并补全缺失楼层
+  return { ...blank, ...raw }
+}
+
+// 解析照片字段（后端为 String 存 JSON）
+function parsePhotos(raw) {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw) } catch { return [] }
+  }
+  return []
+}
+
 // 复制上次巡检
 function handleCopyLast() {
   getLatestInspection().then(response => {
     if (response.data) {
-      form.value.items = response.data.items
+      form.value.items = normalizeItems(response.data.items)
       form.value.remark = `[复制自巡检#${response.data.inspectionNo}]`
       proxy.$modal.msgSuccess('已复制上次巡检记录')
     } else {
@@ -314,33 +335,43 @@ function handleSubmit() {
 function saveInspection() {
   const data = {
     ...form.value,
+    items: JSON.stringify(form.value.items || {}), // 序列化为后端 String
+    photos: JSON.stringify(form.value.photos || []), // 序列化照片
     anomalyCount: anomalies.value.length,
     progress: progress.value
   }
 
-  if (inspectionId.value) {
-    updateInspection(data).then(() => {
-      proxy.$modal.msgSuccess('修改成功')
-      router.push('/business/inspection')
-    })
-  } else {
-    addInspection(data).then(() => {
-      proxy.$modal.msgSuccess('新增成功')
-      router.push('/business/inspection')
-    })
-  }
+  const action = inspectionId.value ? updateInspection : addInspection
+  return action(data).then((res) => {
+    // 新增场景拿到生成的 ID，供后续生成工单使用
+    if (!inspectionId.value && res?.data?.inspectionId) {
+      inspectionId.value = res.data.inspectionId
+    }
+    proxy.$modal.msgSuccess(inspectionId.value ? '修改成功' : '新增成功')
+    return res
+  })
 }
 
 // 确认异常处理
 function confirmAnomalies() {
-  if (autoGenerateTickets.value && anomalies.value.length > 0) {
-    generateTickets(inspectionId.value, anomalies.value).then(response => {
-      proxy.$modal.msgSuccess(`已生成 ${response.data.length} 个工单`)
-    })
-  }
-
+  const needTickets = autoGenerateTickets.value && anomalies.value.length > 0
   anomalyDialogVisible.value = false
-  saveInspection()
+  // 先保存，获取或更新 inspectionId，再生成工单
+  saveInspection().then(() => {
+    if (needTickets) {
+      if (!inspectionId.value) {
+        proxy.$modal.msgError('未获取到巡检ID，无法生成工单')
+        return
+      }
+      generateTickets(inspectionId.value, anomalies.value).then(response => {
+        proxy.$modal.msgSuccess(`已生成 ${(response.data || []).length} 个工单`)
+        // 保存后再跳转，避免还未保存用户离开
+        router.push('/business/inspection')
+      })
+    } else {
+      router.push('/business/inspection')
+    }
+  })
 }
 
 // 取消
@@ -362,7 +393,11 @@ function getPriorityType(priority) {
 onMounted(() => {
   if (inspectionId.value) {
     getInspection(inspectionId.value).then(response => {
-      form.value = response.data
+      if (response.data) {
+        // 拆分 items
+        const { items, ...rest } = response.data
+  form.value = { ...form.value, ...rest, items: normalizeItems(items), photos: parsePhotos(rest.photos) }
+      }
     })
   }
 })

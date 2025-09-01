@@ -2,6 +2,7 @@ package com.ruoyi.system.mapper;
 
 import java.util.List;
 import com.ruoyi.system.domain.BizMaintenance;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 维保计划Mapper接口
@@ -58,4 +59,7 @@ public interface BizMaintenanceMapper
      * @return 结果
      */
     public int deleteBizMaintenanceByPlanIds(Long[] planIds);
+
+    /** 查询当日已存在的最大编号（用于生成自增 plan_no） */
+    String selectLatestPlanNo(@Param("prefix") String prefix);
 }

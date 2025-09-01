@@ -29,7 +29,7 @@
           {{ form.title }}
         </el-descriptions-item>
         <el-descriptions-item label="处理时限">
-          <el-countdown v-if="form.status !== 'completed' && form.status !== 'closed'" :value="form.deadline"
+          <el-countdown v-if="form.status !== 'completed' && form.status !== 'closed'" :value="deadlineValue"
             format="HH:mm:ss" @finish="handleTimeout" />
           <span v-else>{{ parseTime(form.deadline) }}</span>
         </el-descriptions-item>
@@ -213,7 +213,8 @@
 </template>
 
 <script setup name="TicketDetail">
-import { getCurrentInstance, ref, onMounted } from 'vue'
+import { getCurrentInstance, ref, onMounted, computed } from 'vue'
+import { useTicketStore } from '@/store/modules/ticket'
 import { useRouter, useRoute } from 'vue-router'
 // import { getTicket, updateTicket } from "@/api/business/ticket" // 后端集成后恢复
 // import { listUser } from "@/api/system/user" // 当前使用本地 mock
@@ -255,26 +256,23 @@ const completeRules = {
 }
 
 /** 获取工单详情 */
+const ticketStore = useTicketStore()
+
 async function getDetail() {
   if (!ticketId) return
   loading.value = true
-  // Mock 数据
-  setTimeout(() => {
-    form.value = {
-      ticketId,
-      ticketNo: 'TK' + ticketId,
-      title: '示例工单',
-      status: 'pending',
-      priority: 'medium',
-      reporter: '张三',
-      createTime: new Date(),
-      discoveryTime: new Date(),
-      deadline: new Date(Date.now() + 4 * 60 * 60 * 1000)
-    }
-    logList.value = []
-    attachmentList.value = []
-    loading.value = false
-  }, 200)
+  // 直接读取 store（若刷新后 store 为空则尝试 seed）
+  ticketStore.ensureSeed()
+  const t = ticketStore.getById(Number(ticketId))
+  if (t) {
+    form.value = { ...t }
+  } else {
+    // 未找到：返回列表
+    router.replace('/business/ticket/list')
+  }
+  logList.value = []
+  attachmentList.value = []
+  loading.value = false
 }
 
 /** 获取剩余时间 */
@@ -327,10 +325,17 @@ function handleAssign() {
 function submitAssign() {
   proxy.$refs["assignRef"].validate(valid => {
     if (valid) {
+      const user = userList.value.find(u => u.userId === assignForm.value.assigneeId)
+      if (user) {
+        const existing = ticketStore.getById(Number(ticketId))
+        if (existing) {
+          ticketStore.update({ ...existing, assigneeName: user.nickName, status: 'assigned' })
+        }
+        form.value.assigneeName = user.nickName
+      }
+      form.value.status = 'assigned'
       proxy.$modal.msgSuccess("指派成功")
       assignOpen.value = false
-      form.value.status = 'assigned'
-      getDetail()
     }
   })
 }
@@ -338,9 +343,10 @@ function submitAssign() {
 /** 开始处理 */
 function handleStart() {
   proxy.$modal.confirm('确认开始处理该工单吗？').then(() => {
-    proxy.$modal.msgSuccess("已开始处理")
+    const existing = ticketStore.getById(Number(ticketId))
+    if (existing) ticketStore.update({ ...existing, status: 'processing' })
     form.value.status = 'processing'
-    getDetail()
+    proxy.$modal.msgSuccess("已开始处理")
   }).catch(() => { })
 }
 
@@ -358,10 +364,12 @@ function handleComplete() {
 function submitComplete() {
   proxy.$refs["completeRef"].validate(valid => {
     if (valid) {
+      const existing = ticketStore.getById(Number(ticketId))
+      if (existing) ticketStore.update({ ...existing, status: 'completed', solution: completeForm.value.solution })
+      form.value.status = 'completed'
+      form.value.solution = completeForm.value.solution
       proxy.$modal.msgSuccess("工单已完成")
       completeOpen.value = false
-      form.value.status = 'completed'
-      getDetail()
     }
   })
 }
@@ -369,9 +377,10 @@ function submitComplete() {
 /** 关闭工单 */
 function handleCloseTicket() {
   proxy.$modal.confirm('确认关闭该工单吗？').then(() => {
-    proxy.$modal.msgSuccess("工单已关闭")
+    const existing = ticketStore.getById(Number(ticketId))
+    if (existing) ticketStore.update({ ...existing, status: 'closed' })
     form.value.status = 'closed'
-    getDetail()
+    proxy.$modal.msgSuccess("工单已关闭")
   }).catch(() => { })
 }
 
@@ -397,6 +406,15 @@ function getUserList() {
 onMounted(() => {
   getDetail()
   getUserList()
+})
+
+// 倒计时展示所需的毫秒时间戳
+const deadlineValue = computed(() => {
+  if (!form.value.deadline) return Date.now()
+  if (typeof form.value.deadline === 'number') return form.value.deadline
+  const d = new Date(form.value.deadline.replace(/-/g, '/')) // 兼容 iOS
+  const ts = d.getTime()
+  return isNaN(ts) ? Date.now() : ts
 })
 </script>
 

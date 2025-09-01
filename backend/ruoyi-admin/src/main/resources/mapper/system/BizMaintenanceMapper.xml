@@ -217,4 +217,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{planId}
         </foreach>
     </delete>
+
+    <!-- 查询当日最新编号: prefix 形如 MP20250901 -->
+    <select id="selectLatestPlanNo" resultType="string">
+        select plan_no from biz_maintenance 
+        where plan_no like concat(#{prefix}, '%') 
+        order by plan_no desc limit 1
+    </select>
 </mapper>

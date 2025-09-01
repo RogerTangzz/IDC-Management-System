@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 
-// pinia defineStore stub (avoid bringing real pinia for unit isolation)
-vi.mock('pinia', () => ({ defineStore: (_id: string, options: any) => () => options }))
+beforeEach(() => setActivePinia(createPinia()))
 
 vi.mock('@/router', () => ({
     constantRoutes: [],

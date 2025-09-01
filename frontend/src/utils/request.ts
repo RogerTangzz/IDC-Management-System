@@ -1,9 +1,4 @@
-// 可通过环境变量控制是否启用 Mock（默认开发开启 / 生产关闭）
-if (import.meta.env.VITE_ENABLE_MOCK === 'true') {
-    // 动态导入避免生产 tree-shaking 误保留
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    import('../mock')
-}
+// Mock 加载放在 main.js 中集中控制，避免在此处二次引入导致生产残留
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElNotification, ElMessageBox, ElMessage, ElLoading } from 'element-plus'
 import { getToken } from '@/utils/auth'
@@ -12,12 +7,10 @@ import { tansParams, blobValidate } from '@/utils/ruoyi'
 import cache from '@/plugins/cache'
 import { saveAs } from 'file-saver'
 import useUserStore from '@/store/modules/user'
+import type { ApiResult, PageResult } from '@/types/api/common'
 
-// --------------------------- 基础响应类型 ----------------------------
-export interface ApiResult<T = any> { code: number; msg: string; data: T }
-export interface PageResult<T = any> { total: number; rows: T[]; code?: number; msg?: string }
-
-// 与旧全局保持兼容（后续可移除 global.d.ts 中重复声明）
+// --------------------------- 基础响应类型（集中于 types/api/common.ts） ----------------------------
+// 临时兼容别名（若外部仍引用）
 export type AxiosResult<T = any> = Promise<ApiResult<T>>
 export type RequestResult<T = any> = AxiosResult<T>
 

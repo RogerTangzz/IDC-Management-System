@@ -1,5 +1,8 @@
 import auth from '@/plugins/auth'
+import { defineStore } from 'pinia'
 import router, { constantRoutes, dynamicRoutes } from '@/router'
+// 直接引入业务本地路由，防止由于某些构建/循环依赖导致 dynamicRoutes 丢失该节点
+import businessRoutes from '@/router/modules/business.ts'
 import { getRouters } from '@/api/menu'
 import Layout from '@/layout/index.vue'
 // 显式加 .vue 以兼容 Vitest 在 Node 环境的路径解析（无真实目录同名 index.ts 情况）
@@ -63,25 +66,78 @@ const usePermissionStore = defineStore('permission', {
         setSidebarRouters(routes: RouteRecordRaw[]) {
             this.sidebarRouters = routes
         },
-        async generateRoutes(_roles?: string[]) {
-            const res = await getRouters()
-            if (process.env.NODE_ENV !== 'production') {
-                console.debug('[permission] raw routers count=', Array.isArray(res.data) ? res.data.length : 'n/a', res.data)
+    /**
+     * 生成可访问路由（含后端返回 + 本地 dynamicRoutes）
+     * 若后端获取失败使用空数组 fallback，仍然注入 dynamicRoutes 以保证基础功能。
+     */
+    async generateRoutes(_roles?: string[]): Promise<BackendRoute[]> {
+            let backend: any[] = []
+            try {
+                const res = await getRouters()
+                if (process.env.NODE_ENV !== 'production') {
+                    console.debug('[permission] raw routers count=', Array.isArray(res.data) ? res.data.length : 'n/a', res.data)
+                }
+                backend = Array.isArray(res.data) ? res.data : []
+            } catch (e) {
+                console.error('[permission] 获取路由失败，使用空路由集合', e)
+                backend = []
             }
-            // 深拷贝，避免原数据被原地修改
-            const sdata: BackendRoute[] = structuredClone(res.data)
-            const rdata: BackendRoute[] = structuredClone(res.data)
-            const defaultData: BackendRoute[] = structuredClone(res.data)
+            const sdata: BackendRoute[] = structuredClone(backend)
+            const rdata: BackendRoute[] = structuredClone(backend)
+            const defaultData: BackendRoute[] = structuredClone(backend)
 
             const sidebarRoutes = filterAsyncRouter(sdata)
             const rewriteRoutes = filterAsyncRouter(rdata, false, true)
             const defaultRoutes = filterAsyncRouter(defaultData)
-            const asyncRoutes = filterDynamicRoutes(dynamicRoutes as any)
+            if (import.meta.env.DEV) {
+                console.debug('[permission] imported dynamicRoutes length=', (dynamicRoutes as any)?.length)
+            }
+            let asyncRoutes = filterDynamicRoutes(dynamicRoutes as any)
+            if (import.meta.env.DEV) {
+                console.debug('[permission] after filterDynamicRoutes length=', asyncRoutes.length, asyncRoutes.map(r=>r.path))
+            }
+            if (!asyncRoutes.some((r: any) => r.path === '/business')) {
+                if (import.meta.env.DEV) console.warn('[permission] dynamicRoutes 中缺少 /business，执行补充注入')
+                asyncRoutes = asyncRoutes.concat(filterDynamicRoutes(businessRoutes as any))
+                if (import.meta.env.DEV) {
+                    console.debug('[permission] appended businessRoutes, now length=', asyncRoutes.length, asyncRoutes.map(r=>r.path))
+                }
+            }
+            // 运行时注入本地动态路由
             asyncRoutes.forEach((route: RouteRecordRaw) => { router.addRoute(route) })
-            this.setRoutes(rewriteRoutes as unknown as RouteRecordRaw[])
-            this.setSidebarRouters(constantRoutes.concat(sidebarRoutes as any))
+
+            // 合并：后端路由 + 本地动态（避免重复 path）
+            const dedupe = <T extends { path?: string }>(list: T[]): T[] => {
+                const seen = new Set<string>()
+                return list.filter(r => {
+                    const p = r.path || ''
+                    if (seen.has(p)) return false
+                    seen.add(p)
+                    return true
+                })
+            }
+            const mergedRoutes = dedupe([...(rewriteRoutes as any), ...asyncRoutes])
+            const mergedSidebar = dedupe([...(sidebarRoutes as any), ...asyncRoutes])
+
+            // 顶部菜单：需要把本地动态中同级(拥有 Layout 作为根组件)的路由合并，否则顶部无法出现 /business
+            const asyncLayoutRoots = asyncRoutes.filter((r: any) => (r as any).component === Layout)
+            let mergedTopbar = dedupe([...(defaultRoutes as any), ...asyncLayoutRoots])
+            // 若 /business 未被识别为 Layout 根（可能因组件引用不相等），显式补充
+            if (!mergedTopbar.some((r: any) => r.path === '/business')) {
+                const biz = asyncRoutes.find((r: any) => r.path === '/business')
+                if (biz) {
+                    mergedTopbar.push(biz as any)
+                    mergedTopbar = dedupe(mergedTopbar)
+                    if (import.meta.env.DEV) console.debug('[permission] 补充 /business 进入 topbarRouters')
+                } else if (import.meta.env.DEV) {
+                    console.warn('[permission] 未找到 /business 路由用于顶部菜单')
+                }
+            }
+
+            this.setRoutes(mergedRoutes as unknown as RouteRecordRaw[])
+            this.setSidebarRouters(constantRoutes.concat(mergedSidebar as any))
             this.setDefaultRoutes(sidebarRoutes as any)
-            this.setTopbarRoutes(defaultRoutes as any)
+            this.setTopbarRoutes(mergedTopbar as any)
             if (typeof window !== 'undefined') {
                 ; (window as any).__perm = this
             }

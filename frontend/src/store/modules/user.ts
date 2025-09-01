@@ -1,10 +1,13 @@
 /// <reference path="../../types/entities.d.ts" />
 import router from '@/router'
+import { defineStore } from 'pinia'
 import { ElMessageBox } from 'element-plus'
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { isHttp, isEmpty } from '@/utils/validate'
 import defAva from '@/assets/images/profile.jpg'
+import type { LoginParams, GetInfoResponse } from '@/types/api/auth'
+import { extractToken } from '@/types/api/common'
 // 注意：后端 /getInfo 与 /login 返回结构并不统一（/login: {code,msg,token} ； /getInfo: {code,msg,user,roles,...})
 // 因此这里不直接使用 resultData，而是兼容 data 包裹与顶层字段两种形式。
 
@@ -18,19 +21,7 @@ interface UserState {
     permissions: string[]
 }
 
-interface LoginParams { username: string; password: string; code?: string; uuid?: string }
-
-interface LoginResponse { token: string }
-
-// 临时 User 类型（后续应与后端接口模型统一）：
-interface UserDTO { userId: string | number; userName: string; nickName?: string; avatar?: string }
-interface GetInfoResponse {
-    user: UserDTO
-    roles: string[]
-    permissions: string[]
-    isDefaultModifyPwd?: boolean
-    isPasswordExpired?: boolean
-}
+// 相关类型已迁移至 types/api/auth.ts
 
 const useUserStore = defineStore('user', {
     state: (): UserState => ({
@@ -52,23 +43,23 @@ const useUserStore = defineStore('user', {
             } catch (e: any) {
                 console.error('[userStore.login] request failed', e?.response || e)
                 const msg = e?.response?.data?.msg || e?.message || '登录请求失败'
-                if (typeof window !== 'undefined') {
+                if (import.meta.env.DEV && typeof window !== 'undefined') {
                     ; (window as any).__lastLoginError = e
                 }
                 throw new Error(msg)
             }
             console.debug('[userStore.login] raw response', loginResp)
-            const token: string | undefined = loginResp?.token ?? loginResp?.data?.token
+            const token: string | undefined = extractToken(loginResp)
             if (!token) {
                 console.error('[userStore.login] token missing in response, keys=', Object.keys(loginResp || {}))
-                if (typeof window !== 'undefined') {
+                if (import.meta.env.DEV && typeof window !== 'undefined') {
                     ; (window as any).__lastLoginResponse = loginResp
                 }
                 throw new Error('登录响应缺少 token 字段')
             }
             setToken(token)
             this.token = token
-            if (typeof window !== 'undefined') {
+            if (import.meta.env.DEV && typeof window !== 'undefined') {
                 ; (window as any).__lastLoginResponse = loginResp
             }
         },

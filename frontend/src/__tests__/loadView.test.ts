@@ -1,7 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 
-vi.mock('pinia', () => ({ defineStore: (_id: string, options: any) => () => options }))
-
 vi.mock('@/router', () => ({
     constantRoutes: [],
     dynamicRoutes: [],

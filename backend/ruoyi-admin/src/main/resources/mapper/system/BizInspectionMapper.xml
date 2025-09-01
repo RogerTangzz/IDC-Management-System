@@ -147,4 +147,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{inspectionId}
         </foreach>
     </delete>
+
+    <!-- 查询当日最新巡检编号 -->
+    <select id="selectLatestInspectionNo" resultType="string">
+        select inspection_no from biz_inspection 
+        where inspection_no like concat(#{prefix}, '%') 
+        order by inspection_no desc limit 1
+    </select>
 </mapper>

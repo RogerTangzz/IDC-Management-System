@@ -10,6 +10,9 @@ export default defineConfig({
             '@/store/modules/permission': path.resolve(__dirname, 'src/store/modules/permission.ts')
         }
     },
+    define: {
+        __ENABLE_MOCK__: JSON.stringify(process.env.VITE_ENABLE_MOCK === 'true')
+    },
     test: {
         environment: 'jsdom',
         globals: true,

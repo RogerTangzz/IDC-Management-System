@@ -53,6 +53,18 @@ public class BizMaintenanceServiceImpl implements IBizMaintenanceService
     @Override
     public int insertBizMaintenance(BizMaintenance bizMaintenance)
     {
+        // 自动编号：MP + yyyyMMdd + 4位序号
+        if (bizMaintenance.getPlanNo() == null || bizMaintenance.getPlanNo().isEmpty()) {
+            String datePart = DateUtils.dateTimeNow("yyyyMMdd");
+            String prefix = "MP" + datePart;
+            String latest = bizMaintenanceMapper.selectLatestPlanNo(prefix);
+            int nextSeq = 1;
+            if (latest != null && latest.length() >= prefix.length()) {
+                String suffix = latest.substring(prefix.length());
+                try { nextSeq = Integer.parseInt(suffix) + 1; } catch (NumberFormatException ignored) {}
+            }
+            bizMaintenance.setPlanNo(prefix + String.format("%04d", nextSeq));
+        }
         bizMaintenance.setCreateTime(DateUtils.getNowDate());
         return bizMaintenanceMapper.insertBizMaintenance(bizMaintenance);
     }
