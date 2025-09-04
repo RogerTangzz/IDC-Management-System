@@ -12,6 +12,7 @@ import com.ruoyi.system.domain.BizInspection;
 import com.ruoyi.system.domain.BizTicket;
 import com.ruoyi.system.service.IBizInspectionService;
 import com.ruoyi.system.service.IBizTicketService;
+import com.ruoyi.system.service.IBizTicketLogService;
 
 @RestController
 @RequestMapping("/business/inspection")
@@ -22,6 +23,9 @@ public class BizInspectionController extends BaseController {
 
     @Autowired
     private IBizTicketService bizTicketService;
+
+    @Autowired
+    private IBizTicketLogService bizTicketLogService;
 
     @GetMapping("/list")
     public TableDataInfo list(BizInspection criteria) {
@@ -104,7 +108,10 @@ public class BizInspectionController extends BaseController {
             t.setSource("inspection");
             t.setSourceId(inspectionId);
             t.setDiscoveryTime(DateUtils.getNowDate());
+            t.setLastAction("create");
+            t.setLastStatusTime(DateUtils.getNowDate());
             bizTicketService.insertBizTicket(t);
+            bizTicketLogService.log(t.getTicketId(), "create", null, t.getStatus(), "巡检生成", currentUserId(), currentUserName());
             created.add(t);
         }
         // 更新巡检记录的 ticket 关联
@@ -165,9 +172,9 @@ public class BizInspectionController extends BaseController {
         if (newIds==null || newIds.isEmpty()) return oldIds;
         return oldIds + "," + newIds;
     }
-    private int countIds(String ids){
-        if (ids==null || ids.isEmpty()) return 0;
-        int count = 0; for (String s: ids.split(",")) if (!s.isEmpty()) count++;
+    private Long countIds(String ids){
+        if (ids==null || ids.isEmpty()) return 0L;
+        long count = 0; for (String s: ids.split(",")) if (!s.isEmpty()) count++;
         return count;
     }
 }

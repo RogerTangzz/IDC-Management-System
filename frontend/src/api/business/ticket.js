@@ -54,3 +54,18 @@ export function assignTickets(data) { return post('/business/ticket/assign', dat
  * @param {number|string} assigneeId
  */
 export function batchAssignTickets(ticketIds, assigneeId) { return post('/business/ticket/batchAssign', { ticketIds, assigneeId }) }
+
+/** 重新打开工单 */
+export function reopenTicket(ticketId){ return post(`/business/ticket/reopen/${ticketId}`) }
+
+/** 工单简易汇总报表 */
+export function ticketSummary(){ return get('/business/ticket/report/summary') }
+
+/** 工单高级分析 */
+export function ticketAnalytics(params){ return get('/business/ticket/report/analytics', params) }
+
+/** 逾期工单分页列表 */
+export function getOverdueTickets(params){ return get('/business/ticket/overdue', params) }
+
+/** 近到期工单分页列表 */
+export function getNearDueTickets(params){ return get('/business/ticket/nearDue', params) }

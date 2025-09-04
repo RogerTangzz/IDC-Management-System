@@ -58,4 +58,20 @@ public interface IBizTicketService
      * @return 结果
      */
     public int deleteBizTicketByTicketId(Long ticketId);
+
+    /* ================== 业务动作（服务层统一校验/记录） ================== */
+    /** 批量指派 */
+    void assignTickets(Long[] ticketIds, Long assigneeId, String assigneeName, Long operatorId, String operatorName);
+
+    /** 开始处理 */
+    void startTicket(Long ticketId, Long operatorId, String operatorName);
+
+    /** 完成工单 */
+    void completeTicket(Long ticketId, String solution, String result, Long operatorId, String operatorName);
+
+    /** 关闭工单 */
+    void closeTicket(Long ticketId, Long operatorId, String operatorName);
+
+    /** 重新打开 */
+    void reopenTicket(Long ticketId, Long operatorId, String operatorName);
 }

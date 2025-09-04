@@ -28,6 +28,8 @@ CREATE TABLE `biz_ticket` (
   `solution` text COMMENT '解决方案',
   `escalation_history` text COMMENT '升级历史JSON',
   `attachments` varchar(1000) COMMENT '附件路径',
+  `last_status_time` datetime DEFAULT NULL COMMENT '最近状态变更时间',
+  `last_action` varchar(50) DEFAULT NULL COMMENT '最近动作',
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 2代表删除）',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime COMMENT '创建时间',
@@ -38,8 +40,44 @@ CREATE TABLE `biz_ticket` (
   UNIQUE KEY `idx_ticket_no` (`ticket_no`),
   KEY `idx_status` (`status`),
   KEY `idx_assignee` (`assignee_id`),
+  KEY `idx_deadline` (`deadline`),
+  KEY `idx_last_status_time` (`last_status_time`),
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工单表';
+
+-- 1.1 工单日志表
+DROP TABLE IF EXISTS `biz_ticket_log`;
+CREATE TABLE `biz_ticket_log` (
+  `log_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+  `ticket_id` bigint(20) NOT NULL COMMENT '工单ID',
+  `action` varchar(32) NOT NULL COMMENT '动作(create,assign,start,complete,close,reopen,edit,update)',
+  `old_status` varchar(20) DEFAULT NULL COMMENT '旧状态',
+  `new_status` varchar(20) DEFAULT NULL COMMENT '新状态',
+  `operator_id` bigint(20) DEFAULT NULL COMMENT '操作人ID',
+  `operator_name` varchar(50) DEFAULT NULL COMMENT '操作人姓名',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_ticket_id` (`ticket_id`),
+  KEY `idx_action` (`action`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工单日志表';
+
+-- 6. 站内消息表（简版）
+DROP TABLE IF EXISTS `biz_message`;
+CREATE TABLE `biz_message` (
+  `msg_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '消息ID',
+  `type` varchar(30) NOT NULL COMMENT '类型(system, sla_warn, sla_overdue, assign, complete, close, other)',
+  `title` varchar(200) NOT NULL COMMENT '标题',
+  `content` varchar(1000) DEFAULT NULL COMMENT '内容',
+  `receiver_id` bigint(20) NOT NULL COMMENT '接收人ID',
+  `receiver_name` varchar(50) DEFAULT NULL COMMENT '接收人姓名',
+  `read_flag` char(1) DEFAULT 'N' COMMENT '是否已读(Y/N)',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`msg_id`),
+  KEY `idx_receiver_read` (`receiver_id`,`read_flag`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='站内消息表';
 
 -- 2. 巡检记录表
 DROP TABLE IF EXISTS `biz_inspection`;

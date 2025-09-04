@@ -120,3 +120,15 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# IDC 扩展配置
+idc:
+  sla:
+    enabled: true
+    warnBeforeHours: 2
+    # 扫描频率：每15分钟
+    scanCron: "0 0/15 * * * ?"
+    # 优先级默认处理时限（用于自动设定 deadline）
+    lowHours: 24
+    mediumHours: 8
+    highHours: 4

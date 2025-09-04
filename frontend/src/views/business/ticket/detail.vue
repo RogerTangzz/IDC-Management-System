@@ -22,6 +22,12 @@
         <el-descriptions-item label="工单状态">
           <dict-tag :options="ticket_status" :value="form.status" />
         </el-descriptions-item>
+        <el-descriptions-item label="最新动作">
+          <dict-tag :options="ticket_action" :value="form.lastAction" />
+        </el-descriptions-item>
+        <el-descriptions-item label="最新状态时间">
+          {{ parseTime(form.lastStatusTime) || '-' }}
+        </el-descriptions-item>
         <el-descriptions-item label="优先级">
           <dict-tag :options="ticket_priority" :value="form.priority" />
         </el-descriptions-item>
@@ -47,7 +53,7 @@
           <span class="descriptions-title">报修信息</span>
         </template>
         <el-descriptions-item label="报修人">
-          {{ form.reporter }}
+          {{ form.reporterName }}
         </el-descriptions-item>
         <el-descriptions-item label="联系电话">
           {{ form.reporterPhone || '-' }}
@@ -88,16 +94,16 @@
           <span class="descriptions-title">处理信息</span>
         </template>
         <el-descriptions-item label="处理人">
-          {{ form.handlerName || '-' }}
+          {{ form.assigneeName || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="开始时间">
-          {{ parseTime(form.startTime) || '-' }}
+          {{ parseTime(startTime) || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="处理方法" :span="2">
           <div class="description-content">{{ form.solution || '处理中...' }}</div>
         </el-descriptions-item>
         <el-descriptions-item label="完成时间" v-if="form.status === 'completed' || form.status === 'closed'">
-          {{ parseTime(form.completeTime) }}
+          {{ parseTime(form.completionTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="处理耗时" v-if="form.status === 'completed' || form.status === 'closed'">
           {{ form.duration || '-' }}
@@ -129,16 +135,35 @@
           <span class="descriptions-title">操作日志</span>
         </template>
         <el-descriptions-item label="">
+          <div class="log-filters">
+            <el-select v-model="logFilters.action" placeholder="动作" clearable size="small" style="width:130px;margin-right:8px" @change="reloadLogs">
+              <el-option v-for="opt in actionOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+            <el-date-picker v-model="logFilters.daterange" type="datetimerange" range-separator="至" start-placeholder="开始时间" end-placeholder="结束时间" size="small" value-format="YYYY-MM-DD HH:mm:ss" @change="reloadLogs" style="margin-right:8px" />
+            <el-button size="small" icon="Refresh" @click="resetLogFilters">重置</el-button>
+          </div>
           <el-timeline>
             <el-timeline-item v-for="(log, index) in logList" :key="index" :timestamp="parseTime(log.createTime)"
-              placement="top" :type="log.type">
+              placement="top" :type="getLogType(log.action)">
               <div class="log-content">
-                <span class="log-user">{{ log.userName }}</span>
-                <span class="log-action">{{ log.action }}</span>
+                <span class="log-user">{{ log.operatorName || log.userName || '-' }}</span>
+                <span class="log-action">{{ actionLabel(log.action) }}<span v-if="log.oldStatus || log.newStatus">：{{ log.oldStatus || '-' }} → {{ log.newStatus || '-' }}</span></span>
                 <div class="log-remark" v-if="log.remark">备注：{{ log.remark }}</div>
               </div>
             </el-timeline-item>
           </el-timeline>
+          <div class="log-pagination" v-if="logPagination.total > logPagination.pageSize">
+            <el-pagination
+              small
+              background
+              layout="prev, pager, next, sizes, total"
+              :total="logPagination.total"
+              :page-size="logPagination.pageSize"
+              :current-page="logPagination.pageNum"
+              @current-change="handleLogPageChange"
+              @size-change="handleLogSizeChange"
+              :page-sizes="[5,10,20,50]" />
+          </div>
         </el-descriptions-item>
       </el-descriptions>
 
@@ -158,6 +183,7 @@
 
         <el-button type="danger" icon="CircleClose" @click="handleCloseTicket" v-hasPermi="['business:ticket:edit']"
           v-if="form.status === 'completed'">关闭工单</el-button>
+  <el-button type="warning" icon="RefreshLeft" @click="handleReopen" v-hasPermi="['business:ticket:reopen']" v-if="form.status === 'closed'">重新打开</el-button>
 
         <el-button type="info" icon="Printer" @click="handlePrint">打印</el-button>
 
@@ -214,7 +240,9 @@
 
 <script setup name="TicketDetail">
 import { getCurrentInstance, ref, onMounted, computed } from 'vue'
-import { useTicketStore } from '@/store/modules/ticket'
+import { getTicket, assignTickets, updateTicket } from '@/api/business/ticket'
+import request from '@/utils/request'
+import { reopenTicket } from '@/api/business/ticket'
 import { useRouter, useRoute } from 'vue-router'
 // import { getTicket, updateTicket } from "@/api/business/ticket" // 后端集成后恢复
 // import { listUser } from "@/api/system/user" // 当前使用本地 mock
@@ -229,13 +257,23 @@ const assignOpen = ref(false)
 const completeOpen = ref(false)
 const userList = ref([])
 const logList = ref([])
+const logPagination = ref({ pageNum:1, pageSize:10, total:0 })
+const logFilters = ref({ action: '', daterange: [] })
+const actionOptions = ref([])
 const attachmentList = ref([])
 
 // 字典数据
-const { ticket_status, ticket_priority, equipment_specialty } = proxy.useDict('ticket_status', 'ticket_priority', 'equipment_specialty')
+  const { ticket_status, ticket_priority, equipment_specialty, ticket_action } = proxy.useDict('ticket_status', 'ticket_priority', 'equipment_specialty', 'ticket_action')
+
+onMounted(() => {
+  // 动态字典填充动作选项
+  actionOptions.value = (ticket_action || []).map(d => ({ value: d.value, label: d.label }))
+})
 
 // 表单数据
 const form = ref({})
+// 从日志推导的辅助显示字段
+const startTime = ref('')
 const assignForm = ref({
   assigneeId: undefined,
   remark: ''
@@ -256,21 +294,14 @@ const completeRules = {
 }
 
 /** 获取工单详情 */
-const ticketStore = useTicketStore()
 
 async function getDetail() {
   if (!ticketId) return
   loading.value = true
-  // 直接读取 store（若刷新后 store 为空则尝试 seed）
-  ticketStore.ensureSeed()
-  const t = ticketStore.getById(Number(ticketId))
-  if (t) {
-    form.value = { ...t }
-  } else {
-    // 未找到：返回列表
-    router.replace('/business/ticket/list')
-  }
-  logList.value = []
+  const { data } = await getTicket(ticketId)
+  if (!data) { router.replace('/business/ticket/list'); return }
+  form.value = { ...data }
+  await loadLogs()
   attachmentList.value = []
   loading.value = false
 }
@@ -323,30 +354,23 @@ function handleAssign() {
 
 /** 提交指派 */
 function submitAssign() {
-  proxy.$refs["assignRef"].validate(valid => {
-    if (valid) {
-      const user = userList.value.find(u => u.userId === assignForm.value.assigneeId)
-      if (user) {
-        const existing = ticketStore.getById(Number(ticketId))
-        if (existing) {
-          ticketStore.update({ ...existing, assigneeName: user.nickName, status: 'assigned' })
-        }
-        form.value.assigneeName = user.nickName
-      }
-      form.value.status = 'assigned'
-      proxy.$modal.msgSuccess("指派成功")
-      assignOpen.value = false
-    }
+  proxy.$refs["assignRef"].validate(async valid => {
+    if (!valid) return
+    const user = userList.value.find(u => u.userId === assignForm.value.assigneeId)
+    if (!user) return
+    await assignTickets({ ticketIds: [ticketId], assigneeId: user.userId, assigneeName: user.nickName })
+    proxy.$modal.msgSuccess('指派成功')
+    assignOpen.value = false
+    getDetail()
   })
 }
 
 /** 开始处理 */
 function handleStart() {
-  proxy.$modal.confirm('确认开始处理该工单吗？').then(() => {
-    const existing = ticketStore.getById(Number(ticketId))
-    if (existing) ticketStore.update({ ...existing, status: 'processing' })
-    form.value.status = 'processing'
-    proxy.$modal.msgSuccess("已开始处理")
+  proxy.$modal.confirm('确认开始处理该工单吗？').then(async () => {
+    await request.post(`/business/ticket/start/${ticketId}`)
+    proxy.$modal.msgSuccess('已开始处理')
+    getDetail()
   }).catch(() => { })
 }
 
@@ -362,26 +386,31 @@ function handleComplete() {
 
 /** 提交完成 */
 function submitComplete() {
-  proxy.$refs["completeRef"].validate(valid => {
-    if (valid) {
-      const existing = ticketStore.getById(Number(ticketId))
-      if (existing) ticketStore.update({ ...existing, status: 'completed', solution: completeForm.value.solution })
-      form.value.status = 'completed'
-      form.value.solution = completeForm.value.solution
-      proxy.$modal.msgSuccess("工单已完成")
-      completeOpen.value = false
-    }
+  proxy.$refs["completeRef"].validate(async valid => {
+    if (!valid) return
+    await request.post('/business/ticket/complete', { ticketId, solution: completeForm.value.solution, result: completeForm.value.result })
+    proxy.$modal.msgSuccess('工单已完成')
+    completeOpen.value = false
+    getDetail()
   })
 }
 
 /** 关闭工单 */
 function handleCloseTicket() {
-  proxy.$modal.confirm('确认关闭该工单吗？').then(() => {
-    const existing = ticketStore.getById(Number(ticketId))
-    if (existing) ticketStore.update({ ...existing, status: 'closed' })
-    form.value.status = 'closed'
-    proxy.$modal.msgSuccess("工单已关闭")
+  proxy.$modal.confirm('确认关闭该工单吗？').then(async () => {
+    await request.post(`/business/ticket/close/${ticketId}`)
+    proxy.$modal.msgSuccess('工单已关闭')
+    getDetail()
   }).catch(() => { })
+}
+
+/** 重新打开 */
+function handleReopen(){
+  proxy.$modal.confirm('确认重新打开该工单？').then(async ()=>{
+    await reopenTicket(ticketId)
+    proxy.$modal.msgSuccess('工单已重新打开')
+    getDetail()
+  }).catch(()=>{})
 }
 
 /** 打印 */
@@ -412,10 +441,49 @@ onMounted(() => {
 const deadlineValue = computed(() => {
   if (!form.value.deadline) return Date.now()
   if (typeof form.value.deadline === 'number') return form.value.deadline
-  const d = new Date(form.value.deadline.replace(/-/g, '/')) // 兼容 iOS
+  const d = new Date(String(form.value.deadline).replace(/-/g, '/'))
   const ts = d.getTime()
   return isNaN(ts) ? Date.now() : ts
 })
+
+// 日志加载与筛选
+async function loadLogs(){
+  const { pageNum, pageSize } = logPagination.value
+  const params = { pageNum, pageSize }
+  if (logFilters.value.action) params.action = logFilters.value.action
+  if (logFilters.value.daterange && logFilters.value.daterange.length === 2) {
+    params.beginTime = logFilters.value.daterange[0]
+    params.endTime = logFilters.value.daterange[1]
+  }
+  const res = await request.get(`/business/ticket/${ticketId}/logs`, { params })
+  const rows = res.rows || res.data || []
+  logList.value = rows
+  logPagination.value.total = res.total || 0
+  // 推导开始时间（最近一次 start）
+  const start = rows.find(r => r.action === 'start')
+  startTime.value = start ? start.createTime : ''
+}
+
+function handleLogPageChange(p){ logPagination.value.pageNum = p; loadLogs() }
+function handleLogSizeChange(s){ logPagination.value.pageSize = s; loadLogs() }
+function resetLogFilters(){ logFilters.value = { action:'', daterange:[] }; logPagination.value.pageNum=1; loadLogs() }
+function reloadLogs(){ logPagination.value.pageNum=1; loadLogs() }
+
+function actionLabel(a){
+  const item = (ticket_action||[]).find(d=>d.value===a)
+  return item?item.label:a
+}
+function getLogType(a){
+  switch(a){
+    case 'create': return 'primary'
+    case 'assign': return 'info'
+    case 'start': return 'warning'
+    case 'complete': return 'success'
+    case 'close': return 'danger'
+    case 'reopen': return 'warning'
+    default: return ''
+  }
+}
 </script>
 
 <style lang="scss" scoped>

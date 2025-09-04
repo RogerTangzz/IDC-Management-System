@@ -28,23 +28,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="solution"    column="solution"    />
         <result property="escalationHistory"    column="escalation_history"    />
         <result property="attachments"    column="attachments"    />
+    <result property="lastStatusTime"    column="last_status_time"    />
+    <result property="lastAction"    column="last_action"    />
         <result property="delFlag"    column="del_flag"    />
         <result property="createBy"    column="create_by"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"    column="update_by"    />
         <result property="updateTime"    column="update_time"    />
         <result property="remark"    column="remark"    />
+    <!-- 非表字段 lastAction/lastStatusTime 通过后续增强设置，不在此 resultMap 中直接映射 -->
     </resultMap>
 
     <sql id="selectBizTicketVo">
-        select ticket_id, ticket_no, title, description, priority, status, equipment, location, specialty, fault_type, reporter_id, reporter_name, reporter_phone, assignee_id, assignee_name, source, source_id, discovery_time, deadline, completion_time, solution, escalation_history, attachments, del_flag, create_by, create_time, update_by, update_time, remark from biz_ticket
+    select ticket_id, ticket_no, title, description, priority, status, equipment, location, specialty, fault_type, reporter_id, reporter_name, reporter_phone, assignee_id, assignee_name, source, source_id, discovery_time, deadline, completion_time, solution, escalation_history, attachments, last_status_time, last_action, del_flag, create_by, create_time, update_by, update_time, remark from biz_ticket
     </sql>
 
     <select id="selectBizTicketList" parameterType="BizTicket" resultMap="BizTicketResult">
         <include refid="selectBizTicketVo"/>
         <where>  
             <if test="ticketNo != null  and ticketNo != ''"> and ticket_no = #{ticketNo}</if>
-            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="title != null  and title != ''"> and title like concat('%', #{title}, '%')</if>
             <if test="description != null  and description != ''"> and description = #{description}</if>
             <if test="priority != null  and priority != ''"> and priority = #{priority}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
@@ -62,9 +65,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="discoveryTime != null "> and discovery_time = #{discoveryTime}</if>
             <if test="deadline != null "> and deadline = #{deadline}</if>
             <if test="completionTime != null "> and completion_time = #{completionTime}</if>
+            <if test="params != null and params.beginTime != null and params.beginTime != ''"> and create_time &gt;= #{params.beginTime}</if>
+            <if test="params != null and params.endTime != null and params.endTime != ''"> and create_time &lt;= #{params.endTime}</if>
             <if test="solution != null  and solution != ''"> and solution = #{solution}</if>
             <if test="escalationHistory != null  and escalationHistory != ''"> and escalation_history = #{escalationHistory}</if>
             <if test="attachments != null  and attachments != ''"> and attachments = #{attachments}</if>
+            <if test="params != null and params.selfOnly != null and (params.selfOnly == '1' or params.selfOnly == 'true')">
+                and (assignee_id = #{params.userId}
+                     or reporter_id = #{params.userId}
+                     or create_by = #{params.username})
+            </if>
         </where>
     </select>
     
@@ -98,6 +108,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="solution != null">solution,</if>
             <if test="escalationHistory != null">escalation_history,</if>
             <if test="attachments != null">attachments,</if>
+            <if test="lastStatusTime != null">last_status_time,</if>
+            <if test="lastAction != null">last_action,</if>
             <if test="delFlag != null">del_flag,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
@@ -128,6 +140,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="solution != null">#{solution},</if>
             <if test="escalationHistory != null">#{escalationHistory},</if>
             <if test="attachments != null">#{attachments},</if>
+            <if test="lastStatusTime != null">#{lastStatusTime},</if>
+            <if test="lastAction != null">#{lastAction},</if>
             <if test="delFlag != null">#{delFlag},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
@@ -162,6 +176,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="solution != null">solution = #{solution},</if>
             <if test="escalationHistory != null">escalation_history = #{escalationHistory},</if>
             <if test="attachments != null">attachments = #{attachments},</if>
+            <if test="lastStatusTime != null">last_status_time = #{lastStatusTime},</if>
+            <if test="lastAction != null">last_action = #{lastAction},</if>
             <if test="delFlag != null">del_flag = #{delFlag},</if>
             <if test="createBy != null">create_by = #{createBy},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
@@ -182,4 +198,136 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{ticketId}
         </foreach>
     </delete>
+
+    <!-- ================== 扩展统计 SQL ================== -->
+    <select id="countGroupByStatus" resultType="java.util.HashMap">
+        select status as k, count(*) as v from biz_ticket group by status
+    </select>
+    <select id="countGroupByPriority" resultType="java.util.HashMap">
+        select priority as k, count(*) as v from biz_ticket group by priority
+    </select>
+    <select id="countToday" resultType="java.util.HashMap">
+        select 
+            sum(case when date(create_time)=current_date then 1 else 0 end) as todayNew,
+            sum(case when completion_time is not null and date(completion_time)=current_date then 1 else 0 end) as todayCompleted
+        from biz_ticket
+    </select>
+    <!-- 处理时长分布区间: lt1h / 1-4h / 4-8h / 8-24h / ge24h -->
+        <select id="durationDistribution" resultType="java.util.HashMap">
+                select 
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 60 then 1 else 0 end) as lt1h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=60 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 240 then 1 else 0 end) as bt1to4h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=240 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 480 then 1 else 0 end) as bt4to8h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=480 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 1440 then 1 else 0 end) as bt8to24h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=1440 then 1 else 0 end) as ge24h,
+                    count(*) as total
+                from biz_ticket
+                where completion_time is not null
+        </select>
+    <!-- SLA 超时: deadline 不为空且 (完成时间>deadline 或 未完成且当前时间>deadline) 视为超时 -->
+        <select id="slaStats" resultType="java.util.HashMap">
+                select 
+                    sum(case when deadline is not null then 1 else 0 end) as withDeadline,
+                    sum(case when deadline is not null and (
+                                (completion_time is not null and completion_time &gt; deadline) or
+                                (completion_time is null and now() &gt; deadline)
+                            ) then 1 else 0 end) as timeoutCount,
+                    sum(case when deadline is not null and completion_time is not null and completion_time &lt;= deadline then 1 else 0 end) as ontimeCompleted
+                from biz_ticket
+        </select>
+
+    <!-- 带范围的分析：参数 beginTime/endTime 可选，过滤 create_time/完成时间 -->
+    <select id="durationAnalytics" parameterType="map" resultType="java.util.HashMap">
+        select 
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 60 then 1 else 0 end) as lt1h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=60 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 240 then 1 else 0 end) as bt1to4h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=240 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 480 then 1 else 0 end) as bt4to8h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=480 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 1440 then 1 else 0 end) as bt8to24h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=1440 then 1 else 0 end) as ge24h,
+            count(*) as total
+        from biz_ticket
+        where completion_time is not null
+        <if test="beginTime != null and beginTime != ''"> and completion_time &gt;= #{beginTime}</if>
+        <if test="endTime != null and endTime != ''"> and completion_time &lt;= #{endTime}</if>
+    </select>
+
+    <select id="slaAnalytics" parameterType="map" resultType="java.util.HashMap">
+        select 
+            sum(case when deadline is not null then 1 else 0 end) as withDeadline,
+            sum(case when deadline is not null and (
+                        (completion_time is not null and completion_time &gt; deadline) or
+                        (completion_time is null and now() &gt; deadline)
+                    ) then 1 else 0 end) as timeoutCount,
+            sum(case when deadline is not null and completion_time is not null and completion_time &lt;= deadline then 1 else 0 end) as ontimeCompleted
+        from biz_ticket
+        <where>
+            <if test="beginTime != null and beginTime != ''"> and create_time &gt;= #{beginTime}</if>
+            <if test="endTime != null and endTime != ''"> and create_time &lt;= #{endTime}</if>
+        </where>
+    </select>
+
+    <!-- 趋势：按天统计 -->
+    <select id="trendCreated" parameterType="map" resultType="java.util.HashMap">
+        select date(create_time) as d, count(*) as v
+        from biz_ticket
+        <where>
+            <if test="beginTime != null and beginTime != ''"> and create_time &gt;= #{beginTime}</if>
+            <if test="endTime != null and endTime != ''"> and create_time &lt;= #{endTime}</if>
+        </where>
+        group by date(create_time)
+        order by d
+    </select>
+
+    <select id="trendCompleted" parameterType="map" resultType="java.util.HashMap">
+        select date(completion_time) as d, count(*) as v
+        from biz_ticket
+        <where>
+            and completion_time is not null
+            <if test="beginTime != null and beginTime != ''"> and completion_time &gt;= #{beginTime}</if>
+            <if test="endTime != null and endTime != ''"> and completion_time &lt;= #{endTime}</if>
+        </where>
+        group by date(completion_time)
+        order by d
+    </select>
+    <select id="countOverdue" resultType="long">
+        select count(*) from biz_ticket
+        where deadline is not null
+            and status &lt;> 'closed'
+            and completion_time is null
+            and now() &gt; deadline
+    </select>
+
+    <!-- 近即将超时（warnBeforeHours 小时内到期） -->
+    <select id="countNearDue" parameterType="int" resultType="long">
+        select count(*) from biz_ticket
+        where deadline is not null
+          and status &lt;&gt; 'closed'
+          and completion_time is null
+          and deadline &gt; now()
+          and deadline &lt;= date_add(now(), interval #{_parameter} hour)
+    </select>
+
+    <select id="selectNearDueList" parameterType="int" resultMap="BizTicketResult">
+        <include refid="selectBizTicketVo"/>
+        where deadline is not null
+          and status &lt;&gt; 'closed'
+          and completion_time is null
+          and deadline &gt; now()
+          and deadline &lt;= date_add(now(), interval #{_parameter} hour)
+    </select>
+
+    <!-- 逾期工单列表 -->
+    <select id="selectOverdueList" parameterType="BizTicket" resultMap="BizTicketResult">
+        <include refid="selectBizTicketVo"/>
+        where deadline is not null
+          and status &lt;&gt; 'closed'
+          and completion_time is null
+          and now() &gt; deadline
+        <if test="assigneeId != null"> and assignee_id = #{assigneeId}</if>
+        <if test="priority != null and priority != ''"> and priority = #{priority}</if>
+        <if test="title != null and title != ''"> and title like concat('%', #{title}, '%')</if>
+        <if test="reporterName != null and reporterName != ''"> and reporter_name like concat('%', #{reporterName}, '%')</if>
+        <if test="params != null and params.beginTime != null and params.beginTime != ''"> and create_time &gt;= #{params.beginTime}</if>
+        <if test="params != null and params.endTime != null and params.endTime != ''"> and create_time &lt;= #{params.endTime}</if>
+    </select>
 </mapper>

@@ -111,6 +111,12 @@ public class BizTicket extends BaseEntity
     @Excel(name = "附件路径")
     private String attachments;
 
+    /** 最近状态变更时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date lastStatusTime;
+    /** 最近动作 */
+    private String lastAction;
+
     /** 删除标志（0代表存在 2代表删除） */
     private String delFlag;
 
@@ -344,6 +350,11 @@ public class BizTicket extends BaseEntity
         return attachments;
     }
 
+    public Date getLastStatusTime() { return lastStatusTime; }
+    public void setLastStatusTime(Date lastStatusTime) { this.lastStatusTime = lastStatusTime; }
+    public String getLastAction() { return lastAction; }
+    public void setLastAction(String lastAction) { this.lastAction = lastAction; }
+
     public void setDelFlag(String delFlag) 
     {
         this.delFlag = delFlag;
@@ -380,6 +391,8 @@ public class BizTicket extends BaseEntity
             .append("solution", getSolution())
             .append("escalationHistory", getEscalationHistory())
             .append("attachments", getAttachments())
+            .append("lastStatusTime", getLastStatusTime())
+            .append("lastAction", getLastAction())
             .append("delFlag", getDelFlag())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())

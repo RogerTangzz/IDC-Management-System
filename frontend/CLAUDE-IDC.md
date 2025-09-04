@@ -1,15 +1,21 @@
 基于当前项目进展，这是更新后的 **CLAUDE-IDC.md v2.2**（同步 TS 迁移与登录兼容策略）：
 
 ```markdown
-# CLAUDE-IDC.md — IDC运维管理系统开发扩展规范 v2.2
+# CLAUDE-IDC.md — IDC运维管理系统开发扩展规范 v2.0（对齐业务规范）
 
-版本: 2.2.0
-基础规范: CLAUDE.md v2.3
+版本: 2.0.0（对齐 IDC 系统开发功能业务逻辑与规范 V2.0）
+基础规范: CLAUDE.md v2.0
 适用项目: IDC运维管理系统（基于RuoYi-Vue3）
 核心目标: 将业务逻辑精准映射到RuoYi规范的技术实现
-更新日期: 2025-08-31
+更新日期: 2025-09-03
 
-本版新增：Auth / Permission Store TypeScript 迁移、登录/用户信息接口兼容指引、Mock 启用策略、模块状态刷新、测试与类型治理路线。
+本版要点（与 V2.0 对齐）：
+1) 工单：持久化 last_action/last_status_time，reopen 工作流，统计 summary/analytics，逾期与近到期 nearDue 指标。
+2) SLA：配置化 warnBeforeHours 与优先级默认时限（low/medium/high），定时提醒任务、逾期自动升级为 urgent。
+3) 巡检联动：巡检异常自动生成工单，记录 create 日志，回写巡检 ticket 关联。
+4) 数据权限：非管理员仅能查看/操作与自己相关（被指派/报修/创建）的工单。
+5) 字典/索引：ticket_action 增加 sla_warn/sla_overdue；索引建议含 last_status_time、deadline、status。
+6) 待办：前端报表图表、逾期/近到期下钻视图、通知中心、系统设置（SLA 阈值 UI）、资产/知识库/审批中心等。
 
 ---
 
@@ -34,10 +40,10 @@ const moduleStatus = {
   // P0 核心模块
   ticket: {
     priority: 'P0',
-    api: '✅ 已转换为RuoYi规范 + 补充assignTickets',
-    list: '✅ index.vue已完成',
-    form: '⚠️ 编码问题已修复，待功能验证',
-    detail: '⚠️ 编码问题已修复，待功能验证',
+    api: '✅ CRUD + assign + start/complete/close + reopen + summary/analytics + overdue/nearDue',
+    list: '✅ 列表+排序+摘要+数据权限过滤',
+    form: '✅ 字段绑定对齐后端（reporterName/assigneeName/completionTime）',
+    detail: '✅ 展示 last_status_time/last_action；startTime 由日志推导',
     template: '⏳ 待开发'
   },
   inspection: {
@@ -66,7 +72,7 @@ const moduleStatus = {
   // P2 支撑模块
   knowledge: { priority: 'P2', status: '❌ 未开始' },
   notification: { priority: 'P2', status: '❌ 未开始' },
-  report: { priority: 'P2', status: '❌ 未开始' }
+  report: { priority: 'P2', status: '⚠️ 后端 summary/analytics 已实装，前端图表开发中' }
 }
 ```
 
@@ -74,6 +80,7 @@ const moduleStatus = {
 | 业务模块 | 前端路由 | API前缀 | 实际位置 | 权限标识前缀 |
 |---------|---------|---------|---------|-------------|
 | 工单管理 | /business/ticket | /business/ticket | views/business/ticket | business:ticket: |
+| 工单报表 | /business/ticket/report | /business/ticket/report | views/business/ticket/report | business:ticket:report: |
 | 巡检管理 | /business/inspection | /business/inspection | views/business/inspection | business:inspection: |
 | 维保计划 | /business/maintenance | /business/maintenance | views/business/maintenance | business:maintenance: |
 | 资产管理 | /business/asset | /business/asset | views/business/asset | business:asset: |
@@ -91,8 +98,12 @@ const currentIssues = {
   pending: [
     '⚠️ 维保模块导入错误 - maintenance import 仍需校验真实接口',
     '⚠️ 登录 / getInfo 后端结构未统一 (需统一 data 包裹)',
-    '⏳ 后端业务 Controller & Service 待实现',
-    '⏳ 数据库业务表 + 索引部署脚本待执行'
+    '⚠️ 工单统计前端图表未完成 (durationDistribution / slaStats)',
+    '⚠️ 逾期工单列表下钻页未实现',
+    '⏳ 工单模板 module 待实现',
+    '⏳ Reopen 权限粒度补充 (business:ticket:reopen)',
+    '✅ 工单后端控制器含统计/重开已上线',
+    '✅ 数据库增量列已添加（需执行脚本）'
   ]
 }
 ```
@@ -148,7 +159,7 @@ const entityRelations = {
 }
 ```
 
-### 1.2 状态机定义
+### 1.2 状态机定义（对齐后端）
 ```javascript
 // 工单状态流转
 export const TICKET_STATUS = {
@@ -156,7 +167,7 @@ export const TICKET_STATUS = {
   ASSIGNED: { value: 'assigned', label: '已指派', color: 'primary', next: ['processing'] },
   PROCESSING: { value: 'processing', label: '处理中', color: '', next: ['completed'] },
   COMPLETED: { value: 'completed', label: '已完成', color: 'success', next: ['closed'] },
-  CLOSED: { value: 'closed', label: '已关闭', color: 'info', next: [] }
+  CLOSED: { value: 'closed', label: '已关闭', color: 'info', next: ['assigned','processing'] } // reopen
 }
 
 // 维保计划审核状态
@@ -172,7 +183,7 @@ export const MAINTENANCE_STATUS = {
 
 ## 2. RuoYi规范API实现（完整版）
 
-### 2.1 工单模块API（完整版）
+### 2.1 工单模块API（完整版，对齐后端）
 ```javascript
 // src/api/business/ticket.js
 import request from '@/utils/request'
@@ -233,6 +244,22 @@ export function assignTickets(data) {
   })
 }
 
+export function startTicket(id) {
+  return request({ url: `/business/ticket/start/${id}`, method: 'post' })
+}
+
+export function completeTicket(payload) {
+  return request({ url: '/business/ticket/complete', method: 'post', data: payload })
+}
+
+export function closeTicket(id) {
+  return request({ url: `/business/ticket/close/${id}`, method: 'post' })
+}
+
+export function reopenTicket(id) {
+  return request({ url: `/business/ticket/reopen/${id}`, method: 'post' })
+}
+
 export function changeTicketStatus(ticketId, status) {
   return request({
     url: '/business/ticket/' + ticketId + '/status',
@@ -245,6 +272,14 @@ export function getOverdueTickets() {
   return request({
     url: '/business/ticket/overdue',
     method: 'get'
+  })
+}
+
+export function getNearDueTickets(hours = 2) {
+  return request({
+    url: '/business/ticket/nearDue', // 注：前端约定，后端实现可基于 selectNearDueList(hours)
+    method: 'get',
+    params: { hours }
   })
 }
 
@@ -476,10 +511,13 @@ export function getApproverList() {
 [保持原有的表结构，添加索引优化]
 
 ```sql
--- 添加索引优化查询性能
+-- 添加索引/新列（若历史库未升）
+ALTER TABLE `biz_ticket` ADD COLUMN IF NOT EXISTS `last_status_time` datetime NULL COMMENT '最近状态变更时间';
+ALTER TABLE `biz_ticket` ADD COLUMN IF NOT EXISTS `last_action` varchar(50) NULL COMMENT '最近动作';
 ALTER TABLE `biz_ticket` ADD INDEX `idx_status` (`status`);
 ALTER TABLE `biz_ticket` ADD INDEX `idx_assignee` (`assignee_id`);
 ALTER TABLE `biz_ticket` ADD INDEX `idx_create_time` (`create_time`);
+ALTER TABLE `biz_ticket` ADD INDEX `idx_last_status_time` (`last_status_time`);
 
 ALTER TABLE `biz_inspection` ADD INDEX `idx_inspection_date` (`inspection_date`);
 ALTER TABLE `biz_inspection` ADD INDEX `idx_inspector` (`inspector_name`);
@@ -499,12 +537,12 @@ const dictionaries = {
     { dictLabel: '已完成', dictValue: 'completed', dictSort: 4, cssClass: 'success' },
     { dictLabel: '已关闭', dictValue: 'closed', dictSort: 5, cssClass: 'default' }
   ],
-  // 工单优先级
+  // 工单优先级（与后端一致）
   'ticket_priority': [
-    { dictLabel: '紧急', dictValue: 'critical', dictSort: 1, cssClass: 'danger' },
-    { dictLabel: '高', dictValue: 'high', dictSort: 2, cssClass: 'warning' },
-    { dictLabel: '中', dictValue: 'medium', dictSort: 3, cssClass: 'primary' },
-    { dictLabel: '低', dictValue: 'low', dictSort: 4, cssClass: 'info' }
+    { dictLabel: '高', dictValue: 'high', dictSort: 2, cssClass: 'danger' },
+    { dictLabel: '中', dictValue: 'medium', dictSort: 3, cssClass: 'warning' },
+    { dictLabel: '低', dictValue: 'low', dictSort: 4, cssClass: 'info' },
+    { dictLabel: '加急', dictValue: 'urgent', dictSort: 1, cssClass: 'danger' }
   ],
   // 设备专业
   'equipment_specialty': [
@@ -539,6 +577,14 @@ const dictionaries = {
     { dictLabel: '已取消', dictValue: 'cancelled', dictSort: 4, cssClass: 'info' }
   ]
 }
+
+### 4.3 索引与查询规范（补充）
+- 工单：建议索引 `idx_status(status)`、`idx_deadline(deadline)`、`idx_assignee(assignee_id)`、`idx_last_status_time(last_status_time)`、`idx_create_time(create_time)`
+- 列表查询：标题/姓名模糊匹配用 like；分页必须配合 PageHelper；排序字段传下划线风格
+
+### 4.4 数据权限（补充）
+- 非管理员：仅能查看/操作与自己相关（被指派/报修/创建）的工单；Controller 设置 `query.params.selfOnly/userId/username`，Mapper 动态 where 过滤
+- 受限动作：start/complete/close 仅指派处理人可操作；reopen 需与自己相关或管理员
 ```
 
 ## 5. 业务服务实现（优化版）
@@ -778,7 +824,56 @@ volumes:
   mysql_data:
 ```
 
+### 新加业务逻辑流程图
+核心业务流程图
+
+```
+任务管理流程：
+创建任务 → 任务审批 → 任务指派 → 执行确认 → 进度更新 → 完成确认 → 归档
+
+工单处理流程：
+故障发现 → 工单创建 → 紧急度评估 → 工单派发 → 现场处理 → 结果反馈 → 验收确认
+
+巡检执行流程：
+制定计划 → 生成任务 → 现场巡检 → 记录异常 → 生成报告 → 问题跟踪 → 知识沉淀
+
+资产管理流程：
+机房机柜号入库 → 信息登记 → 使用方登记 → 审批流程 → 标注使用方颜色 → 客户是否还在继续使用 → 盘点核对
+
+### 添加权限矩阵
+权限矩阵
+
+| 功能模块 | 操作 | 管理员 | 巡检员 | 运维工程师 |
+|---------|------|---------|---------|------------|
+| **维保计划** |
+| | 创建 | ✓ | ✓ | ✓ |
+| | 编辑 | ✓ | × | 自己的 |
+| | 删除 | ✓ | × | 自己的 |
+| **工单管理** |
+| | 创建 | ✓ | ✓ | ✓ |
+| | 处理 | ✓ | × | 被指派 |
+| | 关闭 | ✓ | × | 被指派 |
+| | 指派 | ✓ | ✓ | ✓ |
+| **巡检管理** |
+| | 执行 | ✓ | ✓ | ✓ |
+| | 编辑 | ✓ | ✓ | × |
+| **资产管理** |
+| | 新增 | ✓ | ✓ | ✓ |
+| | 编辑 | ✓ | ✓ | ✓ |
+| **知识库** |
+| | 创建 | ✓ | ✓ | ✓ |
+| | 编辑 | ✓ | ✓ | ✓ |
+| | 查看 | ✓ | ✓ | ✓ |
+
 ## 更新日志
+### v2.2.1 (2025-09-01)
+- 新增：工单 last_status_time / last_action 持久化与增量脚本
+- 新增：reopen 接口 + 状态流转校验
+- 新增：报表 summary / analytics API + 首页摘要卡片
+- 修复：BizTicketMapper.xml 未转义符号导致启动失败
+- 更新：模块状态 / 问题追踪 / 数据模型 (索引与新列)
+- 待办：图表可视化、逾期下钻、权限细化、性能优化
+
 ### v2.2.0 (2025-08-31)
 - 新增：登录 / 用户信息响应兼容章节
 - 新增：服务测试策略 / 认证链路测试要点

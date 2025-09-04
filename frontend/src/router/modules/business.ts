@@ -39,6 +39,59 @@ const businessRoutes: RouteRecordRaw[] = [
                         hidden: true,
                         component: () => import('@/views/business/ticket/index.vue'),
                         meta: { title: '编辑工单', icon: 'edit', activeMenu: '/business/ticket/list', noCache: true }
+                    },
+                    {
+                        path: 'report',
+                        name: 'TicketReport',
+                        component: () => import('@/views/business/ticket/report.vue'),
+                        meta: { title: '工单报表', icon: 'chart', noCache: true }
+                    }
+                ]
+            },
+            {
+                path: 'asset',
+                component: ParentView,
+                name: 'Asset',
+                meta: { title: '资产管理', icon: 'tool' },
+                children: [
+                    {
+                        path: 'rack',
+                        name: 'RackList',
+                        component: () => import('@/views/business/asset/rack/index.vue'),
+                        meta: { title: '机柜使用', icon: 'list' }
+                    },
+                    {
+                        path: 'rack/detail/:rackId',
+                        name: 'RackDetail',
+                        hidden: true,
+                        component: () => import('@/views/business/asset/rack/detail.vue'),
+                        meta: { title: '机柜详情', activeMenu: '/business/asset/rack' }
+                    },
+                    {
+                        path: 'room',
+                        name: 'RoomList',
+                        component: () => import('@/views/business/asset/room/index.vue'),
+                        meta: { title: '机房管理', icon: 'home-filled' }
+                    }
+                ]
+            },
+            {
+                path: 'message',
+                name: 'Message',
+                component: () => import('@/views/business/message/index.vue'),
+                meta: { title: '消息中心', icon: 'bell' }
+            },
+            {
+                path: 'settings',
+                component: ParentView,
+                name: 'BusinessSettings',
+                meta: { title: '业务设置', icon: 'setting' },
+                children: [
+                    {
+                        path: 'sla',
+                        name: 'SlaSettings',
+                        component: () => import('@/views/business/settings/sla.vue'),
+                        meta: { title: 'SLA 阈值设置', icon: 'setting', noCache: true }
                     }
                 ]
             },

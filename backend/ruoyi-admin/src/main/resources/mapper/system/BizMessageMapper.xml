@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BizMessageMapper">
+    <resultMap id="BizMessageResult" type="BizMessage">
+        <result property="msgId" column="msg_id" />
+        <result property="type" column="type" />
+        <result property="title" column="title" />
+        <result property="content" column="content" />
+        <result property="receiverId" column="receiver_id" />
+        <result property="receiverName" column="receiver_name" />
+        <result property="readFlag" column="read_flag" />
+        <result property="bizType" column="biz_type" />
+        <result property="bizId" column="biz_id" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <insert id="insert" parameterType="BizMessage" useGeneratedKeys="true" keyProperty="msgId">
+        insert into biz_message
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            type, title, content, receiver_id, receiver_name, read_flag,
+            <if test="bizType != null">biz_type,</if>
+            <if test="bizId != null">biz_id,</if>
+            create_time
+        </trim>
+        <trim prefix="values(" suffix=")" suffixOverrides=",">
+            #{type}, #{title}, #{content}, #{receiverId}, #{receiverName}, #{readFlag},
+            <if test="bizType != null">#{bizType},</if>
+            <if test="bizId != null">#{bizId},</if>
+            #{createTime}
+        </trim>
+    </insert>
+
+    <update id="markRead" parameterType="long">
+        update biz_message set read_flag='Y' where msg_id = #{msgId}
+    </update>
+
+    <select id="selectUnreadByUser" parameterType="long" resultMap="BizMessageResult">
+        select msg_id, type, title, content, receiver_id, receiver_name, read_flag, biz_type, biz_id, create_time
+        from biz_message where receiver_id = #{userId} and read_flag = 'N' order by msg_id desc
+    </select>
+
+    <select id="countUnread" parameterType="long" resultType="long">
+        select count(*) from biz_message where receiver_id = #{userId} and read_flag = 'N'
+    </select>
+
+    <select id="selectByUser" parameterType="BizMessage" resultMap="BizMessageResult">
+        select msg_id, type, title, content, receiver_id, receiver_name, read_flag, biz_type, biz_id, create_time
+        from biz_message
+        <where>
+            <if test="receiverId != null"> and receiver_id = #{receiverId}</if>
+            <if test="readFlag != null and readFlag != '' and readFlag != 'ALL'"> and read_flag = #{readFlag}</if>
+            <if test="type != null and type != ''"> and type = #{type}</if>
+        </where>
+        order by msg_id desc
+    </select>
+
+    <update id="markAllRead" parameterType="long">
+        update biz_message set read_flag='Y' where receiver_id = #{userId} and read_flag='N'
+    </update>
+</mapper>

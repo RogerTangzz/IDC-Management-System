@@ -52,17 +52,33 @@
         <el-button type="warning" plain icon="Download" @click="handleExport"
           v-hasPermi="['business:ticket:export']">导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="danger" plain icon="WarningFilled" @click="showOverdue" v-hasPermi="['business:ticket:list']">逾期</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Bell" @click="showNearDue" v-hasPermi="['business:ticket:list']">近到期</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 数据表格 -->
-    <el-table v-loading="loading" :data="ticketList" @selection-change="handleSelectionChange">
+  <el-table v-loading="loading" :data="ticketList" @selection-change="handleSelectionChange" @sort-change="handleSortChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="工单编号" align="center" prop="ticketNo" width="120" />
       <el-table-column label="标题" align="center" prop="title" :show-overflow-tooltip="true" />
       <el-table-column label="状态" align="center" prop="status" width="100">
         <template #default="scope">
           <dict-tag :options="ticket_status" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="最新动作" align="center" prop="lastAction" width="100">
+        <template #default="scope">
+          <dict-tag :options="ticket_action" :value="scope.row.lastAction" />
+        </template>
+      </el-table-column>
+  <el-table-column label="最新状态时间" align="center" prop="lastStatusTime" width="160" sortable="custom">
+        <template #default="scope">
+          <span>{{ parseTime(scope.row.lastStatusTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="优先级" align="center" prop="priority" width="80">
@@ -73,7 +89,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="报修人" align="center" prop="reporter" width="100" />
+      <el-table-column label="报修人" align="center" prop="reporterName" width="100" />
       <el-table-column label="故障设备" align="center" prop="equipment" width="120" />
       <el-table-column label="设备专业" align="center" prop="specialty" width="100">
         <template #default="scope">
@@ -86,12 +102,12 @@
           <span>{{ parseTime(scope.row.deadline) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+  <el-table-column label="创建时间" align="center" prop="createTime" width="160" sortable="custom">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="240">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)"
             v-hasPermi="['business:ticket:query']">查看</el-button>
@@ -99,6 +115,7 @@
             v-hasPermi="['business:ticket:edit']">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
             v-hasPermi="['business:ticket:remove']">删除</el-button>
+                <el-button link type="primary" icon="RefreshLeft" v-if="scope.row.status==='closed'" @click="handleReopen(scope.row)" v-hasPermi="['business:ticket:reopen']">重开</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -128,8 +145,8 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="报修人" prop="reporter">
-              <el-input v-model="form.reporter" placeholder="请输入报修人" />
+            <el-form-item label="报修人" prop="reporterName">
+              <el-input v-model="form.reporterName" placeholder="请输入报修人" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -201,14 +218,13 @@
 <script setup name="Ticket">
 import { ref, reactive, getCurrentInstance, toRefs, computed } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
-// import { listTicket, getTicket, delTicket, addTicket, updateTicket, assignTickets } from "@/api/business/ticket" // 后端集成后启用
-// import { listUser } from "@/api/system/user" // 当前使用本地 mock 数据
+import { listTicket, addTicket, updateTicket, delTicket, assignTickets, reopenTicket } from '@/api/business/ticket'
 import { useRouter, useRoute } from 'vue-router'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
-const { ticket_status, equipment_specialty } = proxy.useDict('ticket_status', 'equipment_specialty')
+const { ticket_status, equipment_specialty, ticket_action } = proxy.useDict('ticket_status', 'equipment_specialty', 'ticket_action')
 
 const ticketList = ref([])
 const open = ref(false)
@@ -222,11 +238,11 @@ const total = ref(0)
 const title = ref("")
 const dateRange = ref([])
 const userList = ref([])
+// 特殊模式：'' | 'overdue' | 'neardue'
+const specialMode = ref('')
 
 // 使用全局 ticketStore（持久化）
-import { useTicketStore } from '@/store/modules/ticket'
-const ticketStore = useTicketStore()
-ticketStore.ensureSeed()
+// 取消 Pinia 本地数据，全面改为后端接口
 
 const data = reactive({
   form: {},
@@ -236,17 +252,19 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
+  orderByColumn: undefined,
+  isAsc: undefined,
     ticketNo: undefined,
     title: undefined,
     status: undefined,
     priority: undefined,
     equipment: undefined,
-    reporter: undefined
+    reporterName: undefined
   },
   rules: {
     title: [{ required: true, message: "工单标题不能为空", trigger: "blur" }],
     priority: [{ required: true, message: "优先级不能为空", trigger: "change" }],
-    reporter: [{ required: true, message: "报修人不能为空", trigger: "blur" }],
+    reporterName: [{ required: true, message: "报修人不能为空", trigger: "blur" }],
     equipment: [{ required: true, message: "故障设备不能为空", trigger: "blur" }],
     description: [{ required: true, message: "故障描述不能为空", trigger: "blur" }]
   }
@@ -255,39 +273,38 @@ const data = reactive({
 const { queryParams, form, assignForm, rules } = toRefs(data)
 
 /** 查询工单列表 */
-function getList() {
+async function getList() {
   loading.value = true
-
-  // 使用Mock数据并应用过滤
-  setTimeout(() => {
-  let filteredData = [...ticketStore.tickets]
-
-    // 应用搜索过滤
-    if (queryParams.value.ticketNo) {
-      filteredData = filteredData.filter(item =>
-        item.ticketNo.toLowerCase().includes(queryParams.value.ticketNo.toLowerCase())
-      )
+  try {
+    const payload = { ...queryParams.value }
+    if (dateRange.value && dateRange.value.length === 2) {
+      payload.beginTime = `${dateRange.value[0]} 00:00:00`
+      payload.endTime = `${dateRange.value[1]} 23:59:59`
     }
-    if (queryParams.value.title) {
-      filteredData = filteredData.filter(item =>
-        item.title.includes(queryParams.value.title)
-      )
+    let data, totalCount
+    if (specialMode.value === 'overdue') {
+      const res = await getOverdueTickets({ pageNum: payload.pageNum, pageSize: payload.pageSize })
+      data = res.data || res.rows; totalCount = res.total
+    } else if (specialMode.value === 'neardue') {
+      const res = await getNearDueTickets({ pageNum: payload.pageNum, pageSize: payload.pageSize })
+      data = res.data || res.rows; totalCount = res.total
+    } else {
+      const res = await listTicket(payload)
+      data = res.data; totalCount = res.total
     }
-    if (queryParams.value.status) {
-      filteredData = filteredData.filter(item =>
-        item.status === queryParams.value.status
-      )
-    }
-    if (queryParams.value.priority) {
-      filteredData = filteredData.filter(item =>
-        item.priority === queryParams.value.priority
-      )
-    }
-
-    ticketList.value = filteredData
-    total.value = filteredData.length
+    ticketList.value = data || []
+    total.value = totalCount || 0
+  } finally {
     loading.value = false
-  }, 300)
+  }
+}
+
+function handleSortChange({ prop, order }){
+  // 转下划线并转换排序方向
+  const toUnderScoreCase = (s) => s.replace(/([A-Z])/g, '_$1').toLowerCase()
+  queryParams.value.orderByColumn = prop ? toUnderScoreCase(prop) : undefined
+  queryParams.value.isAsc = order === 'ascending' ? 'asc' : order === 'descending' ? 'desc' : undefined
+  getList()
 }
 
 /** 取消按钮 */
@@ -304,7 +321,7 @@ function reset() {
     title: undefined,
     priority: 'medium',
     status: 'pending',
-    reporter: undefined,
+    reporterName: undefined,
     equipment: undefined,
     specialty: undefined,
     description: undefined,
@@ -324,6 +341,7 @@ function handleQuery() {
 function resetQuery() {
   dateRange.value = []
   proxy.resetForm("queryRef")
+  specialMode.value = ''
   handleQuery()
 }
 
@@ -348,66 +366,68 @@ function handleAdd() {
 }
 
 /** 修改按钮操作 */
-function handleUpdate(row) {
+async function handleUpdate(row) {
   reset()
-  const ticketId = row.ticketId || ids.value[0]
-  const ticket = ticketStore.getById(ticketId)
-  if (ticket) {
-    form.value = { ...ticket }
+  const target = row || (ticketList.value.find(t => t.ticketId === ids.value[0]))
+  if (target) {
+    form.value = { ...target }
     open.value = true
-    title.value = "修改工单"
+    title.value = '修改工单'
   }
 }
 
 // 若通过 /business/ticket/edit/:ticketId 进入，自动打开编辑弹窗
+// 通过编辑路由进入时（后端重取）
 if (route.name === 'TicketEdit' && route.params.ticketId) {
-  const tid = Number(route.params.ticketId)
-  const ticket = ticketStore.getById(tid)
-  if (ticket) {
-    form.value = { ...ticket }
-    open.value = true
-    title.value = '修改工单'
-  } else {
-    // 找不到则回列表
-    router.replace('/business/ticket/list')
-  }
+  const tid = route.params.ticketId
+  // 简化：列表刷新后再打开
+  getList().then(() => {
+    const ticket = ticketList.value.find(t => String(t.ticketId) === String(tid))
+    if (ticket) {
+      form.value = { ...ticket }
+      open.value = true
+      title.value = '修改工单'
+    } else {
+      router.replace('/business/ticket/list')
+    }
+  })
 }
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["ticketRef"].validate(valid => {
-    if (valid) {
-      if (form.value.ticketId != undefined) {
-        // 修改
-  ticketStore.update(form.value)
-        proxy.$modal.msgSuccess("修改成功")
-      } else {
-  const newTicket = ticketStore.add({
-          ...form.value,
-          status: 'pending',
-          createTime: parseTime(new Date()),
-          deadline: parseTime(new Date(Date.now() + 24 * 60 * 60 * 1000))
-  })
-        proxy.$modal.msgSuccess("新增成功")
-      }
-      open.value = false
-      getList()
-      // 若来源为详情页，保存后跳回详情
-      if (route.query.from === 'detail' && form.value.ticketId) {
-        router.replace(`/business/ticket/detail/${form.value.ticketId}`)
-      }
+  proxy.$refs["ticketRef"].validate(async valid => {
+    if (!valid) return
+    const payload = { ...form.value }
+    if (!payload.ticketId) {
+      const res = await addTicket(payload)
+      proxy.$modal.msgSuccess('新增成功')
+    } else {
+      await updateTicket(payload)
+      proxy.$modal.msgSuccess('修改成功')
     }
+    open.value = false
+    getList()
   })
 }
 
 /** 删除按钮操作 */
 function handleDelete(row) {
   const targetIds = Array.isArray(ids.value) && ids.value.length > 0 && !row?.ticketId ? ids.value : [row.ticketId]
-  proxy.$modal.confirm('是否确认删除工单编号为"' + targetIds.join(',') + '"的数据项？').then(function () {
-    ticketStore.remove(targetIds)
+  proxy.$modal.confirm('是否确认删除工单编号为"' + targetIds.join(',') + '"的数据项？').then(async () => {
+    for (const id of targetIds) await delTicket(id)
+    proxy.$modal.msgSuccess('删除成功')
     getList()
-    proxy.$modal.msgSuccess("删除成功")
   }).catch(() => { })
+}
+
+/** 重开工单 */
+function handleReopen(row){
+  const id = row.ticketId
+  proxy.$modal.confirm('确认重新打开该工单？').then(async ()=>{
+    await reopenTicket(id)
+    proxy.$modal.msgSuccess('已重新打开')
+    getList()
+  }).catch(()=>{})
 }
 
 /** 批量指派按钮操作 */
@@ -423,19 +443,15 @@ function handleBatchAssign() {
 }
 
 /** 提交指派 */
-function submitAssign() {
+async function submitAssign() {
   if (!assignForm.value.userId) {
-    proxy.$modal.msgWarning("请选择处理人")
+    proxy.$modal.msgWarning('请选择处理人')
     return
   }
   const user = userList.value.find(u => u.userId === assignForm.value.userId)
-  ids.value.forEach(id => {
-    const ticket = ticketStore.getById(id)
-    if (ticket) {
-      ticketStore.update({ ...ticket, assigneeName: user.nickName, status: 'assigned' })
-    }
-  })
-  proxy.$modal.msgSuccess("指派成功")
+  if (!user) return
+  await assignTickets({ ticketIds: ids.value, assigneeId: user.userId, assigneeName: user.nickName })
+  proxy.$modal.msgSuccess('指派成功')
   assignOpen.value = false
   getList()
 }
@@ -444,6 +460,9 @@ function submitAssign() {
 function handleExport() {
   proxy.$modal.msgSuccess("导出功能待实现")
 }
+
+function showOverdue(){ specialMode.value='overdue'; queryParams.value.pageNum=1; getList() }
+function showNearDue(){ specialMode.value='neardue'; queryParams.value.pageNum=1; getList() }
 
 /** 获取优先级标签 */
 function getPriorityLabel(priority) {

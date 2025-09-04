@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.DcRackUnitMapper">
+    <resultMap id="DcRackUnitResult" type="DcRackUnit">
+        <result property="unitId" column="unit_id"/>
+        <result property="rackId" column="rack_id"/>
+        <result property="uIndex" column="u_index"/>
+        <result property="occupied" column="occupied"/>
+        <result property="label" column="label"/>
+        <result property="owner" column="owner"/>
+        <result property="powerW" column="power_w"/>
+    </resultMap>
+
+    <select id="selectByRackId" parameterType="long" resultMap="DcRackUnitResult">
+        select unit_id, rack_id, u_index, occupied, label, owner, power_w
+        from dc_rack_unit where rack_id = #{rackId} order by u_index desc
+    </select>
+
+    <insert id="batchUpsert" parameterType="java.util.List">
+        insert into dc_rack_unit(rack_id, u_index, occupied, label, owner, power_w)
+        values
+        <foreach collection="list" item="it" separator=",">
+            (#{it.rackId}, #{it.uIndex}, #{it.occupied}, #{it.label}, #{it.owner}, #{it.powerW})
+        </foreach>
+        on duplicate key update occupied=values(occupied), label=values(label), owner=values(owner), power_w=values(power_w)
+    </insert>
+
+    <delete id="clearByRackId" parameterType="long">
+        delete from dc_rack_unit where rack_id = #{rackId}
+    </delete>
+</mapper>
+

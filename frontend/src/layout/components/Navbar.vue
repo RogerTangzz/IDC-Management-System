@@ -8,6 +8,37 @@
       <template v-if="appStore.device !== 'mobile'">
         <header-search id="header-search" class="right-menu-item" />
 
+        <el-popover placement="bottom" :width="360" trigger="click" @show="loadTopMessages">
+          <template #reference>
+            <div class="right-menu-item hover-effect">
+              <el-badge :value="unread" :max="99" class="item">
+                <svg-icon icon-class="bell" />
+              </el-badge>
+            </div>
+          </template>
+          <div class="msg-pop">
+            <div class="msg-pop-header">
+              <span>未读消息</span>
+              <div>
+                <el-button text type="primary" @click="goMessage">更多</el-button>
+                <el-button text type="primary" @click="readAllQuick" v-if="unread>0">全部已读</el-button>
+              </div>
+            </div>
+            <el-scrollbar height="240px">
+              <el-skeleton v-if="msgLoading" :rows="3" animated />
+              <div v-else>
+                <div v-if="topMessages.length===0" class="msg-empty">暂无未读</div>
+                <div v-for="m in topMessages" :key="m.msgId" class="msg-item">
+                  <div class="msg-title">{{ m.title }}</div>
+                  <div class="msg-content">{{ m.content }}</div>
+                  <div class="msg-meta">{{ parseTime(m.createTime) }}</div>
+                  <el-button text type="primary" size="small" @click="readQuick(m.msgId)">已读</el-button>
+                </div>
+              </div>
+            </el-scrollbar>
+          </div>
+        </el-popover>
+
         <el-tooltip content="源码地址" effect="dark" placement="bottom">
           <ruo-yi-git id="ruoyi-git" class="right-menu-item hover-effect" />
         </el-tooltip>
@@ -55,6 +86,10 @@
 
 <script setup>
 import { ElMessageBox } from 'element-plus'
+import request from '@/utils/request'
+import { getUnreadMessages, markAllRead, markRead } from '@/api/business/message'
+import { parseTime } from '@/utils/ruoyi'
+import { useRouter } from 'vue-router'
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'
 import Hamburger from '@/components/Hamburger'
@@ -70,6 +105,11 @@ import useSettingsStore from '@/store/modules/settings'
 const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
+const router = useRouter()
+const unread = ref(0)
+const topMessages = ref([])
+const msgLoading = ref(false)
+let timer = null
 
 function toggleSideBar() {
   appStore.toggleSideBar()
@@ -108,6 +148,32 @@ function setLayout() {
 function toggleTheme() {
   settingsStore.toggleTheme()
 }
+
+function goMessage(){
+  router.push('/business/message')
+}
+
+async function refreshUnread(){
+  try { const r = await request({ url: '/business/message/countUnread', method:'get' }); unread.value = r.data || 0 } catch(e){ /* ignore */ }
+}
+
+async function loadTopMessages(){
+  msgLoading.value = true
+  try {
+    const res = await getUnreadMessages({ pageNum:1, pageSize:5 })
+    topMessages.value = res.rows || res.data || []
+  } finally { msgLoading.value = false }
+}
+
+async function readAllQuick(){ await markAllRead(); await refreshUnread(); await loadTopMessages() }
+async function readQuick(id){ await markRead(id); await refreshUnread(); await loadTopMessages() }
+
+onMounted(()=>{
+  refreshUnread();
+  timer = setInterval(refreshUnread, 60000)
+})
+onBeforeUnmount(()=>{ if (timer) clearInterval(timer) })
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 </script>
 
 <style lang='scss' scoped>
