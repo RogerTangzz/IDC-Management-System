@@ -1,0 +1,1018 @@
+M0 变更已完成并落地，包含前端、后端、SQL、调度与安全收紧。变更要点与涉及文件如下。
+
+前端修复
+
+字段对齐: 列表/表单/详情统一使用 reporterName、assigneeName、completionTime。
+frontend/src/views/business/ticket/index.vue
+frontend/src/views/business/ticket/index.vue
+frontend/src/views/business/ticket/index.vue
+frontend/src/views/business/ticket/index.vue
+frontend/src/views/business/ticket/index.vue
+排序适配: 将 prop 从驼峰转下划线，将 order 转为 asc/desc，与 RuoYi 后端排序约定兼容。
+frontend/src/views/business/ticket/index.vue
+详情页语法错误修复:
+将 loadLogs、分页/筛选函数从 deadlineValue computed 内移出，避免作用域错误。
+新增 startTime（从日志中推导最近一次 start），模板直接渲染。
+扩展 getLogType 支持 reopen。
+frontend/src/views/business/ticket/detail.vue
+frontend/src/views/business/ticket/detail.vue
+frontend/src/views/business/ticket/detail.vue
+frontend/src/views/business/ticket/detail.vue
+frontend/src/views/business/ticket/detail.vue
+后端优化
+
+工单新增/修改只进行一次更新（移除二次 update），并保证先设置 lastAction/lastStatusTime 再 update，然后写日志：
+
+backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+启用调度与清理任务修复：
+
+启用 @EnableScheduling
+backend/ruoyi-admin/src/main/java/com/ruoyi/RuoYiApplication.java
+清理 Mapper 参数改为 Date 并使用 #{value} 传参，Task 直接传 Date，避免 #{threshold} 未绑定问题：
+backend/ruoyi-admin/src/main/resources/mapper/system/TicketLogCleanupMapper.xml
+backend/ruoyi-admin/src/main/java/com/ruoyi/framework/task/TicketLogCleanupTask.java
+安全策略收紧（移除调试期放行）：
+
+backend/ruoyi-framework/src/main/java/com/ruoyi/framework/config/SecurityConfig.java
+SQL 与字典
+
+新增缺失的工单日志表 DDL：
+backend/sql/create_tables.sql: 在工单表后新增 biz_ticket_log 表（含索引）
+升级脚本幂等化：
+backend/sql/upgrade_20250901_last_action_reopen.sql
+使用 ADD COLUMN IF NOT EXISTS
+启动字典初始化（避免字典缺失导致前端空白）：
+新增 ticket_status/ticket_priority/equipment_specialty 初始化器
+backend/ruoyi-admin/src/main/java/com/ruoyi/framework/init/TicketBasicDictInitializer.java
+
+已按 M1 执行并打通：服务层承接动作、列表过滤增强、逾期工单接口、首页统计展示。下面是完成项与涉及文件。
+
+服务层动作下沉
+
+新增接口方法：assignTickets/startTicket/completeTicket/closeTicket/reopenTicket，统一做状态校验、一次性更新 lastAction/lastStatusTime、写入 BizTicketLog，并加事务。
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/service/IBizTicketService.java
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizTicketServiceImpl.java
+控制器动作改为调用服务层，移除重复更新与分散校验：
+backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+, 134, 153, 171, 187
+列表过滤增强
+
+标题支持模糊搜索；新增创建时间区间筛选（params.beginTime/endTime）。
+backend/ruoyi-admin/src/main/resources/mapper/system/BizTicketMapper.xml
+, 68
+前端传递时间区间并补齐 00:00
+/23:59
+；排序参数兼容 RuoYi（prop 驼峰转下划线，order 转 asc/desc）。
+frontend/src/views/business/ticket/index.vue
+, 279
+逾期工单接口
+
+Mapper 与 SQL：新增逾期列表查询；保留原逾期计数。
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizTicketMapper.java
+backend/ruoyi-admin/src/main/resources/mapper/system/BizTicketMapper.xml
+控制器新增分页查询：GET /business/ticket/overdue
+backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+首页统计接入
+
+首页脚本已接入 ticketSummary() 并渲染四张卡片：今日新增、今日完成、进行中（非关闭）、逾期。
+frontend/src/views/index.vue
+已存在并使用中（无需改动）
+M0 延伸修正（已随手完成）
+
+详情页脚本错误修复、字段对齐（startTime 从日志推导；assigneeName/completionTime 渲染；reopen 标签样式）。
+frontend/src/views/business/ticket/detail.vue
+, 97, 100, 106, 420
+列表字段统一 reporterName，并修正表单/校验。
+frontend/src/views/business/ticket/index.vue
+, 142, 239, 291
+
+推进了 M2：完成 SLA 配置与提醒、近到期统计、巡检生成工单关联与日志、首页统计扩展。以下为落地内容与文件位置。
+
+SLA 配置与统计
+
+配置类与默认值
+新增 idc.sla 配置：enabled、warnBeforeHours（默认2小时）、scanCron（默认每15分钟）
+ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/SlaProperties.java
+ruoyi-admin/src/main/resources/application.yml: 追加 idc.sla 默认配置
+Mapper 支持近到期统计与列表
+ruoyi-admin/src/main/resources/mapper/system/BizTicketMapper.xml
+countNearDue(int hours)、selectNearDueList(int hours)
+ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizTicketMapper.java
+接口扩展（首页统计）
+近到期计数加入 summary 返回：nearDue
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java: summary 中注入 SlaProperties 并调用 countNearDue(...)
+SLA 定时提醒任务
+
+每 15 分钟扫描：
+即将超时：添加 sla_warn 日志（避免当天重复记录）
+已超时：添加 sla_overdue 日志（避免当天重复记录）
+不改变工单 lastAction/lastStatusTime，仅记 BizTicketLog
+ruoyi-admin/src/main/java/com/ruoyi/framework/task/SlaReminderTask.java
+日志去重辅助：
+ruoyi-admin/src/main/resources/mapper/system/BizTicketLogMapper.xml: countTodayByAction
+ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizTicketLogMapper.java
+字典扩展（用于前端 dict-tag 展示）
+新增 sla_warn/sla_overdue
+ruoyi-admin/src/main/java/com/ruoyi/framework/init/TicketActionDictInitializer.java
+backend/sql/ticket_action_dict.sql
+巡检生成工单关联完善
+
+生成工单时设置 lastAction=“create”、lastStatusTime=now，并写入创建日志（remark=“巡检生成”）
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizInspectionController.java: 多处调整（新增注入 IBizTicketLogService）
+首页统计扩展
+
+首页卡片增加“即将超时”展示（读取 summary.nearDue）
+frontend/src/views/index.vue
+附近，扩展 summaryCards 与赋值逻辑
+已完成的配套（来自 M0/M1，保持一致）
+
+前端字段统一/排序映射、详情页脚本修复
+frontend/src/views/business/ticket/index.vue 与 detail.vue
+服务层承接动作（事务 + 日志 + last* 一次写入）
+ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizTicketServiceImpl.java
+控制器调用服务层替代重复更新
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+SQL DDL/幂等
+backend/sql/create_tables.sql: 新增 biz_ticket_log 表
+backend/sql/upgrade_20250901_last_action_reopen.sql: 使用 IF NOT EXISTS
+调度启用 + 清理任务参数类型修复
+ruoyi-admin/src/main/java/com/ruoyi/RuoYiApplication.java: 加 @EnableScheduling
+ruoyi-admin/src/main/resources/mapper/system/TicketLogCleanupMapper.xml（Date 参数）
+ruoyi-admin/src/main/java/com/ruoyi/framework/task/TicketLogCleanupTask.java（传 Date）
+
+推进了 M3 的关键前后端联动，聚焦逾期/近到期下钻与报表可视化入口。
+
+后端
+
+新增近到期分页接口
+路径: /business/ticket/nearDue?hours=2
+功能: 默认读取 SLA 配置 warnBeforeHours，返回即将超时的工单分页数据
+文件: backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java: 新增 nearDue()
+前端 API
+
+ticket.js 新增
+ticketAnalytics(params): GET /business/ticket/report/analytics
+getOverdueTickets(params): GET /business/ticket/overdue
+getNearDueTickets(params): GET /business/ticket/nearDue
+文件: frontend/src/api/business/ticket.js
+工单列表页增强
+
+工具栏新增两个快捷按钮
+逾期: 切换至 overdue 模式，调用 /overdue
+近到期: 切换至 neardue 模式，调用 /nearDue
+切换模式时支持分页；重置搜索时回到常规列表
+文件: frontend/src/views/business/ticket/index.vue
+增加按钮、specialMode 状态、getList 分支与 showOverdue/showNearDue 操作
+工单报表页
+
+新增报表路由与页面，展示后端 analytics 的核心数据（处理时长分布 + SLA）
+路由: /business/ticket/report
+组件: frontend/src/views/business/ticket/report.vue
+路由配置: frontend/src/router/modules/business.ts（新增 TicketReport）
+
+完成范围: M0–M3 核心闭环
+
+工单: last_action/last_status_time 持久化、合法状态流转、reopen、服务层动作统一(事务+日志+一次更新)
+统计: summary/analytics、近到期(nearDue)/逾期(overdue) 指标、首页卡片接入
+列表: 字段对齐(report erName/assigneeName/completionTime)、排序参数兼容、日期范围筛选、数据权限过滤(仅与自己相关)
+联动: 巡检异常生成工单并写日志
+调度: SLA 提醒(sla_warn/sla_overdue)、逾期自动升级为 urgent、日志清理
+安全: 去除调试期全放行，保留 @PreAuthorize 与服务层二次校验
+重要文件: backend/.../BizTicketController.java, BizTicketServiceImpl.java, BizTicketMapper.xml, TicketActionDictInitializer.java, SlaReminderTask.java, TicketEscalationTask.java, frontend/src/views/business/ticket/{index.vue,detail.vue,report.vue}
+当前状态: 可用的工单闭环（创建/指派/开始/完成/关闭/重开）、可视化基础（报表页信息卡）、近到期/逾期下钻入口（列表页按钮），SLA 配置生效（后端）
+
+我已落实两项优先事项并起步 M4，实现内容如下。
+
+SLA 阈值设置（系统设置）
+
+后端
+运行时读取/更新配置
+新增配置读取服务：优先从 sys_config 取值，缺省使用 application.yml 默认值
+backend/ruoyi-admin/src/main/java/com/ruoyi/framework/config/SlaConfigService.java
+新增查询/保存接口（需权限：查询 system:config
+，保存 system:config
+）
+GET/PUT /system/sla
+backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SlaConfigController.java
+全面接入动态配置
+定时提醒：backend/ruoyi-admin/src/main/java/com/ruoyi/framework/task/SlaReminderTask.java
+新建工单自动设定 deadline：backend/ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizTicketServiceImpl.java
+SQL 无需变更（复用 sys_config 表）
+前端
+配置页（业务设置—SLA 阈值）
+路由：/business/settings/sla
+视图：frontend/src/views/business/settings/sla.vue
+API：frontend/src/api/system/sla.js
+路由注册：frontend/src/router/modules/business.ts
+报表图表化
+
+报表页（新增）
+路由：/business/ticket/report
+视图：frontend/src/views/business/ticket/report.vue
+图表：ECharts 柱形图（处理时长分布）+ 饼图（SLA统计）
+数据源：GET /business/ticket/report/analytics
+列表快捷下钻（已在 M3）
+逾期/近到期按钮：frontend/src/views/business/ticket/index.vue
+近到期接口：GET /business/ticket/nearDue（支持 hours）
+逾期接口：GET /business/ticket/overdue
+消息中心（M4 起步，最简版站内消息）
+
+后端
+表与模型
+表：biz_message（DDL 已加入）
+backend/sql/create_tables.sql
+实体/Mapper/Service/接口：
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/domain/BizMessage.java
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizMessageMapper.java
+backend/ruoyi-admin/src/main/resources/mapper/system/BizMessageMapper.xml
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/service/IBizMessageService.java
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizMessageServiceImpl.java
+backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizMessageController.java
+SLA 联动：提醒任务产生日志时推送站内消息（发给指派人）
+backend/ruoyi-admin/src/main/java/com/ruoyi/framework/task/SlaReminderTask.java
+前端（轻量展示）
+首页卡片新增“未读消息”展示
+frontend/src/views/index.vue
+如何使用
+
+系统设置
+打开 业务设置 → SLA 阈值设置（/business/settings/sla），修改“即将超时阈值”与低/中/高时限；保存后生效（无需重启）
+报表
+打开 工单报表（/business/ticket/report），查看处理时长分布与 SLA 统计图
+列表下钻
+在工单列表点击“逾期/近到期”按钮即可切换相应分页视图
+消息
+首页“未读消息”卡片可看到数量；接口已就绪，前端消息列表页我可按需补上
+
+我先把 M4 的两条主线落到了可用状态：系统设置里的 SLA 阈值 UI 与“消息中心”基础能力，然后把工单报表做了图表化，最后把近到期/逾期的下钻体验打通。
+
+本次交付
+
+SLA 阈值设置（系统设置）
+
+后端读取/保存
+新增配置服务：优先从 sys_config 读取，缺省落 application.yml
+ruoyi-admin/src/main/java/com/ruoyi/framework/config/SlaConfigService.java
+新增接口（需权限）
+GET/PUT /system/sla（查询/保存）
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SlaConfigController.java
+动态生效点
+SLA 提醒任务：SlaReminderTask 使用最新配置
+新建工单自动设置 deadline：BizTicketServiceImpl 使用最新配置映射 low/medium/high 小时数
+前端页面与接口
+路由：/business/settings/sla
+页面：frontend/src/views/business/settings/sla.vue
+API：frontend/src/api/system/sla.js
+菜单路由：frontend/src/router/modules/business.ts
+报表图表化（ECharts）
+
+路由：/business/ticket/report
+页面：frontend/src/views/business/ticket/report.vue
+图表：处理时长分布（柱形）+ SLA 统计（饼图）
+数据源：GET /business/ticket/report/analytics
+消息中心（M4 起步版）
+
+数据表与模型
+DDL：biz_message（站内消息）
+backend/sql/create_tables.sql
+实体/Mapper/Service/Controller
+ruoyi-admin/src/main/java/com/ruoyi/system/domain/BizMessage.java
+ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizMessageMapper.java
+ruoyi-admin/src/main/resources/mapper/system/BizMessageMapper.xml
+ruoyi-admin/src/main/java/com/ruoyi/system/service/IBizMessageService.java
+ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizMessageServiceImpl.java
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizMessageController.java
+SLA 联动
+提醒任务产生 sla_warn/sla_overdue 日志时，同时发送站内消息给指派人
+ruoyi-admin/src/main/java/com/ruoyi/framework/task/SlaReminderTask.java
+前端
+顶部导航未读角标 + 跳转消息中心
+frontend/src/layout/components/Navbar.vue
+消息中心页面（未读列表、标记已读）
+路由：/business/message
+页面：frontend/src/views/business/message/index.vue
+API：frontend/src/api/business/message.js
+首页未读卡片（与工单汇总一起展示）
+frontend/src/views/index.vue
+近到期/逾期下钻（对齐 M3）
+
+后端近到期分页：GET /business/ticket/nearDue?hours=2
+前端列表页快捷切换按钮“逾期/近到期”，分页展示
+frontend/src/views/business/ticket/index.vue
+API：frontend/src/api/business/ticket.js
+如何验证
+
+设置
+打开“业务设置 → SLA 阈值设置”（/business/settings/sla），修改“五项阈值”；保存后，无需重启即可影响近到期统计与提醒任务
+报表
+打开“工单报表”（/business/ticket/report），查看柱/饼图，刷新无报错
+列表下钻
+工单列表点击“逾期/近到期”按钮分页查看；重置搜索后回到常规列表
+消息
+等待定时任务触发后，顶部铃铛角标出现未读数；打开“消息中心”（/business/message）可查看未读并标记已读；首页卡片也显示未读数
+
+已继续推进 M4，完成消息中心强化、SLA 设置动态化和报表图表化整合。重点如下：
+
+SLA 设置（系统设置）完善
+
+后端
+动态配置读取服务：从 sys_config 优先读取，缺省用 application.yml
+ruoyi-admin/src/main/java/com/ruoyi/framework/config/SlaConfigService.java
+管理接口（需权限）
+GET/PUT /system/sla
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SlaConfigController.java
+任务与业务使用动态配置
+提醒任务：ruoyi-admin/src/main/java/com/ruoyi/framework/task/SlaReminderTask.java
+工单创建自动设定 deadline：ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizTicketServiceImpl.java
+前端
+页面/路由/API
+视图：frontend/src/views/business/settings/sla.vue
+API：frontend/src/api/system/sla.js
+路由：frontend/src/router/modules/business.ts（BusinessSettings → SlaSettings）
+报表图表化（ECharts）
+
+视图：frontend/src/views/business/ticket/report.vue
+渲染 analytics 的处理时长分布（柱形图）和 SLA 统计（饼图）
+数据：GET /business/ticket/report/analytics
+路由：frontend/src/router/modules/business.ts（TicketReport）
+消息中心（M4 强化）
+
+数据层（已新增）
+表：biz_message（DDL 在 backend/sql/create_tables.sql）
+Model/Mapper/Service/Controller：
+Domain: ruoyi-admin/src/main/java/com/ruoyi/system/domain/BizMessage.java
+Mapper: ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizMessageMapper.java
+XML: ruoyi-admin/src/main/resources/mapper/system/BizMessageMapper.xml（新增 selectByUser、markAllRead）
+Service: ruoyi-admin/src/main/java/com/ruoyi/system/service/IBizMessageService.java
+Impl: ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizMessageServiceImpl.java
+Controller: ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizMessageController.java
+GET /business/message/unread（分页）
+GET /business/message/countUnread
+POST /business/message/read/{id}
+GET /business/message/list?readFlag=[N|Y|ALL]&type=...（分页）
+POST /business/message/readAll（一键已读）
+行为触发
+在工单服务层统一发送消息：
+指派 assign → 发给 assignee
+开始 start/完成 complete/关闭 close → 发给 reporter
+重新打开 reopen → 若有 assignee，发给 assignee
+文件：ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizTicketServiceImpl.java
+提醒任务也发送消息（近到期/已超时）
+ruoyi-admin/src/main/java/com/ruoyi/framework/task/SlaReminderTask.java
+前端集成
+顶部导航铃铛角标 + 1 分钟轮询
+frontend/src/layout/components/Navbar.vue
+消息中心页面（未读/全部/已读切换、类型筛选、标记已读、一键已读）
+frontend/src/views/business/message/index.vue
+API：frontend/src/api/business/message.js
+路由：frontend/src/router/modules/business.ts（Message）
+首页卡片展示未读消息数
+frontend/src/views/index.vue
+近到期/逾期下钻（M3 接口 + M4 体验）
+
+接口：GET /business/ticket/nearDue（支持 hours）、GET /business/ticket/overdue
+列表页按钮切换模式 + 分页更新
+frontend/src/views/business/ticket/index.vue
+
+已继续推进 M4，聚焦“消息中心体验完善”和“设置/报表可用性”。
+
+本次更新
+
+顶部消息下拉
+
+Navbar 加入铃铛下拉：展示最近 5 条未读、快捷“已读/全部已读/更多”
+自动每分钟刷新未读数，点击铃铛异步加载最新 5 条
+位置: frontend/src/layout/components/Navbar.vue
+消息中心（列表增强）
+
+增加筛选：未读/全部/已读 + 类型（sla_warn/sla_overdue/assign/start/complete/close/reopen）
+支持“全部标记已读”
+文件:
+后端筛选与批量已读：
+ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizMessageMapper.java
+ruoyi-admin/src/main/resources/mapper/system/BizMessageMapper.xml
+ruoyi-admin/src/main/java/com/ruoyi/system/service/IBizMessageService.java
+ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizMessageServiceImpl.java
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizMessageController.java
+前端页面与 API：
+frontend/src/views/business/message/index.vue
+frontend/src/api/business/message.js
+路由：frontend/src/router/modules/business.ts
+SLA 设置/报表图形化（前序已上线）
+
+SLA 设置：/business/settings/sla（系统设置 → SLA 阈值）
+报表：/business/ticket/report（ECharts 柱/饼图）
+首页卡片新增未读消息数量
+建议的下一步（收尾 M4）
+
+铃铛下拉内“跳转到相关工单”体验：后续在消息表补充 biz_type/biz_id 字段，发送消息时携带工单 ID；下拉与列表中提供跳转到 /business/ticket/detail/:id。
+权限与菜单
+给“消息中心”“SLA 设置”配置相应的菜单与权限（business:message
+/read，system:config
+/edit），避免 403。
+报表增强
+时间范围筛选与趋势图（近 7 日新增/完成）；导出按钮（占位先返回 success）。
+设置整合
+将 SLA 设置合入统一“系统设置”或在 sys_config 内做管理项展示（含说明）。
+工单详情集成消息
+在详情页增加 “相关消息/提醒” tab（按 ticketId 过滤显示）。
+
+M4 已基本收尾，我补完了“消息中心与工单关联跳转”，并做了若干打磨。你现在可以从铃铛下拉、消息中心列表一键跳转对应工单详情，形成提醒→处理的闭环。
+
+本轮交付汇总
+
+工单关联消息
+
+数据库升级（新字段）
+新增 biz_message 业务关联字段：biz_type、biz_id
+脚本：backend/sql/upgrade_20250903_add_message_bizref.sql
+模型/Mapper/SQL
+增加字段：backend/ruoyi-admin/src/main/java/com/ruoyi/system/domain/BizMessage.java
+Mapper 动态插入/查询出 biz_type/biz_id
+backend/ruoyi-admin/src/main/resources/mapper/system/BizMessageMapper.xml
+服务方法
+IBizMessageService 增加带业务参的 send(..., bizType, bizId)
+实现：BizMessageServiceImpl 回填 bizType/bizId
+工单动作发消息时写入关联
+指派/开始/完成/关闭/重开，以及 SLA warn/overdue 都会带上 bizType='ticket'、bizId=ticketId
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/service/impl/BizTicketServiceImpl.java
+backend/ruoyi-admin/src/main/java/com/ruoyi/framework/task/SlaReminderTask.java
+前端跳转闭环
+
+顶部铃铛下拉：展示最近 5 条未读，支持“已读/全部已读/更多”；可继续点“更多”去消息中心
+frontend/src/layout/components/Navbar.vue
+消息中心：支持未读/全部/已读与类型筛选，标记已读/一键已读；带工单关联的消息提供“查看”按钮，跳转 /business/ticket/detail/:ticketId
+frontend/src/views/business/message/index.vue
+消息 API 扩展：列表/一键已读
+frontend/src/api/business/message.js
+SLA 与报表（先前已完成，本次未改变）
+
+SLA 阈值设置 UI：/business/settings/sla，动态应用到任务与 deadline 自动设定
+报表图表化：/business/ticket/report，处理时长分布 + SLA 统计（ECharts）
+上线与验证建议
+
+执行数据库升级脚本（老库）
+backend/sql/upgrade_20250903_add_message_bizref.sql
+验证流程
+指派/开始/完成/关闭/重开 → 收到站内消息，消息“查看”跳转至工单详情
+SLA 即将超时/已超时 → 收到提醒消息与日志
+顶部铃铛角标与下拉展示正确、消息中心筛选与一键已读有效
+SLA 设置页面修改阈值后，近到期/提醒生效（近 15 分钟内可见变化）
+后续（建议延伸）
+
+权限与菜单
+给“消息中心”“SLA 设置”配置菜单与权限（business:message
+/read，system:config
+/edit），避免 403
+报表增强
+时间范围筛选、近7日趋势、导出
+设置整合
+将 SLA 配置纳入统一系统设置页或 sys_config 可视界面（含字段说明）
+代码质量
+执行升级脚本幂等校验；确认 deadline/last_status_time/status/assignee_id/create_time 索引齐备
+
+我已收尾 M4 并按你的优先事项落地以下内容，确保权限、导航、报表和数据质量更加完善。
+
+权限与菜单
+
+新增初始化 SQL：为“消息中心”和“SLA 阈值设置”创建菜单与权限，避免 403
+文件: backend/sql/upgrade_20250903_menu_init.sql
+内容:
+消息中心 菜单（/business/message），按钮权限 business:message:list、business:message:read
+SLA 阈值设置 菜单（/business/settings/sla），可选按钮权限 system:config:edit（沿用系统参数权限，便于授权）
+说明: 该脚本默认将菜单挂载在 path = business 的模块下（父节点为 M 类型）。如果生产库父节点命名不同，可改为实际 parent_id 后再执行
+报表增强（先做菜单，趋势筛选下一步）
+
+报表页已图表化（处理时长分布 + SLA 饼图），下一步我可以加时间范围筛选与“近7日趋势折线图”，并增加导出按钮（可先占位）
+路由: /business/ticket/report
+视图: frontend/src/views/business/ticket/report.vue
+当前数据源: GET /business/ticket/report/analytics
+设置整合（已具备、待菜单授权联动）
+
+SLA 阈值 UI 已上线，配合上面菜单 SQL 即可在前端导航访问
+路由: /business/settings/sla
+视图: frontend/src/views/business/settings/sla.vue
+接口: GET/PUT /system/sla（复用 system:config:query/edit 权限）
+后端动态读取: SlaConfigService（sys_config 优先，application.yml 兜底）
+代码质量与索引
+
+强化 ID 表结构与升级脚本，确保幂等与性能
+工单表新增索引（建表脚本）
+backend/sql/create_tables.sql: 新增 idx_deadline(deadline)、idx_last_status_time(last_status_time)
+升级脚本：为历史库补充索引（幂等）
+backend/sql/upgrade_20250903_add_ticket_indexes.sql
+业务消息表新增业务关联（幂等）脚本（用于跳转工单）
+backend/sql/upgrade_20250903_add_message_bizref.sql
+已具备的整体能力（M4 完成度）
+
+消息中心
+铃铛下拉（最近 5 条未读、已读/全部已读/更多）
+前端消息中心页（列表筛选：未读/全部/已读 + 类型筛选；标记已读、一键已读；工单关联跳转）
+后端消息落地：工单指派/开始/完成/关闭/重开、SLA 近到期/逾期均发消息，带 biz_type='ticket'、biz_id
+SLA 设置
+UI+API 可用，变更后自动生效（提醒任务与新建工单 deadline）
+报表
+柱/饼图展示 analytics 关键指标，入口已在左侧菜单
+近到期/逾期下钻
+列表页快捷按钮“逾期/近到期”，分页查看
+建议下一步（两条可选路线）
+
+报表增强（推荐）
+把时间范围筛选接入后端 analytics（参数化 beginTime/endTime），新增“近7日趋势折线图”和“导出”按钮（先返回 success，占位）
+菜单权限精细化
+给“消息中心”“SLA 设置”配置前端菜单的角色授权（若生产库角色未自动拥有），必要时补 sys_role_menu 绑定（通常 admin 已全权限，无需额外处理）
+
+已确认并继续推进，完成以下增强与收尾工作：
+
+报表增强
+
+后端支持时间范围与趋势
+新增带范围分析接口
+durationAnalytics(beginTime/endTime)
+slaAnalytics(beginTime/endTime)
+trendCreated(beginTime/endTime)
+trendCompleted(beginTime/endTime)
+位置: ruoyi-admin/src/main/resources/mapper/system/BizTicketMapper.xml、ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizTicketMapper.java
+控制器扩展
+GET /business/ticket/report/analytics 支持 beginTime/endTime
+新增 GET /business/ticket/report/trend（默认近7日，可传 begin/end）
+占位 GET /business/ticket/report/export
+位置: ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+前端报表页
+新增时间范围筛选，ECharts 折线图展示“近7日趋势：新增/完成”
+保留柱图（处理时长分布）与饼图（SLA统计）
+占位导出按钮
+位置: frontend/src/views/business/ticket/report.vue
+权限与菜单（SQL）
+
+初始化“消息中心”、“SLA 阈值设置”菜单及权限按钮（避免 403）
+文件: backend/sql/upgrade_20250903_menu_init.sql
+索引与脚本幂等
+
+工单表新索引（ddl）与历史库增量脚本（幂等）
+create_tables.sql 增加 idx_deadline、idx_last_status_time
+upgrade_20250903_add_ticket_indexes.sql 为历史库补齐
+消息表业务关联字段（历史库幂等）
+upgrade_20250903_add_message_bizref.sql
+消息中心收尾
+
+顶部铃铛下拉：最近 5 条未读 + 一键已读 + “更多”
+frontend/src/layout/components/Navbar.vue
+消息中心：支持筛选（未读/全部/已读 + 类型），工单消息“查看”跳转详情
+frontend/src/views/business/message/index.vue
+工单动作与 SLA 提醒发送消息已带业务关联（ticket/id）
+下一步建议（可选二选一先做）
+
+菜单/权限授予与验证
+执行 SQL 脚本初始化菜单，给对应角色（如管理员或普通用户）授权“消息中心”和“SLA设置”权限
+报表导出落地
+将导出按钮打通：服务端生成 CSV/Excel（状态分布、SLA、趋势数据），前端下载
+
+已按你的优先顺序完成两项：一是菜单/权限授予与验证脚本，二是报表导出打通（后端生成 CSV，前端下载）。
+
+菜单与权限授予
+
+初始化菜单和权限（幂等）
+文件: backend/sql/upgrade_20250903_menu_init.sql
+内容:
+新增“消息中心”菜单（/business/message）与权限按钮 business:message
+、business:message
+新增“SLA 阈值设置”菜单（/business/settings/sla），并添加保存权限按钮 system:config
+（沿用系统配置权限）
+角色绑定（授予给管理员 admin 角色，幂等）
+文件: backend/sql/upgrade_20250903_role_menu_bind.sql
+内容:
+将“消息中心”菜单及其权限、“SLA 设置”菜单及保存权限授予 role_key='admin' 的角色
+验证建议
+执行两份 SQL 后，使用 admin 角色登录，确认侧栏可见“消息中心”和“业务设置 -> SLA 阈值设置”，并操作不出现 403
+报表导出打通（CSV）
+
+后端导出实现
+控制器导出接口: GET /business/ticket/report/export?beginTime&endTime
+输出内容: CSV（UTF-8 含 BOM），包含：
+报告区间
+处理时长分布（<1h,1-4h,4-8h,8-24h,>=24h，总数）
+SLA 统计（有时限、超时数量、按时完成、超时率）
+趋势（按日）新增与完成
+位置: ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+同时把 analytics 支持了 beginTime/endTime 参数；新增了趋势接口 /business/ticket/report/trend
+Mapper 支持时间范围分析和趋势（幂等修改）
+位置: ruoyi-admin/src/main/resources/mapper/system/BizTicketMapper.xml
+新增方法声明: ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizTicketMapper.java
+前端下载
+报表页新增时间范围选择器与“导出”按钮
+下载实现: 优先用 proxy.download('/business/ticket/report/export', params, 'ticket_report.csv')
+位置: frontend/src/views/business/ticket/report.vue
+怎么用
+
+报表查询
+打开“工单报表”（/business/ticket/report），选择时间范围，点击“查询”刷新；点击“导出”下载 CSV
+权限与菜单
+执行 upgrade_20250903_menu_init.sql 与 upgrade_20250903_role_menu_bind.sql
+以 admin 登录验证菜单显示与功能访问
+备注（小修）
+
+修复了之前 analytics 方法中使用 getRequest 的问题，改为 @RequestParam 接参，避免找不到方法
+补了工单表常用索引（DDL 与升级脚本），以及消息表业务关联字段的历史升级
+
+下面是基于现状（M0–M4 已完成）给出的后续开发路线图，按阶段划分目标、范围、交付与验收标准，包含横切质量与运维工作，确保上线后的稳定与可持续。
+
+总体目标
+
+提升“可视化+可配置+可协作”：报表看板可用可导出，SLA/流程配置化，通知触达多渠道。
+完成核心业务闭环延伸：资产台账、知识库、审批中心，与工单/巡检/维保深度联动。
+夯实工程质量：权限/数据安全/审计/索引/监控/CI。
+M5 报表与看板（1–2 周）
+
+数据范围与趋势
+时间范围筛选：所有统计接口支持 beginTime/endTime；报表 UI 增加时间选择。
+趋势图：近7/30日新增/完成曲线；按专业/楼层对比柱状图。
+导出能力
+导出 Excel：使用 RuoYi ExcelUtil 导出状态分布、SLA、趋势（当前 CSV 已可用，升级为 Excel）。
+导出模版与命名规范：带公司/项目/区间信息。
+首页看板增强
+卡片可配置：选择显示项/顺序；“逾期/近到期”小表单组件。
+验收
+指定区间内统计与趋势准确；导出 Excel 成功，文件可在 Excel 打开无乱码。
+M6 通知中心（2 周）
+
+站内消息完善
+列表筛选：未读/已读/全部 + 类型；批量已读；全文关键字搜索。
+铃铛下拉：最近5条 + 快速跳转；新消息红点/角标即时刷新（WebSocket 可选）。
+多渠道触达
+邮件通知：SMTP 模版、密钥配置、失败重试、节流。
+企业微信/钉钉（可选）：Webhook/应用机器人接入，关键事件推送（SLA超时、指派、审批）。
+模版与变量
+通知模版化：动作类型（assign/start/complete/close/reopen/sla_warn/sla_overdue）→ 标题/内容变量（工单号、标题、链接）。
+验收
+指派/完成/超时 3 类事件触发消息到达站内+邮件；铃铛下拉与消息中心一致。
+M7 工单流程/模板/附件（2–3 周）
+
+流程与状态机
+状态机配置化：允许运维配置可达转移（含回退/跳跃规则）、动作按钮可见性。
+动作审核（可选）：特定转移需审批或双人确认（如关闭/重开）。
+模板中心
+工单模板 CRUD：默认优先级/专业/标题/描述/方案；选择模板一键填充。
+模板统计：使用次数/效果反馈。
+附件体系
+上传/预览/删除；限制类型/大小；OSS/本地可切换；附件清理任务（孤儿文件清理）。
+验收
+模板创建并套用成功；附件上传预览与权限控制正确；状态机改动落地后 UI 按钮联动生效。
+M8 资产管理 MVP（3 周）
+
+台账管理
+资产信息 CRUD、批量导入导出（Excel）、字段字典（类别/楼层/状态/责任人）。
+资产与工单/维保关联：从资产页查看相关工单与维保记录。
+盘点/借用（可选）
+借用/归还流程；即将归还提醒。
+验收
+资产导入模板校验友好；台账与工单/维保互链可用。
+M9 知识库 MVP（3 周）
+
+内容与标签
+富文本/图片/视频/附件；标签与搜索；内容字数/多媒体大小限制。
+反馈与排序
+解决率统计；按“最新/最热/解决率最高”排序；推荐位（与工单故障类型联动）。
+验收
+从工单页一键检索知识库；新建/编辑/搜索/反馈全链路可用。
+M10 审批中心（3 周）
+
+审批引擎（简版）
+流程：提交→待审→批准/拒绝；支持多级（顺序审批），会签/或签（可选）。
+绑定对象
+适配项：删除用户/资产/知识库/清空日志等高危操作。
+通知与看板
+待办提醒、审批中心列表与详情。
+验收
+配置一条多级审批流程；高危动作受审批拦截；审批完成后触达消息。
+M11 巡检/维保增强（3–4 周）
+
+计划日历
+月/周视图；执行提醒（站内+邮件）；延期/补检机制。
+维保执行流程
+执行记录详情；审批流衔接；异常闭环自动生成工单与回写。
+MOP 模板与版本管理
+模板库；版本比对与历史回溯。
+验收
+计划视图可拖动/编辑；异常工单闭环可追踪。
+M12 权限与数据治理（2–3 周）
+
+数据权限
+部门/楼层/项目维度的数据隔离；字段脱敏（电话/邮箱等）。
+审计与归档
+操作日志、审计日志归档（6/12 个月）；导出与查询。
+备份与恢复
+数据库备份策略；文件存储备份；恢复演练脚本。
+验收
+权限切换能显著改变可见范围；审计导出可用；恢复演练通过。
+横切工程与运维（持续并行）
+
+质量与测试
+单元/集成/端到端用例补齐核心路径（工单动作、统计、导出、通知、权限）。
+Git Hooks/CI：构建、测试、Lint、TypeCheck 门禁。
+性能与索引
+慢 SQL 看板；重点表（biz_ticket/biz_ticket_log/biz_message）的组合索引优化（status+assignee_id、deadline、create_time、last_status_time）。
+监控与告警
+应用指标（接口 RT/错误率）；任务执行结果日志；失败重试策略。
+文档与培训
+API 文档（Swagger/OpenAPI）；ER 图；运维手册；规范文档（CLAUDE/CLAUDE-IDC/CODE-QUALITY）迭代。
+快速收益（可穿插）
+
+报表导出 Excel（当前 CSV 已就绪，建议升级到 ExcelUtil）。
+首页消息角标实时刷新（已支持轮询，升级WebSocket可选）。
+工单看板视图（按状态列展示，拖拽变更状态，可加权限控制）。
+i18n 国际化（若有需求）。
+依赖与前置
+
+菜单/权限 SQL 已提供：执行并为目标角色赋权。
+字典初始化与 DB 升级脚本按序执行（增量脚本幂等）。
+外部通知渠道（SMTP/企微/钉钉）需配置凭据。
+附件与导出需确认存储策略（本地/OSS）与容量。
+建议排期与里程碑
+
+近2周：完成报表 Excel 导出 + 通知中心多渠道（邮件） + 流程模板（简单版）。
+3–6周：资产/知识库 MVP；审批中心；巡检/维保日历与提醒。
+6–10周：流程配置化/数据权限/审计与备份；性能与稳定性优化。
+
+一切需要的功能参考DC系统开发功能业务逻辑与规范 V2.0.md就行，不需要开发其他功能比如SMTP，其他机器人或者接入。资产需要去掉节日归还和提醒。主要做机房机柜使用情况。
+
+
+已确认。后续开发严格以“DC系统开发功能业务逻辑与规范 V2.0.md”为准，明确不做 SMTP/机器人/外接系统；资产模块去掉“借用/归还/提醒”等，与资产台账相关的“节日归还和提醒”全部剔除。资产模块聚焦“机房机柜使用情况”。
+
+阶段路线（调整版）
+
+M5 报表/看板收尾
+
+报表页时间范围筛选、近7日趋势、CSV/Excel导出（已完成CSV，补Excel）。
+首页卡片配置化（可选），不引入第三方推送。
+验收：指定区间统计与趋势准确，导出文件本地可用。
+M6 业务设置与权限收束
+
+菜单/权限：消息中心、SLA设置已加初始化 SQL；增加普通角色授权示例脚本（可选）。
+设置整合：SLA 设置沿用 sys_config；不引入任何外部渠道配置项。
+验收：目标角色无 403，SLA 修改后近到期统计/提醒生效。
+M7 资产-机房机柜使用（核心）
+
+范围聚焦：仅做“机房/机柜（Rack）/U位使用情况”，不做借用归还/提醒。
+数据模型（建议）
+dc_room：机房（名称、楼层、区域、机架数量、总U位、可用U位等）
+dc_rack：机柜（房间、机柜编号、规格（42U/45U等）、额定功率/当前功率、网络汇总口数、状态）
+dc_rack_unit：U位（rack_id、u_index、占用状态、设备/用途、客户/业务方、功耗/配线备注）
+dc_device（可选）：设备（名称、型号、序列号、所属客户/业务方、功耗、起始U/占用U数）
+后端接口
+房间/机柜 CRUD、分页筛选（房间、状态、空闲≥N U）
+U位视图：按机柜返回 1..N U 明细（上/下方向可选）
+占用/释放操作：批量占用（指定起始U+高度）/释放，校验重叠与越界
+统计：房间/机柜使用率、可用U总数、功率使用情况（聚合）
+前端页面
+“机柜列表”：房间/状态筛选，展示使用率条形图、可用U、功率使用等
+“机柜详情/示意图”：纵向 U 位图（颜色区分空闲/占用/预留），点击 U 位查看/编辑详情
+“容量规划视图”：按房间展示机柜使用热力图（红-高占用，绿-低占用）
+导入/导出：机柜与U位模板导入（Excel），导出当前列表（Excel）
+索引与数据质量
+索引：dc_rack(room_id, status), dc_rack_unit(rack_id, u_index)
+幂等导入校验、重复机柜编号约束（唯一索引）
+验收
+机柜/房间基础维护可用；U 位可视化清晰；占用/释放校验安全；使用率/可用U统计准确。
+M8 工单/巡检/维保联动（轻量）
+
+在机柜详情里展示关联工单/巡检/维保记录数量（通过 biz_ticket.equipment 或映射表）
+从机柜跳转工单列表过滤（不做跨系统接入/推送）
+不做范围（明确排除）
+
+所有外部通知渠道（SMTP、企业微信/钉钉/机器人等）
+资产借用/归还/提醒（节日归还与提醒一并去掉）
+第三方系统接入（监控/OA/财务等）
+落地清单（资产-机柜使用）
+
+后端
+建表 SQL：dc_room/dc_rack/dc_rack_unit（含索引与唯一约束）
+Mapper+XML：房间/机柜/单机柜U位视图/占用释放/统计接口
+Controller：REST CRUD + 批量占用/释放 + 导入/导出
+校验：占用段（start_u, height）的重叠与越界检查；机柜规格内 U 范围校验
+前端
+菜单：资产管理 → 机柜使用
+列表页：房间/状态/空闲U过滤，支持导出
+详情页：机柜示意图（42/45/47U），颜色区分，点击 U 位编辑占用信息
+导入：机柜与U位模板上传（Excel）；导出：当前筛选集
+联动（轻量）
+机柜详情显示“相关工单”数量与快捷链接
+时间/交付
+
+第1周：数据模型/建表/接口（列表、U位图数据），前端列表页与机柜示意图初版
+第2周：占用/释放操作、导入/导出、统计与热力图
+第3周：联动视图、权限与菜单校验、回归与优化
+质量与运维
+
+索引：biz_ticket(deadline,last_status_time,status,assignee_id,create_time)已补；新表比照增加
+迁移脚本：建表与菜单初始化、角色授权（admin）脚本幂等
+回归：工单流程、统计与导出、消息中心、SLA 设置 + 
+
+已按你的要求推进 M5：
+
+菜单/权限授予与验证
+初始化菜单与权限（幂等）
+新增脚本 backend/sql/upgrade_20250903_menu_init.sql
+消息中心（/business/message），权限 business:message
+、business:message
+SLA 阈值设置（/business/settings/sla），权限 system:config
+（沿用系统参数权限）
+为 admin 角色绑定（幂等）
+新增脚本 backend/sql/upgrade_20250903_role_menu_bind.sql
+将“消息中心”菜单与按钮权限及“SLA 设置”菜单与保存权限授予 admin
+验证建议
+执行上述 SQL 后，用 admin 登录；侧栏可见“消息中心”“业务设置->SLA 阈值设置”，访问不出现 403
+报表导出打通（Excel）
+后端导出为 Excel（xlsx，多 sheet）
+接口: GET /business/ticket/report/export?beginTime&endTime
+生成 3 个 sheet：
+Summary：时间区间
+Duration：处理时长分布（<1h、1-4h、4-8h、8-24h、>=24h、Total）
+SLA：withDeadline、timeoutCount、ontimeCompleted、timeoutRate
+Trend：按日统计的 created/completed（时间区间内）
+位置: ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+同时将 analytics 支持 beginTime/endTime，并新增了趋势接口 /business/ticket/report/trend（已用在报表页）
+Mapper 支持带时间范围分析和趋势
+durationAnalytics/slaAnalytics/trendCreated/trendCompleted
+位置: ruoyi-admin/src/main/resources/mapper/system/BizTicketMapper.xml 与 ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizTicketMapper.java
+前端下载
+报表页导出按钮下载 ticket_report.xlsx
+位置: frontend/src/views/business/ticket/report.vue
+其他（已完成）
+报表页增加时间范围筛选、近7日趋势图（折线），并保留柱/饼图展示时长分布与SLA。
+提示：Excel 使用 Apache POI（项目依赖中已包含），不需新增依赖。
+下一步（可选项）
+
+为普通用户角色添加“消息中心”“SLA 设置”的授权 SQL（演示环境）；目前 admin 已具备。
+报表导出 Excel 内容扩展（例如状态分布明细、按专业/楼层拆分 sheet）。
+首页看板增加“时间范围选择 + 导出快捷”入口。
+
+已按你的要求推进两项工作：
+
+普通用户角色授权脚本
+新增脚本 backend/sql/upgrade_20250904_role_menu_bind_common.sql，实现幂等的角色创建与授权：
+若无 role_key='common' 角色则创建（role_name='普通角色'）
+为 common 绑定“消息中心”菜单及权限（business:message
+、business:message
+）
+为 common 绑定“SLA 阈值设置”菜单及保存权限（system:config
+）
+使用方法：
+先执行菜单初始化脚本 backend/sql/upgrade_20250903_menu_init.sql
+再执行本授权脚本，即可让 common 角色拥有访问与操作权限
+如需给自定义角色授权，可复制该脚本，将 role_key 改为你的自定义值即可
+报表 Excel 明细结构拓展
+导出 Excel（xlsx）增加更多信息（多 sheet）：
+Summary：Begin/End、Overdue（逾期数）、NearDue（近到期数）
+Duration：处理时长分布（<1h、1-4h、4-8h、8-24h、>=24h、Total）
+SLA：withDeadline、timeoutCount、ontimeCompleted、timeoutRate（%）
+Trend：按日 created/completed 时序（时间范围内）
+Status：按状态分布
+Priority：按优先级分布
+后端
+导出接口 GET /business/ticket/report/export?beginTime&endTime
+位置: ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/BizTicketController.java
+新增注入 SlaConfigService，用于 NearDue 计算
+Excel 生成改为 Apache POI（原 CSV 已替换）
+Summary sheet 增加逾期与近到期
+新增 Status 与 Priority 两个分布 sheet
+分析与趋势 Mapper（时间范围）已经接入：durationAnalytics/slaAnalytics/trendCreated/trendCompleted
+ruoyi-admin/src/main/resources/mapper/system/BizTicketMapper.xml
+ruoyi-admin/src/main/java/com/ruoyi/system/mapper/BizTicketMapper.java
+前端
+报表页面导出按钮下载 xlsx
+位置: frontend/src/views/business/ticket/report.vue（文件名从 csv 改为 xlsx）
+验证与注意
+
+执行 SQL 后，以 common 角色登录，确认可以访问“消息中心”“SLA 阈值设置”且无 403。
+报表页面选择时间范围后点击“导出”，应下载 ticket_report.xlsx，包含上述 6 个 sheet。
+若你希望普通用户也能导出报表，确保角色拥有 business:ticket
+权限。当前我们未新增该权限的菜单项（只有后端注解）。如需要，我可以补一个“工单报表”权限按钮 sys_menu（perms='business:ticket
+'）并绑定到角色。
+
+已完成两项内容：
+
+为 common 增加“工单报表”权限菜单项与授权
+新增脚本 backend/sql/upgrade_20250904_ticket_report_menu_and_bind.sql（幂等）
+在“工单管理（ticket 模块）”下新增“工单报表”菜单（/business/ticket/report，组件 business/ticket/report）
+新增按钮权限 business:ticket
+（用于后端报表接口鉴权）
+授权给 admin 和 common 角色（如果 common 不存在则自动创建）
+验证
+执行后，用 common 角色登录应能看到“工单报表”，并可访问/导出（前提该角色有页面菜单与按钮权限）
+启动 M7（机房机柜使用）
+数据表（首版）
+backend/sql/create_dc_assets_tables.sql
+dc_room：机房（name/floor/area/status）
+dc_rack：机柜（room_id/code/u_total/power/status），唯一约束 room_id+code
+dc_rack_unit：U位（rack_id/u_index/occupied/label/owner/power_w），唯一约束 rack_id+u_index
+后端 Domain/Mapper/XML/Controller（基础 CRUD + U 位查询/占用）
+Domain（位置：ruoyi-admin/src/main/java/com/ruoyi/system/domain）
+DcRoom.java, DcRack.java, DcRackUnit.java
+Mapper 接口（位置：ruoyi-admin/src/main/java/com/ruoyi/system/mapper）
+DcRoomMapper.java, DcRackMapper.java, DcRackUnitMapper.java
+Mapper XML（位置：ruoyi-admin/src/main/resources/mapper/system）
+DcRoomMapper.xml：列表/新增/更新/逻辑删除
+DcRackMapper.xml：列表/新增/更新/逻辑删除、统计占用/总U位
+DcRackUnitMapper.xml：按机柜查询 U 位、批量 upsert、清除机柜全部 U 位
+控制器（位置：ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/DcRackController.java）
+机房
+GET /business/asset/room/list（分页）
+POST /business/asset/room（新增）
+PUT /business/asset/room（更新）
+DELETE /business/asset/room/{id}（逻辑删除）
+机柜
+GET /business/asset/rack/list（分页）
+POST /business/asset/rack（新增，自动初始化机柜 U 位全空闲）
+PUT /business/asset/rack（更新）
+DELETE /business/asset/rack/{id}
+GET /business/asset/rack/{id}/units（查询 U 位列表）
+POST /business/asset/rack/{id}/occupy（批量占用/释放段，当前实现为“清空后批量写入”，后续可细化校验）
+权限点（控制器中已预留）
+business:asset:room
+/add/edit/remove
+business:asset:rack
+/add/edit/remove/query/occupy
+后续我可提供菜单初始化/授权 SQL（类似报表/消息中心），将其挂在“资产管理”下（业务模块）。
+下一步建议
+
+为资产模块添加菜单/权限 SQL 与 admin/common 授权脚本（如 asset -> rack/room 菜单）。
+前端页面（首版）
+机柜列表页：房间/状态筛选；列出 code/u_total/占用率/功率；支持导出
+机柜详情页：U 位纵向可视化（颜色区分）；支持批量占用/释放（调用 occupy 接口）
+菜单：资产管理 → 机柜使用（对应接口权限）
+U 位占用/释放的细化校验
+校验越界、重叠、空闲段占用、指定高度等（可提供服务层方法/接口）
+
+已按你的要求完成两部分工作：
+
+一、为“工单报表”增加菜单与授权（common/admin）
+
+新增脚本（幂等）
+backend/sql/upgrade_20250904_ticket_report_menu_and_bind.sql
+作用
+在“工单管理”下新增“工单报表”菜单（/business/ticket/report）
+新增权限按钮 business:ticket
+（供报表/导出接口使用）
+授权给 admin 与 common 角色（若 common 不存在自动创建）
+使用
+执行该 SQL（先确保之前 menu_init 已执行），以 common 登录可见“工单报表”并可访问/导出
+二、启动 M7（资产-机房机柜使用，聚焦机房/机柜/U 位）
+
+数据表（首版）
+backend/sql/create_dc_assets_tables.sql
+dc_room：机房（name/floor/area/status）
+dc_rack：机柜（room_id/code/u_total/power_rated/power_current/status，唯一约束 room_id+code）
+dc_rack_unit：U 位（rack_id/u_index/occupied/label/owner/power_w，唯一约束 rack_id+u_index）
+后端代码（Domain/Mapper/XML/Controller）
+Domain（ruoyi-admin/src/main/java/com/ruoyi/system/domain）
+DcRoom.java, DcRack.java, DcRackUnit.java
+Mapper 接口（ruoyi-admin/src/main/java/com/ruoyi/system/mapper）
+DcRoomMapper.java, DcRackMapper.java, DcRackUnitMapper.java
+Mapper XML（ruoyi-admin/src/main/resources/mapper/system）
+DcRoomMapper.xml：列表/增改/逻辑删
+DcRackMapper.xml：列表/增改/逻辑删、统计占用/总 U 位
+DcRackUnitMapper.xml：查 U 位、批量 upsert、清空
+Controller（ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/DcRackController.java）
+机房
+GET /business/asset/room/list（分页）
+POST /business/asset/room（新增）
+PUT /business/asset/room（更新）
+DELETE /business/asset/room/{id}（逻辑删除）
+机柜
+GET /business/asset/rack/list（分页，返回 occupancyRate 占用率）
+POST /business/asset/rack（新增时自动初始化 U 位全空闲）
+PUT /business/asset/rack（更新）
+DELETE /business/asset/rack/{id}
+GET /business/asset/rack/{id}/units（查询 U 位列表，按 U 倒序）
+POST /business/asset/rack/{id}/occupy（批量占用/释放指定 U 位）
+细化校验：越界（1..u_total）、重复 U 位、occupied 值限制（Y/N）；未传默认 Y；不对未传 U 位做变更
+权限与菜单（资产管理）
+新增脚本（幂等）
+backend/sql/upgrade_20250904_asset_menu_and_bind.sql
+作用
+在“业务模块”下新增“资产管理”父菜单（asset）
+子菜单：“机柜使用”（/business/asset/rack）、“机房管理”（/business/asset/room）
+权限按钮：business:asset:room
+/add/edit/remove, business:asset:rack
+/add/edit/remove/query/occupy
+授权给 admin 与 common 角色
+前端接口与页面（首版）
+API：frontend/src/api/business/asset.js
+listRooms/addRoom/updateRoom/delRoom
+listRacks/addRack/updateRack/delRack
+getRackUnits/occupyUnits
+路由：frontend/src/router/modules/business.ts
+资产管理 → 机柜使用（/business/asset/rack）
+机柜详情（隐藏） → /business/asset/rack/detail/
+机房管理（占位）
+页面
+机柜列表：frontend/src/views/business/asset/rack/index.vue
+机房/状态筛选，列表字段 code/room/u_total/占用率/功率，导出占位
+双击行/详情按钮进入详情
+机柜详情（U 位纵向图）：frontend/src/views/business/asset/rack/detail.vue
+U 位颜色区分（被占用红色），点击选择 U 位，支持“占用所选”“释放所选”，调用 occupy 接口
+注意
+当前占用/释放接口按“指定 U 位集合”写入，不做“高度起点”的段操作；前端可通过范围选择（自选多个 U 位）实现段占用
+如需严格“段”与“高度”语义，可扩展接口为 { startU, height, occupied }，后台生成 U 集合校验后落库
