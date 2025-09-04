@@ -33,12 +33,7 @@ export function updateTicket(data) { return put('/business/ticket', data) }
  */
 export function delTicket(ticketId) { return del('/business/ticket/' + ticketId) }
 
-/**
- * （可选）获取逾期工单列表
- * @param {object} params
- * @returns {Promise<ApiResult<PageResult<Ticket>>>}
- */
-export function getOverdueTickets(params) { return get('/business/ticket/overdue', params) }
+
 
 // 在文件末尾添加缺失的函数
 /**
