@@ -21,7 +21,7 @@
               <span>未读消息</span>
               <div>
                 <el-button text type="primary" @click="goMessage">更多</el-button>
-                <el-button text type="primary" @click="readAllQuick" v-if="unread>0">全部已读</el-button>
+                <el-button text type="primary" @click="readAllQuick" v-if="unread>0" v-hasPermi="['business:message:read']">全部已读</el-button>
               </div>
             </div>
             <el-scrollbar height="240px">
@@ -32,7 +32,7 @@
                   <div class="msg-title">{{ m.title }}</div>
                   <div class="msg-content">{{ m.content }}</div>
                   <div class="msg-meta">{{ parseTime(m.createTime) }}</div>
-                  <el-button text type="primary" size="small" @click="readQuick(m.msgId)">已读</el-button>
+                  <el-button text type="primary" size="small" @click="readQuick(m.msgId)" v-hasPermi="['business:message:read']">已读</el-button>
                 </div>
               </div>
             </el-scrollbar>

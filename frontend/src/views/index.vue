@@ -2,7 +2,7 @@
   <div class="app-container home">
     <el-row :gutter="20" class="ticket-summary-row">
       <el-col :xs="24" :sm="12" :md="6" v-for="card in summaryCards" :key="card.key">
-        <el-card shadow="hover" class="ticket-summary-card">
+        <el-card shadow="hover" class="ticket-summary-card" @click="openCard(card)" style="cursor:pointer">
           <div class="meta">
             <div class="value">{{ card.value }}</div>
             <div class="label">{{ card.label }}</div>
@@ -1073,6 +1073,8 @@ const version = ref('3.9.0')
 import { ticketSummary } from '@/api/business/ticket'
 import request from '@/utils/request'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 const summary = ref({ byStatus:{}, byPriority:{}, todayNew:0, todayCompleted:0 })
 const summaryCards = ref([
@@ -1107,6 +1109,17 @@ onMounted(()=>{ loadSummary() })
 
 function goTarget(url) {
   window.open(url, '__blank')
+}
+
+function openCard(card){
+  if (!card || !card.key) return
+  if (card.key === 'unread') {
+    router.push('/business/message')
+  } else if (card.key === 'nearDue') {
+    router.push({ path: '/business/ticket/list', query: { mode: 'neardue' } })
+  } else if (card.key === 'overdue') {
+    router.push({ path: '/business/ticket/list', query: { mode: 'overdue' } })
+  }
 }
 </script>
 

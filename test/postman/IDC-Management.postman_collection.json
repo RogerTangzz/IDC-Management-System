@@ -1,0 +1,215 @@
+{
+  "info": {
+    "name": "IDC Management API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "b8e2e6a5-6a6e-4a2b-9e21-idx-icdcoll"
+  },
+  "item": [
+    {
+      "name": "Auth (Optional)",
+      "item": [
+        {
+          "name": "Login (captcha disabled only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Extract token when captcha is disabled",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  if (json && json.token) { pm.collectionVariables.set('token', json.token); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ticket",
+      "item": [
+        {
+          "name": "List Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/business/ticket/list?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["business","ticket","list"],
+              "query": [
+                {"key": "pageNum", "value": "1"},
+                {"key": "pageSize", "value": "10"}
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Overdue Tickets",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/ticket/overdue?pageNum=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["business","ticket","overdue"], "query": [{"key":"pageNum","value":"1"},{"key":"pageSize","value":"10"}] }
+          },
+          "response": []
+        },
+        {
+          "name": "Near Due Tickets",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/ticket/nearDue?hours=2&pageNum=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["business","ticket","nearDue"], "query": [{"key":"hours","value":"2"},{"key":"pageNum","value":"1"},{"key":"pageSize","value":"10"}] }
+          },
+          "response": []
+        },
+        {
+          "name": "Report Summary",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/ticket/report/summary", "host": ["{{baseUrl}}"], "path": ["business","ticket","report","summary"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Report Analytics",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/ticket/report/analytics", "host": ["{{baseUrl}}"], "path": ["business","ticket","report","analytics"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Report Trend",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/ticket/report/trend", "host": ["{{baseUrl}}"], "path": ["business","ticket","report","trend"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Message",
+      "item": [
+        {
+          "name": "Count Unread",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/message/countUnread", "host": ["{{baseUrl}}"], "path": ["business","message","countUnread"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Unread List",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/message/unread?pageNum=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["business","message","unread"], "query": [{"key":"pageNum","value":"1"},{"key":"pageSize","value":"10"}] }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save first unread id to collection variable msgId",
+                  "try {",
+                  "  var json = pm.response.json();",
+                  "  var rows = json.rows || [];",
+                  "  if (rows.length > 0) { pm.collectionVariables.set('msgId', rows[0].msgId); }",
+                  "} catch(e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark Read (first)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/message/read/{{msgId}}", "host": ["{{baseUrl}}"], "path": ["business","message","read","{{msgId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/message/readAll", "host": ["{{baseUrl}}"], "path": ["business","message","readAll"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Message List (all)",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/business/message/list?pageNum=1&pageSize=10&readFlag=ALL", "host": ["{{baseUrl}}"], "path": ["business","message","list"], "query": [{"key":"pageNum","value":"1"},{"key":"pageSize","value":"10"},{"key":"readFlag","value":"ALL"}] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SLA Config",
+      "item": [
+        {
+          "name": "Get SLA Config",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/system/sla", "host": ["{{baseUrl}}"], "path": ["system","sla"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Update SLA Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/system/sla", "host": ["{{baseUrl}}"], "path": ["system","sla"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true,\n  \"warnBeforeHours\": 2,\n  \"lowHours\": 24,\n  \"mediumHours\": 8,\n  \"highHours\": 4\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "msgId", "value": "" }
+  ]
+}
+

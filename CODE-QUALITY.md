@@ -1,6 +1,6 @@
 # CODE-QUALITY.md — 代码质量与工程规范（对齐 IDC 业务规范 V2.0）
 
-版本: 2.0.0  更新时间: 2025-09-03
+版本: 2.0.0  更新时间: 2025-09-04
 
 ## 基本原则
 - 以“可维护、可回归”为最高优先；小步提交、语义清晰。
@@ -27,6 +27,10 @@
 - SQL 与迁移：
   - 所有 `ALTER` 使用 `IF NOT EXISTS` 以保证幂等。
   - 主键/唯一键/常用筛选字段必须加索引：`status/deadline/assignee_id/create_time/last_status_time`。
+- SLA 配置：
+  - 动态读取优先：通过 `SlaConfigService` 先查 `sys_config`，缺省回落到 `application.yml` 的 `SlaProperties`。
+  - 变更配置需调用 `configService.resetConfigCache()` 刷新缓存（见 `SlaConfigController`）。
+  - 任务侧不得硬编码小时阈值，统一从配置读取；异常需 catch 并记录。
 - 调度任务：
   - 启用 `@EnableScheduling`；任务异常必须 catch + 记录日志；避免长事务。
 - 安全：
@@ -41,9 +45,20 @@
   - 列表排序：`prop` 驼峰转下划线、`order` 转 `asc/desc` 传后端。
   - 表单重置使用 `proxy.resetForm`；字典用 `proxy.useDict`。
   - 消息/确认统一使用 `proxy.$modal`。
+  - 顶部未读角标：轮询 `/business/message/countUnread`（60s），气泡展示最近5条未读；按钮显隐用 `v-hasPermi` 保护。
 - TypeScript：
   - 优先迁移 API/Store，保持 API 返回类型；视图后迁移。
   - 类型定义集中在 `src/types/api/`；禁止在视图内定义接口结构。
+
+## 消息中心（权限与接口约定）
+- 权限点：
+  - `business:message:list`（列表/未读/计数）
+  - `business:message:read`（单条已读/全部已读）
+- 主要接口：
+  - `GET /business/message/countUnread` → 数字
+  - `GET /business/message/unread` → 分页 `rows/total`
+  - `POST /business/message/read/{id}`、`POST /business/message/readAll`
+  - 前端页面：`/business/message`，顶部角标集成在 Navbar
 
 ## 日志与审计
 - 业务动作写入表 `biz_ticket_log`：`action/old_status/new_status/operator/remark/create_time`。
@@ -63,4 +78,5 @@
 - 本地验证：接口 401/403、分页/排序/过滤、常见边界（空字段/超长/非法流转）。
 - 数据脚本：先在测试库执行验证幂等，再发布到生产。
 - 监控：观察定时任务日志（SLA 提醒/升级）与数据库相关索引命中情况。
-
+ - Postman 集合：`test/postman/IDC-Management.postman_collection.json` + 环境 `test/postman/Local.postman_environment.json`
+ - 冒烟清单：`test/TESTING.md`（覆盖工单/报表/SLA/消息中心/调度）

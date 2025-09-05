@@ -33,7 +33,10 @@ export function updateTicket(data) { return put('/business/ticket', data) }
  */
 export function delTicket(ticketId) { return del('/business/ticket/' + ticketId) }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b688528f (9.5 13：01)
 
 // 在文件末尾添加缺失的函数
 /**
@@ -58,9 +61,6 @@ export function ticketSummary(){ return get('/business/ticket/report/summary') }
 
 /** 工单高级分析 */
 export function ticketAnalytics(params){ return get('/business/ticket/report/analytics', params) }
-
-/** 逾期工单分页列表 */
-export function getOverdueTickets(params){ return get('/business/ticket/overdue', params) }
 
 /** 近到期工单分页列表 */
 export function getNearDueTickets(params){ return get('/business/ticket/nearDue', params) }

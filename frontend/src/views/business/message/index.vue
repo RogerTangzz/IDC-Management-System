@@ -20,7 +20,7 @@
               <el-option label="重新打开" value="reopen" />
             </el-select>
             <el-button size="small" @click="getList">刷新</el-button>
-            <el-button type="primary" size="small" @click="readAll" v-if="filters.readFlag==='N'" >全部标记已读</el-button>
+            <el-button type="primary" size="small" @click="readAll" v-if="filters.readFlag==='N'" v-hasPermi="['business:message:read']">全部标记已读</el-button>
           </div>
         </div>
       </template>
@@ -33,7 +33,7 @@
         </el-table-column>
         <el-table-column label="操作" width="200">
           <template #default="scope">
-            <el-button type="primary" link @click="read(scope.row.msgId)">标记已读</el-button>
+            <el-button type="primary" link @click="read(scope.row.msgId)" v-hasPermi="['business:message:read']">标记已读</el-button>
             <el-button v-if="scope.row.bizType==='ticket'" type="primary" link @click="open(scope.row)">查看</el-button>
           </template>
         </el-table-column>

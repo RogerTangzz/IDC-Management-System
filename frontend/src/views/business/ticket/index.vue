@@ -218,7 +218,7 @@
 <script setup name="Ticket">
 import { ref, reactive, getCurrentInstance, toRefs, computed } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
-import { listTicket, addTicket, updateTicket, delTicket, assignTickets, reopenTicket } from '@/api/business/ticket'
+import { listTicket, addTicket, updateTicket, delTicket, assignTickets, reopenTicket, getOverdueTickets, getNearDueTickets } from '@/api/business/ticket'
 import { useRouter, useRoute } from 'vue-router'
 
 const { proxy } = getCurrentInstance()
@@ -472,6 +472,11 @@ function getPriorityLabel(priority) {
     low: '低'
   }
   return map[priority] || priority
+}
+
+// 根据路由参数设置特殊模式（支持首页卡片跳转）
+if (route?.query?.mode === 'overdue' || route?.query?.mode === 'neardue') {
+  specialMode.value = String(route.query.mode)
 }
 
 getList()

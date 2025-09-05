@@ -7,7 +7,7 @@
 基础规范: CLAUDE.md v2.0
 适用项目: IDC运维管理系统（基于RuoYi-Vue3）
 核心目标: 将业务逻辑精准映射到RuoYi规范的技术实现
-更新日期: 2025-09-03
+更新日期: 2025-09-04
 
 本版要点（与 V2.0 对齐）：
 1) 工单：持久化 last_action/last_status_time，reopen 工作流，统计 summary/analytics，逾期与近到期 nearDue 指标。
@@ -15,7 +15,8 @@
 3) 巡检联动：巡检异常自动生成工单，记录 create 日志，回写巡检 ticket 关联。
 4) 数据权限：非管理员仅能查看/操作与自己相关（被指派/报修/创建）的工单。
 5) 字典/索引：ticket_action 增加 sla_warn/sla_overdue；索引建议含 last_status_time、deadline、status。
-6) 待办：前端报表图表、逾期/近到期下钻视图、通知中心、系统设置（SLA 阈值 UI）、资产/知识库/审批中心等。
+6) 新增完成：前端报表图表（ECharts）与导出、逾期/近到期下钻视图、消息中心、系统设置（SLA 阈值 UI）。
+   待办：资产/知识库/审批中心等后续模块。
 
 ---
 
@@ -71,8 +72,8 @@ const moduleStatus = {
   },
   // P2 支撑模块
   knowledge: { priority: 'P2', status: '❌ 未开始' },
-  notification: { priority: 'P2', status: '❌ 未开始' },
-  report: { priority: 'P2', status: '⚠️ 后端 summary/analytics 已实装，前端图表开发中' }
+  notification: { priority: 'P2', status: '✅ 基础消息中心已就绪（未读/已读/角标/列表）' },
+  report: { priority: 'P2', status: '✅ 前端图表与导出已完成' }
 }
 ```
 
@@ -872,7 +873,7 @@ volumes:
 - 新增：报表 summary / analytics API + 首页摘要卡片
 - 修复：BizTicketMapper.xml 未转义符号导致启动失败
 - 更新：模块状态 / 问题追踪 / 数据模型 (索引与新列)
-- 待办：图表可视化、逾期下钻、权限细化、性能优化
+- 更新：报表图表/导出、逾期/近到期下钻、消息中心、SLA 阈值 UI 已落地；继续推进权限细化与性能优化
 
 ### v2.2.0 (2025-08-31)
 - 新增：登录 / 用户信息响应兼容章节

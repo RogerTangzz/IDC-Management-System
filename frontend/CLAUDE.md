@@ -6,12 +6,14 @@
 版本: 2.0.0（对齐 IDC 系统开发功能业务逻辑与规范 V2.0）
 适用范围: RuoYi-Vue3 (Vue 3 + Element Plus + Vite) 前端项目
 核心目标: 与 IDC 业务规范保持一致，提供可落地的前端架构与实现准则
-更新日期: 2025-09-03
+更新日期: 2025-09-04
 
 本版要点（与 V2.0 对齐）：
 - 工单模块：持久化 last_action/last_status_time、reopen 流程、统计报表（summary/analytics）、逾期与“即将超时” nearDue 指标、与巡检联动生成工单
 - SLA：支持前端首页“即将超时/已逾期”卡片展示，与后端配置 `idc.sla.warnBeforeHours` 对齐
 - 列表/详情：前端字段与后端一致（`reporterName/assigneeName/completionTime`），排序参数兼容 RuoYi（字段下划线、方向 asc/desc）
+- 报表与下钻：报表图表（处理时长柱状 + SLA 饼图）已接入；列表支持 nearDue/overdue 模式切换
+- 消息中心：顶部未读角标与消息中心页（未读、单条/全部已读）已接入，权限 `business:message:list/read`
 - 渐进式 TypeScript：以业务闭环为先，API/Store 优先迁移，其余组件与视图逐步迁移
 
 ---
@@ -23,7 +25,7 @@
 |------|------|--------|------|
 | 工单 last*/reopen | ✅ 完成 | 100% | 列表支持 last_status_time 排序、详情展示 last_action |
 | 统计 summary/analytics | ✅ 完成 | 100% | 首页 todayNew/todayCompleted/nearDue/overdue 卡片 |
-| 逾期/近到期入口 | ⏳ 进行中 | 60% | 后端接口已就绪，前端列表入口待加 |
+| 逾期/近到期入口 | ✅ 完成 | 100% | 列表按钮切换 nearDue/overdue 模式，分页/重置兼容 |
 | 巡检联动生成工单 | ✅ 完成 | 100% | 生成时写 last_action 并记日志 |
 | 字典 | ✅ 完成 | 100% | ticket_action 增加 sla_warn/sla_overdue |
 | TypeScript 迁移 | ⏳ 进行中 | 40% | 先迁 API/Store；页面逐步推进 |
