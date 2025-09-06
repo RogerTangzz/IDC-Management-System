@@ -1,64 +1,41 @@
-## IDC-Management-System
+# IDC-Management-System
 
-前后端分离的 IDC 运维管理系统（基于 RuoYi 3.9.0 + Vue3/Vite/Element Plus + TypeScript 渐进迁移中）。
+DC/IDC 运维管理系统（前端 RuoYi-Vue3 + 后端 RuoYi-Boot）。聚焦工单、巡检、维保、资产等模块，支持 SLA、报表下钻与数据权限。
 
-### 目录结构
-```
-backend/   # RuoYi 后端（Spring Boot 2.5.x, JDK8）
-frontend/  # Vue3 + Vite 前端
-```
+## 快速开始
 
-### 快速开始
-Backend:
-1. 导入数据库：执行 `sql/` 目录下初始化脚本（顺序：create_tables.sql → import.sql → 业务补充）。
-2. 编译运行：`cd backend && mvn clean package -DskipTests`，运行 `ruoyi-admin/target/ruoyi-admin.jar`。
-3. 默认配置：端口 8080（按需修改 `application.yml`）。
+- 前端
+  - 进入 `frontend/`
+  - 安装依赖：`npm i`
+  - 开发：`npm run dev`
+  - 测试：`npm test` / `npm run test:run`
+  - 构建：`npm run build:prod`
 
-Frontend:
-1. `cd frontend`
-2. 安装依赖：`npm install`
-3. 开发运行：`npm run dev`
-4. 构建：`npm run build:prod`（产物生成 `dist/`）
+- 后端
+  - 进入 `backend/`
+  - 启动：`mvn spring-boot:run`
+  - 打包：`mvn clean package`
 
-### 环境变量（前端）
-| 变量 | 说明 | 示例 |
-|------|------|------|
-| VITE_APP_BASE_API | 后端 API 基础路径 | /dev-api / /prod-api |
-| VITE_ENABLE_MOCK  | 是否启用内置 Mock | development=true / production=false |
+## 关键文档
 
-### Mock 策略
-开发环境可使用内置 Mock（位于 `src/mock/`）。发布前端时应设置 `VITE_ENABLE_MOCK=false`（生产 `.env.production` 已配置）。
+- 业务与前端规范
+  - `docs/agent.md`（Agent/前端协作规范与环境配置）
+  - `docs/CLAUDE.md`（主规范）
+  - `docs/CLAUDE-IDC.md`（IDC 扩展规范）
+  - `docs/CODE-QUALITY.md`（代码质量与测试指南）
+  - `docs/DC系统开发功能与业务逻辑设计规范 V2.0.md`（业务规格）
 
-### TypeScript 迁移进度
-| 模块 | 状态 |
-|------|------|
-| 请求封装(utils/request) | 已 TS 化 |
-| 权限/用户 store | 已 TS 化 |
-| 路由模块 | 部分 TS 化 |
-| 业务 API | 待整体迁移 |
-| 视图组件 | 逐步进行 |
+- 接口契约（后端）
+  - 工单导出：`docs/backend-contracts/ticket-export.md`
 
-详见 `CLAUDE.md v2.3` 与 `CLAUDE-IDC.md v2.2`。
+## 配置要点
 
-### 测试
-使用 Vitest：`npm test`。当前基线覆盖：权限过滤、动态视图加载。后续将新增登录/认证与业务服务测试。
+- 前端 `.env.*`
+  - `VITE_APP_BASE_API`：后端网关前缀（开发 `/dev-api`、生产 `/prod-api`）
+  - `VITE_API_MINE_ONLY_PARAM`：后端“仅本人数据”参数名（默认 `mineOnly`；若后端使用别名如 `selfOnly`，设置后前端灰度期会双写）
 
-### 发布前检查清单
-1. 前端：`npm run type-check && npm run build:prod` 通过。
-2. 后端：`mvn clean package` 通过且无快照依赖。
-3. 环境变量：生产构建 `VITE_ENABLE_MOCK=false`。
-4. 移除调试暴露：`window.__lastLoginResponse` / `__lastLoginError`（可在正式上线前清理）。
-5. 确认无敏感信息（密码 / 内网地址）写入仓库。
-6. 运行端到端冒烟：登录 → 获取菜单 → 路由切换。
+## 功能摘录
 
-### 许可证
-后端目录内包含原始 LICENSE（保留 RuoYi 原版权说明）。
-
-### 后续路线
-- 统一后端登录 / 用户信息响应结构（统一 data 包裹）
-- 引入前端 CI（lint + type-check + test + build）
-- 抽离 api/ 领域类型至 `src/types/`
-- 增加覆盖率门禁与差异文件校验
-
----
-如需更多规范，参阅：`CLAUDE.md` 与 `CLAUDE-IDC.md`。
+- SLA 报表下钻：饼图点击下钻到工单列表（`mode=neardue|overdue`）
+- 工单导出：携带筛选/时间/排序/下钻与数据权限参数导出 xlsx
+- 数据权限：非管理员自动注入“仅本人数据”参数（支持别名配置与双写灰度）

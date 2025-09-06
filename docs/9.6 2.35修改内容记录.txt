@@ -1,0 +1,153 @@
+总结报告
+
+目标与范围: 巡检模块增强与稳定性修复
+仅生成选中异常：在详情页“异常项汇总”支持复选→批量生成，并提供跳转（首张工单详情/工单列表）。
+防重复提交：列表页与详情页“生成工单”按钮增加 loading/disabled。
+乱码修复：将 detail.vue 模板中文全面还原为正常中文，避免 UTF‑8 批量转换引入的二次破坏。
+测试完善：为关键路径补充单元/集成测试，覆盖过滤、空选择、按钮 loading 等行为。
+核心改动
+
+详情模板中文恢复与交互
+返回/标题/信息区中文恢复: frontend/src/views/business/inspection/detail.vue:6, 9, 22
+异常项汇总与批量操作: frontend/src/views/business/inspection/detail.vue:134, 136, 142
+顶栏按钮 loading/disabled: frontend/src/views/business/inspection/detail.vue:12
+单项“生成工单”按钮态: frontend/src/views/business/inspection/detail.vue:166
+仅选中异常生成
+过滤工具: frontend/src/views/business/inspection/utils.ts
+详情页调用 filterByIds: frontend/src/views/business/inspection/detail.vue:372, 533
+选择状态: frontend/src/views/business/inspection/detail.vue:384
+生成状态 generating: frontend/src/views/business/inspection/detail.vue:388
+列表页防重复
+行内按钮 loading/disabled: frontend/src/views/business/inspection/index.vue:106
+生成状态声明: frontend/src/views/business/inspection/index.vue:162
+置位/复位: frontend/src/views/business/inspection/index.vue:303, 324
+成功提示统一为“已生成 n 个工单”
+测试补充
+
+过滤函数：frontend/src/tests/inspection.selected.test.ts
+空选择应警告且不调接口：frontend/src/tests/inspection.selectedEmpty.test.ts
+集成（仅选中异常 + 跳详情/回列表）：frontend/src/tests/inspection.generate.test.ts
+详情页单条按钮 loading/disabled：frontend/src/tests/inspection.itemButton.test.ts
+验证方法
+
+前端运行：cd frontend && npm ci && npm run dev
+测试执行：cd frontend && npm test
+手工冒烟：
+列表页：有异常且未生成工单的行→点击“生成工单”，按钮出现 loading，成功后按确认跳详情、取消回列表。
+详情页：顶栏“生成工单”；在“异常项汇总”勾选若干项→“仅生成选中异常”；单条异常右侧“生成工单”。
+遗留与建议
+
+列表页 index.vue 仍有少量中文乱码（标签文案层面），不影响逻辑；建议后续逐段手工修复。
+详情页 generateTicketsByIds 中 generating 的置位建议放在“确认之后”，避免用户取消时出现短暂 loading。
+保持后端返回“创建的工单列表”，便于前端准确提示与导航。
+严格禁令（请特别注意）
+
+禁止使用任何“一键编码转换脚本”或批量“改为 UTF‑8”的操作（如 convert_utf8.py 等）。
+禁止对整个仓库/大量文件做统一编码重写或“批量另存为 UTF‑8”。
+原因：历史文件存在混合来源与编码，批量转换会让已正确显示的中文被错误重解码，造成不可逆的二次乱码。
+正确做法：
+仅对“确有乱码的片段”做小范围手工重写（保持文件其他部分不动）。
+新增文件统一以 UTF‑8 保存；旧文件除非有乱码，不做编码层面的改动。
+IDE 设置为 UTF‑8 并启用“自动检测编码”，谨慎处理来自 Windows/旧工具的文件。
+
+直接提交一个最小补丁吗（先处理 index.vue 的占位/选项/计数单位、detail.vue 的 viewTickets 路径与两处中文碎片）
+
+
+下面是我对两个文件的最新复核与最小修复结论，以及可立即执行的下一步。
+
+已最小修复
+
+detail.vue
+修正“查看工单列表”跳转路径
+from: router.push('/business/ticket')
+to: router.push('/business/ticket/list')
+修正两处中文碎片
+formatRange 布尔分支返回：from “状态检…” → to “正常”
+处理建议默认提示：from “请根据设备手册进行处…” → to “请根据设备手册进行处理”
+说明：detail.vue 的模板中文此前我已整体恢复为可读中文，交互不变；本次只是对脚本里零散中文和路径做了微调。
+
+仍存在待改（index.vue 的几处文案/占位）
+这些位置建议在 IDE 里逐段手工改写（避免再次受编码影响）：
+
+日期占位与分隔符
+将下面两行合并为一行（或保持两行也可），但确保占位与分隔符为中文：
+replace:
+<el-date-picker v-model="dateRange" type="daterange" range-separator="…" start-placeholder="开始…"
+end-placeholder="结束日期" value-format="YYYY-MM-DD" />
+with:
+<el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" />
+异常状态筛选项
+<el-form-item label="异常状态" prop="hasAnomaly">
+<el-option label="有异常" :value="1" />
+<el-option label="无异常" :value="0" />
+列表计数字段单位
+异常数量显示：{{ scope.row.anomalyCount }} 项
+无异常标签：<el-tag v-else type="success">无异常</el-tag>
+工单数量显示：{{ scope.row.ticketCount }} 个
+复制来源：<el-tag v-if="scope.row.isCopied === 'Y'" type="info">已复制</el-tag>
+统计弹窗字段名
+title="异常处理率"
+提示：由于 index.vue 仍有少量不可见/破损字节（UTF‑8 之外的历史残留），自动替换容易把“有异常”变成“有异常常”之类错误。请务必在 IDE 中直接手工改写为上述中文，不要再运行任何批量转换。
+
+重要备注（请严格遵守）
+
+禁止使用任何“一键编码转换脚本”或“批量改为 UTF‑8”的操作。
+每次只对出现乱码的具体片段做手工修复。批量操作会让已正常的内容被错误重解码，越修越乱。
+如果你确认，我可以：
+
+按上述点位，在 index.vue 里逐段手工重写并提交最小补丁（不动其它代码，不做批量替换）。
+继续把 detail.vue 中 mock 数据里个别单位/中文（如 ℃、温度/电压等）也统一清理为可读中文。
+
+已按你的清单做了最小、定点修复，并推进了 P0。关键改动如下（仅针对受影响片段，小范围手工修复，未做任何批量编码转换）。
+
+已修内容
+
+巡检列表 index.vue
+
+日期占位与分隔符: 将重复且乱码的 range-separator/placeholder 合并并修正为中文
+frontend/src/views/business/inspection/index.vue:14
+替换为 range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
+异常/工单数量单位与“无异常”文案
+frontend/src/views/business/inspection/index.vue:71–86 附近
+异常数量后缀改为“项”，工单数量后缀改为“个”，无异常标签改为“无异常”
+“复制来源”标签文本
+frontend/src/views/business/inspection/index.vue:87–91 附近 → “已复制”
+行内“生成工单”按钮：按钮文字与禁用/加载一致
+frontend/src/views/business/inspection/index.vue:106–109
+文案修正为“生成工单”；保留 :loading/:disabled 与 generatingInspectionId 的一致绑定
+统计弹窗标题修正
+frontend/src/views/business/inspection/index.vue:129 → “异常处理率”
+成功提示统一为“已生成 n 个工单”
+两处旧实现统一为 proxy.$modal.msgSuccess(已生成 ${n} 个工单)
+frontend/src/views/business/inspection/index.vue:262, 317
+空异常拦截提示补全
+frontend/src/views/business/inspection/index.vue:301
+由乱码修正为 proxy.$modal.msgWarning("没有异常项目需要生成工单")
+巡检详情 detail.vue
+
+处理建议默认文案
+frontend/src/views/business/inspection/detail.vue:261
+改为 return item.suggestion || '请根据设备手册进行处理'
+生成成功提示统一为“已生成 n 个工单”
+frontend/src/views/business/inspection/detail.vue:273
+改为 proxy.$modal.msgSuccess(已生成 ${resp.data.length} 个工单)
+误改的导出提示已恢复
+frontend/src/views/business/inspection/detail.vue:311–313
+保持 proxy.$modal.msgSuccess("导出功能正在开发中")
+说明：控制台显示中文可能出现“ ?”，文件内部已按 UTF-8 保存且文案为正确中文。
+说明与校验
+
+保持了行内生成按钮 loading/disabled 与 generatingInspectionId 绑定一致（列表与详情交互规范一致）。
+未改动任何路由逻辑；详情页跳转工单列表仍为 /business/ticket/list，符合“9.6 2.35修改内容记录”的要求。
+坚持“不做批量编码转换”，所有改动均为局部手工修复。
+下一步（P0 推进）
+
+用例补齐
+空选择拦截、仅选中异常生成、按钮 loading/disabled 切换（vitest）
+手工冒烟
+列表行内生成→成功后确认进详情/取消回列表
+详情顶部生成、勾选“仅选中异常”批量生成
+如需，我可以：
+补 2–3 个 vitest 用例（生成成功提示/空选择拦截/禁用态）
+清理巡检模块其余零散文案（不触碰正常片段，不做批量替换）
+一次性执行前端测试并给出报告

@@ -66,13 +66,8 @@ const businessRoutes: RouteRecordRaw[] = [
                         hidden: true,
                         component: () => import('@/views/business/asset/rack/detail.vue'),
                         meta: { title: '机柜详情', activeMenu: '/business/asset/rack' }
-                    },
-                    {
-                        path: 'room',
-                        name: 'RoomList',
-                        component: () => import('@/views/business/asset/room/index.vue'),
-                        meta: { title: '机房管理', icon: 'home-filled' }
                     }
+                    // 注意：移除了 room 路由，避免导入不存在的文件报错
                 ]
             },
             {
@@ -97,50 +92,68 @@ const businessRoutes: RouteRecordRaw[] = [
             },
             {
                 path: 'inspection',
+                component: ParentView,
                 name: 'Inspection',
-                component: () => import('@/views/business/inspection/index.vue'),
-                meta: { title: '巡检管理', icon: 'search' }
-            },
-            {
-                path: 'inspection/create',
-                name: 'InspectionCreate',
-                hidden: true,
-                component: () => import('@/views/business/inspection/create.vue'),
-                meta: { title: '开始巡检', icon: 'form' }
-            },
-            {
-                path: 'inspection/edit/:inspectionId',
-                name: 'InspectionEdit',
-                hidden: true,
-                component: () => import('@/views/business/inspection/edit.vue'),
-                meta: { title: '继续巡检', icon: 'form' }
-            },
-            {
-                path: 'inspection/detail/:inspectionId',
-                name: 'InspectionDetail',
-                hidden: true,
-                component: () => import('@/views/business/inspection/detail.vue'),
-                meta: { title: '巡检详情', icon: 'view' }
+                redirect: '/business/inspection/list',
+                meta: { title: '巡检管理', icon: 'search' },
+                children: [
+                    {
+                        path: 'list',
+                        name: 'InspectionList',
+                        component: () => import('@/views/business/inspection/index.vue'),
+                        meta: { title: '巡检列表', icon: 'list' }
+                    },
+                    {
+                        path: 'create',
+                        name: 'InspectionCreate',
+                        hidden: true,
+                        component: () => import('@/views/business/inspection/create.vue'),
+                        meta: { title: '开始巡检', icon: 'form', activeMenu: '/business/inspection/list' }
+                    },
+                    {
+                        path: 'edit/:inspectionId',
+                        name: 'InspectionEdit',
+                        hidden: true,
+                        component: () => import('@/views/business/inspection/edit.vue'),
+                        meta: { title: '继续巡检', icon: 'form', activeMenu: '/business/inspection/list' }
+                    },
+                    {
+                        path: 'detail/:inspectionId',
+                        name: 'InspectionDetail',
+                        hidden: true,
+                        component: () => import('@/views/business/inspection/detail.vue'),
+                        meta: { title: '巡检详情', icon: 'view', activeMenu: '/business/inspection/list' }
+                    }
+                ]
             },
             {
                 path: 'maintenance',
+                component: ParentView,
                 name: 'Maintenance',
-                component: () => import('@/views/business/maintenance/plan/index.vue'),
-                meta: { title: '维保管理', icon: 'tool' }
-            },
-            {
-                path: 'maintenance/plan/form/:planId?',
-                name: 'MaintenancePlanForm',
-                hidden: true,
-                component: () => import('@/views/business/maintenance/plan/form.vue'),
-                meta: { title: '维保计划表单', icon: 'form' }
-            },
-            {
-                path: 'maintenance/plan/detail/:planId',
-                name: 'MaintenancePlanDetail',
-                hidden: true,
-                component: () => import('@/views/business/maintenance/plan/detail.vue'),
-                meta: { title: '维保计划详情', icon: 'view' }
+                redirect: '/business/maintenance/plan',
+                meta: { title: '维保管理', icon: 'tool' },
+                children: [
+                    {
+                        path: 'plan',
+                        name: 'MaintenancePlan',
+                        component: () => import('@/views/business/maintenance/plan/index.vue'),
+                        meta: { title: '计划列表', icon: 'list' }
+                    },
+                    {
+                        path: 'plan/form/:planId?',
+                        name: 'MaintenancePlanForm',
+                        hidden: true,
+                        component: () => import('@/views/business/maintenance/plan/form.vue'),
+                        meta: { title: '计划表单', icon: 'form', activeMenu: '/business/maintenance/plan' }
+                    },
+                    {
+                        path: 'plan/detail/:planId',
+                        name: 'MaintenancePlanDetail',
+                        hidden: true,
+                        component: () => import('@/views/business/maintenance/plan/detail.vue'),
+                        meta: { title: '计划详情', icon: 'view', activeMenu: '/business/maintenance/plan' }
+                    }
+                ]
             }
         ]
     }

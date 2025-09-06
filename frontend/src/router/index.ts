@@ -41,12 +41,12 @@ export const constantRoutes: RouteRecordRaw[] = [
     },
     {
         path: '/login',
-        component: () => import('@/views/login/index.vue'),
+        component: () => import('@/views/login.vue'),
         hidden: true
     },
     {
         path: '/register',
-        component: () => import('@/views/register/index.vue'),
+        component: () => import('@/views/register.vue'),
         hidden: true
     },
     {
@@ -112,7 +112,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         children: [
             {
                 path: 'index/:dictId(\\d+)',
-                component: () => import('@/views/system/dict/data/index.vue'),
+                component: () => import('@/views/system/dict/data.vue'),
                 name: 'Data',
                 meta: { title: '字典数据', activeMenu: '/system/dict' }
             }
@@ -126,7 +126,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         children: [
             {
                 path: 'index/:jobId(\\d+)',
-                component: () => import('@/views/monitor/job/log/index.vue'),
+                component: () => import('@/views/monitor/job/log.vue'),
                 name: 'JobLog',
                 meta: { title: '调度日志', activeMenu: '/monitor/job' }
             }

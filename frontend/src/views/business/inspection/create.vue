@@ -364,9 +364,18 @@ function confirmAnomalies() {
         return
       }
       generateTickets(inspectionId.value, anomalies.value).then(response => {
-        proxy.$modal.msgSuccess(`已生成 ${(response.data || []).length} 个工单`)
-        // 保存后再跳转，避免还未保存用户离开
-        router.push('/business/inspection')
+        const created = (response && (response.data || response.rows)) || []
+        const n = Array.isArray(created) ? created.length : (created ? 1 : 0)
+        proxy.$modal.msgSuccess(`已生成 ${n} 个工单`)
+        if (Array.isArray(created) && created.length > 0 && created[0]?.ticketId) {
+          proxy.$modal.confirm('是否前往第一张工单详情？').then(() => {
+            router.push('/business/ticket/detail/' + created[0].ticketId)
+          }).catch(() => {
+            router.push('/business/ticket/list')
+          })
+        } else {
+          router.push('/business/ticket/list')
+        }
       })
     } else {
       router.push('/business/inspection')

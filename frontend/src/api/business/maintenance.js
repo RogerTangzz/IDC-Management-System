@@ -48,6 +48,31 @@ export function exportMaintenance(query) { return get('/business/maintenance/exp
 
 // ========== 业务特定接口 ==========
 
+// 导入维保计划（Excel）
+/**
+ * 导入维保计划
+ * @param {File} file - 选择的Excel文件
+ */
+export function importMaintenance(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return post('/business/maintenance/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+// 导入模板下载（返回 blob）
+export function downloadMaintenanceTemplate() {
+  // 若后端采用 GET 下载模板，保持与 RuoYi download 规范一致
+  return get('/business/maintenance/importTemplate', undefined, { responseType: 'blob' })
+}
+
+// 导入错误明细导出（Blob）
+export function downloadMaintenanceImportErrors(taskId) {
+  // 可选携带任务ID，若后端需要
+  return get('/business/maintenance/importErrors', taskId ? { taskId } : undefined, { responseType: 'blob' })
+}
+
 // 复制上次计划
 /**
  * 复制上次计划
@@ -107,7 +132,11 @@ export function startExecution(planId) { return post(`/business/maintenance/${pl
  * @param {number|string} planId
  * @param {string} result
  */
-export function completeExecution(planId, result) { return post(`/business/maintenance/${planId}/complete`, { result }) }
+// 完成执行：兼容传入字符串或对象
+export function completeExecution(planId, payload) {
+  const body = (payload && typeof payload === 'object') ? payload : { result: payload }
+  return post(`/business/maintenance/${planId}/complete`, body)
+}
 
 // 获取即将到期的计划
 /**
@@ -144,7 +173,7 @@ export function getNotifyUserList() { return get('/business/maintenance/notifyUs
  * @param {number|string} planId
  * @returns {Promise<ApiResult<ApprovalRecord[]>>}
  */
-export function getApprovalHistory(planId) { return get(`/business/maintenance/${planId}/history`) }
+export function getApprovalHistory(planId) { return get(`/business/maintenance/${planId}/history`, { type: 'approval' }) }
 
 // 撤回审批
 /**
@@ -175,3 +204,22 @@ export function getExecution(executionId) { return get(`/business/maintenance/ex
  * @param {number|string} executionId
  */
 export function createTicketFromExecution(executionId) { return post(`/business/maintenance/execution/${executionId}/ticket`) }
+
+// ========== M2 Prep: API aliases aligned with new contract (compat via existing endpoints) ==========
+/**
+ * 获取计划日志（兼容：复用现有 /{planId}/history）
+ * @param {number|string} planId
+ * @param {object} [params]
+ */
+export function getPlanLogs(planId, params) {
+  return get(`/business/maintenance/${planId}/history`, params)
+}
+
+/**
+ * 获取计划候选审批人（兼容：复用现有 /approvers，按需带 planId）
+ * @param {number|string} planId
+ */
+export function getApprovers(planId) {
+  // 后端如不需 planId，可忽略该参数
+  return get('/business/maintenance/approvers', planId ? { planId } : undefined)
+}

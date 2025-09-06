@@ -1,0 +1,3 @@
+先阅读C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\docs的agnet.md随后CLAUDE,CLAUDE-IDC,CODE-QUALITY,DC系统开发功能业务逻辑与规范 V2.0,最后阅读9.6 11.29修改内容记录以及dev-report_20250906_1124，分析目前情况，并且给出后续开发流程。
+
+

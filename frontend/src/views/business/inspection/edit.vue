@@ -243,7 +243,7 @@ const anomalyItems = computed(() => {
   return items
 })
 
-import { getInspection, updateInspection } from '@/api/business/inspection'
+import { getInspection, updateInspection, generateTickets } from '@/api/business/inspection'
 
 function parseItems(raw) {
   if (!raw) return {}
@@ -385,13 +385,35 @@ function handleSave() {
 }
 
 /** 保存并生成工单 */
-function handleSaveAndGenerate() {
+async function handleSaveAndGenerate() {
   if (selectedAnomalies.value.length === 0) {
-    proxy.$modal.msgWarning("请选择要生成工单的异常项")
+    proxy.$modal.msgWarning('请选择要生成工单的异常项')
     return
   }
-  handleSave()
-  // TODO: 后续补充生成工单接口调用
+  const data = {
+    ...form.value,
+    items: JSON.stringify(formItems.value || {}),
+    photos: JSON.stringify(form.value.photos || []),
+    anomalyCount: anomalyItems.value.length
+  }
+  try {
+    await updateInspection(data)
+    const selected = anomalyItems.value.filter(it => selectedAnomalies.value.includes(it.id))
+    const anomalies = selected.map(it => ({ itemName: it.label, value: it.value, priority: determinePriority(it.label) || 'low' }))
+    const resp = await generateTickets(form.value.inspectionId || inspectionId, anomalies)
+    const created = (resp && (resp.data || resp.rows)) || []
+    const n = Array.isArray(created) ? created.length : (created ? 1 : 0)
+    proxy.$modal.msgSuccess(`已生成 ${n} 个工单`)
+    if (Array.isArray(created) && created.length > 0 && created[0]?.ticketId) {
+      try { await proxy.$modal.confirm('是否前往第一张工单详情？'); router.push('/business/ticket/detail/' + created[0].ticketId) }
+      catch { router.push('/business/ticket/list') }
+    } else {
+      router.push('/business/ticket/list')
+    }
+  } catch (e) {
+    console.error(e)
+    proxy.$modal.msgError('保存或生成工单失败')
+  }
 }
 
 /** 取消 */

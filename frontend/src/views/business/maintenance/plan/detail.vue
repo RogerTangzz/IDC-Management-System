@@ -1,215 +1,257 @@
-<!-- src/views/maintenance/plan/detail.vue -->
 <template>
-  <div class="maintenance-plan-detail">
-    <el-card v-loading="loading">
+  <div class="app-container">
+    <el-page-header @back="goBack" content="Maintenance Plan Detail" />
+
+    <el-card class="mb16">
       <template #header>
-        <div class="header-wrapper">
-          <span>维保计划详情</span>
+        <div class="card-header">
+          <span>Plan Info</span>
           <div class="actions">
-            <el-button v-if="plan.approvalStatus === 'draft'" type="primary" @click="handleEdit">
-              编辑
-            </el-button>
-            <el-button @click="handleBack">返回</el-button>
+            <el-button v-if="canReview" type="warning" size="small" @click="openApprove">Review</el-button>
+            <el-button v-if="canStart" type="primary" size="small" @click="onStart">Start</el-button>
+            <el-button v-if="canComplete" type="success" size="small" @click="openComplete">Complete</el-button>
           </div>
         </div>
       </template>
-
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="计划标题" :span="2">
-          {{ plan.title }}
+      <el-descriptions :column="3" border>
+        <el-descriptions-item label="PlanNo">{{ plan?.planNo }}</el-descriptions-item>
+        <el-descriptions-item label="Title">{{ plan?.title }}</el-descriptions-item>
+        <el-descriptions-item label="Floor">{{ plan?.floor }}</el-descriptions-item>
+        <el-descriptions-item label="Approval">
+          <dict-tag :options="approval_status" :value="plan?.approvalStatus" />
         </el-descriptions-item>
-        <el-descriptions-item label="楼层">
-          {{ plan.floor }}
+        <el-descriptions-item label="Execution">
+          <dict-tag :options="execution_status" :value="plan?.executionStatus" />
         </el-descriptions-item>
-        <el-descriptions-item label="版本">
-          {{ plan.version }}
-        </el-descriptions-item>
-        <el-descriptions-item label="MOP类别">
-          <el-tag :type="getMOPCategoryType(plan.mopCategory)">
-            {{ getMOPCategoryLabel(plan.mopCategory) }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="执行周期">
-          {{ plan.executionCycle?.frequency }}{{ plan.executionCycle?.unit }}
-        </el-descriptions-item>
-        <el-descriptions-item label="审核状态">
-          <StatusTag module="maintenance" :status="plan.approvalStatus" />
-        </el-descriptions-item>
-        <el-descriptions-item label="执行状态">
-          <el-tag :type="getExecutionStatusType(plan.executionStatus)">
-            {{ getExecutionStatusLabel(plan.executionStatus) }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="审核人">
-          {{ plan.approverName || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="执行审核人">
-          {{ plan.executorName || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="MOP名称" :span="2">
-          {{ plan.mopName }}
-        </el-descriptions-item>
-        <el-descriptions-item label="MOP目的" :span="2">
-          {{ plan.mopPurpose }}
-        </el-descriptions-item>
-        <el-descriptions-item label="工具仪表" :span="2">
-          {{ plan.tools || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="材料" :span="2">
-          {{ plan.materials || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="安全PPE" :span="2">
-          {{ plan.safety || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="特殊工具" :span="2">
-          {{ plan.specialTools || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="步骤内容" :span="2">
-          <div v-html="plan.steps" class="steps-content"></div>
-        </el-descriptions-item>
-        <el-descriptions-item label="巡检结果" :span="2">
-          {{ plan.inspectionResult || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">
-          {{ plan.remark || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="创建时间">
-          {{ parseTime(plan.createTime) }}
-        </el-descriptions-item>
-        <el-descriptions-item label="下次执行时间">
-          {{ plan.nextExecutionTime ? parseTime(plan.nextExecutionTime) : '-' }}
-        </el-descriptions-item>
+        <el-descriptions-item label="Owner">{{ plan?.responsibleName }}</el-descriptions-item>
+        <el-descriptions-item label="Start">{{ parseTime(plan?.plannedStartDate) }}</el-descriptions-item>
+        <el-descriptions-item label="End">{{ parseTime(plan?.plannedEndDate) }}</el-descriptions-item>
       </el-descriptions>
 
-      <!-- 审批历史 -->
-      <div class="approval-history" v-if="plan.approvalHistory?.length">
-        <el-divider content-position="left">审批历史</el-divider>
-        <el-timeline>
-          <el-timeline-item v-for="item in plan.approvalHistory" :key="item.id" :timestamp="parseTime(item.time)"
-            :type="getApprovalType(item.action)">
-            {{ item.operatorName }} {{ getApprovalAction(item.action) }}
-            <span v-if="item.comment">：{{ item.comment }}</span>
-          </el-timeline-item>
-        </el-timeline>
+      <div v-if="Array.isArray(plan?.attachments) && plan.attachments.length" class="mt12">
+        <div class="section-title">Attachments</div>
+        <el-space wrap>
+          <a v-for="(att,idx) in plan.attachments" :key="idx" class="file-link" :href="att" target="_blank">File {{ idx + 1 }}</a>
+        </el-space>
       </div>
     </el-card>
+
+    <el-row :gutter="16">
+      <el-col :span="12">
+        <el-card>
+          <template #header><span>Approval History</span></template>
+          <div v-if="approvalError" class="error-tip">
+            <el-alert type="error" title="Load failed" :closable="false" />
+            <div><el-button link type="primary" @click="reloadApproval">Retry</el-button></div>
+          </div>
+          <div v-else-if="Array.isArray(approvalHistory) && approvalHistory.length">
+            <el-timeline>
+              <el-timeline-item v-for="(item, i) in approvalHistory" :key="i" :timestamp="parseTime(item.time)" :type="getApproveType(item)">
+                <div>
+                  <b>{{ formatApproveAction(item.action) }}</b>
+                  <span v-if="item.operatorName"> - {{ item.operatorName }}</span>
+                </div>
+                <div v-if="item.nextAssigneeName">Next: {{ item.nextAssigneeName }}</div>
+                <div v-if="item.comment">Remark: {{ item.comment }}</div>
+              </el-timeline-item>
+            </el-timeline>
+          </div>
+          <div v-else class="empty-tip">No approval records</div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card>
+          <template #header><span>Execution History</span></template>
+          <div v-if="executionError" class="error-tip">
+            <el-alert type="error" title="Load failed" :closable="false" />
+            <div><el-button link type="primary" @click="reloadExecution">Retry</el-button></div>
+          </div>
+          <div v-else-if="Array.isArray(executionList) && executionList.length">
+            <el-timeline>
+              <el-timeline-item v-for="(item, i) in executionList" :key="i" :timestamp="parseTime(item.time)" :type="getExecType(item)">
+                <div>
+                  <b>{{ formatExecAction(item.action) }}</b>
+                  <span v-if="item.operatorName"> - {{ item.operatorName }}</span>
+                </div>
+                <div v-if="item.result">Result: {{ item.result }}</div>
+              </el-timeline-item>
+            </el-timeline>
+          </div>
+          <div v-else class="empty-tip">No execution records</div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-dialog title="Complete Execution" v-model="completeOpen" width="600px" append-to-body>
+      <el-form :model="completeForm" label-width="80px">
+        <el-form-item label="Result">
+          <el-input v-model="completeForm.result" type="textarea" :rows="4" placeholder="Enter execution result" />
+        </el-form-item>
+        <el-form-item label="Attachments">
+          <FileUpload v-model="completeForm.attachments" :limit="6" :file-size="10" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="completeOpen = false">Cancel</el-button>
+          <el-button type="primary" @click="onComplete">Submit</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog title="Review Plan" v-model="approveOpen" width="520px" append-to-body>
+      <el-form :model="approveForm" label-width="90px">
+        <el-form-item label="Result">
+          <el-radio-group v-model="approveForm.result">
+            <el-radio-button label="approved">Approve</el-radio-button>
+            <el-radio-button label="rejected">Reject</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="Comment">
+          <el-input v-model="approveForm.comment" type="textarea" :rows="3" placeholder="Enter comment" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="approveOpen = false">Cancel</el-button>
+          <el-button type="primary" @click="onSubmitApproval">Submit</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
+<script setup lang="ts" name="MaintenancePlanDetail">
+import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getMaintenance as getMaintenancePlan } from '@/api/business/maintenance'
-import StatusTag from '@/components/Status/StatusTag.vue'
+import useUserStore from '@/store/modules/user'
+import { withMineOnly } from '@/utils/business/mineOnly'
 import { parseTime } from '@/utils/ruoyi'
-// 字典工具：使用已有的 useDict / 或后续可替换
-import { useDict } from '@/utils/dict'
-// 简单封装获取字典标签的方法（避免不存在的 '@/constants/dict' 导入错误）
-const getDictLabel = (dictType, value) => {
-  const { [dictType]: dictArr } = useDict(dictType)
-  const item = dictArr.value?.find(d => d.value === value)
-  return item ? item.label : value
-}
+import { getMaintenance, getPlanLogs, startExecution, completeExecution, approvePlan, rejectPlan } from '@/api/business/maintenance'
+import FileUpload from '@/components/FileUpload/index.vue'
 
+const { proxy } = getCurrentInstance() as any
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
+const isAdmin = computed(() => Array.isArray(userStore.roles) && (userStore.roles.includes('admin') || userStore.roles.includes('ROLE_ADMIN')))
+const { approval_status, execution_status } = proxy.useDict('approval_status', 'execution_status')
 
-const loading = ref(false)
-const plan = ref({
-  title: '-',
-  floor: '-',
-  version: '-',
-  mopCategory: undefined,
-  executionCycle: {},
-  // 用空字符串而非 undefined 避免子组件 status prop 类型校验警告
-  approvalStatus: '',
-  executionStatus: '',
-  approverName: '-',
-  executorName: '-',
-  mopName: '-',
-  mopPurpose: '-',
-  tools: '-',
-  materials: '-',
-  safety: '-',
-  specialTools: '-',
-  steps: '',
-  inspectionResult: '-',
-  remark: '-'
-})
+const planId = computed(() => Number((route.params as any).planId))
+const plan = ref<any>(null)
+const approvalHistory = ref<any[]>([])
+const executionList = ref<any[]>([])
+const approvalError = ref(false)
+const executionError = ref(false)
 
-// 加载详情
-const loadDetail = async () => {
-  loading.value = true
+const canReview = computed(() => plan.value && plan.value.approvalStatus === 'pending')
+const canStart = computed(() => plan.value && plan.value.approvalStatus === 'approved' && plan.value.executionStatus === 'pending')
+const canComplete = computed(() => plan.value && plan.value.executionStatus === 'executing')
+
+const completeOpen = ref(false)
+const completeForm = ref<{ result: string; attachments?: string | any[] }>({ result: '', attachments: '' })
+
+const approveOpen = ref(false)
+const approveForm = ref<{ result: 'approved' | 'rejected'; comment: string }>({ result: 'approved', comment: '' })
+
+function goBack(){ router.back() }
+
+function getApproveType(item:any){
+  const map:any = { submit: 'info', approve: 'success', reject: 'danger' }
+  return map[item?.action] || 'primary'
+}
+function formatApproveAction(a:string){
+  return a === 'submit' ? 'Submit' : a === 'approve' ? 'Approved' : a === 'reject' ? 'Rejected' : a
+}
+function getExecType(item:any){
+  const map:any = { start: 'primary', complete: 'success' }
+  return map[item?.action] || 'info'
+}
+function formatExecAction(a:string){
+  return a === 'start' ? 'Start' : a === 'complete' ? 'Complete' : a
+}
+
+async function load(){
   try {
-    const res = await getMaintenancePlan(route.params.planId || route.params.id)
-    const data = res?.data || res
-    plan.value = { ...plan.value, ...data }
-  } catch (e) {
-    // 500 时保持占位展示，并提示
-    console.error('加载维保计划失败', e)
-  } finally {
-    loading.value = false
-  }
+    const res = await getMaintenance(planId.value)
+    plan.value = res?.data || res
+  } catch (e) { proxy?.$modal?.msgError?.('Load failed') }
+  try {
+    approvalError.value = false
+    const his = await getPlanLogs(planId.value, { type: 'approval' })
+    approvalHistory.value = his?.data || his?.rows || []
+  } catch { approvalHistory.value = []; approvalError.value = true }
+  try {
+    executionError.value = false
+    const exe = await getPlanLogs(planId.value, { type: 'execution' })
+    executionList.value = exe?.data || exe?.rows || []
+  } catch { executionList.value = []; executionError.value = true }
 }
 
-// 编辑
-const handleEdit = () => {
-  router.push(`/business/maintenance/plan/form/${plan.value.planId || plan.value.id}`)
+async function reloadApproval(){
+  try {
+    approvalError.value = false
+    const his = await getPlanLogs(planId.value, { type: 'approval' })
+    approvalHistory.value = his?.data || his?.rows || []
+  } catch { approvalError.value = true }
 }
 
-// 返回
-const handleBack = () => {
-  router.back()
+async function reloadExecution(){
+  try {
+    executionError.value = false
+    const exe = await getPlanLogs(planId.value, { type: 'execution' })
+    executionList.value = exe?.data || exe?.rows || []
+  } catch { executionError.value = true }
 }
 
-// 工具函数
-const getMOPCategoryLabel = (value) => getDictLabel('MOP_CATEGORY', value)
-const getMOPCategoryType = (value) => {
-  const map = { daily: 'success', regular: 'info', annual: 'warning', emergency: 'danger' }
-  return map[value] ? map[value] : 'info'
+async function onStart(){
+  try {
+    await proxy.$modal.confirm('Confirm start?')
+    await startExecution(planId.value)
+    proxy.$modal.msgSuccess('Started')
+    await load()
+  } catch { proxy?.$modal?.msgError?.('Start failed') }
 }
 
-const getExecutionStatusLabel = (value) => {
-  const map = { pending: '待执行', executing: '执行中', completed: '已完成' }
-  return map[value] || value
-}
-const getExecutionStatusType = (value) => {
-  const map = { pending: 'warning', executing: 'primary', completed: 'success' }
-  return map[value] || 'info'
+function openComplete(){ completeOpen.value = true }
+
+function openApprove(){ approveOpen.value = true }
+
+async function onComplete(){
+  try {
+    const payload: any = { result: completeForm.value.result }
+    if (completeForm.value.attachments) payload.attachments = completeForm.value.attachments
+    await completeExecution(planId.value, payload)
+    proxy.$modal.msgSuccess('Completed')
+    completeOpen.value = false
+    completeForm.value = { result: '', attachments: '' }
+    await load()
+  } catch { proxy?.$modal?.msgError?.('Submit failed') }
 }
 
-const getApprovalType = (action) => {
-  const map = { submit: 'primary', approve: 'success', reject: 'danger' }
-  return map[action] || ''
+async function onSubmitApproval(){
+  try {
+    if (approveForm.value.result === 'approved') {
+      await approvePlan(planId.value, approveForm.value.comment)
+      proxy.$modal.msgSuccess('Approved')
+    } else {
+      await rejectPlan(planId.value, approveForm.value.comment)
+      proxy.$modal.msgSuccess('Rejected')
+    }
+    approveOpen.value = false
+    await load()
+  } catch { proxy?.$modal?.msgError?.('Review failed') }
 }
 
-const getApprovalAction = (action) => {
-  const map = { submit: '提交审核', approve: '审核通过', reject: '审核拒绝' }
-  return map[action] || action
-}
-
-onMounted(() => {
-  loadDetail()
-})
+onMounted(load)
 </script>
 
-<style scoped lang="scss">
-.maintenance-plan-detail {
-  padding: 20px;
-
-  .header-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .steps-content {
-    white-space: pre-wrap;
-    line-height: 1.6;
-  }
-
-  .approval-history {
-    margin-top: 20px;
-  }
-}
+<style scoped>
+.mb16 { margin-bottom: 16px; }
+.mt12 { margin-top: 12px; }
+.card-header { display:flex; align-items:center; justify-content:space-between; }
+.file-link { display:inline-block; padding: 2px 4px; }
+.section-title { font-weight: 600; margin: 8px 0; }
+.empty-tip { color: var(--el-text-color-secondary, #909399); font-size: 13px; padding: 8px 0; }
+.error-tip { color: #f56c6c; font-size: 13px; padding: 8px 0; }
 </style>

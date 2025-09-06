@@ -64,8 +64,5 @@ export function ticketSummary(){ return get('/business/ticket/report/summary') }
 /** 工单高级分析 */
 export function ticketAnalytics(params){ return get('/business/ticket/report/analytics', params) }
 
-/** 逾期工单分页列表 */
-export function getOverdueTickets(params){ return get('/business/ticket/overdue', params) }
-
 /** 近到期工单分页列表 */
 export function getNearDueTickets(params){ return get('/business/ticket/nearDue', params) }

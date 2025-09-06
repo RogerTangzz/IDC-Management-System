@@ -42,11 +42,13 @@
 
 <script setup name="TicketReport">
 import { ref, onMounted, getCurrentInstance, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { ticketAnalytics } from '@/api/business/ticket'
 import request from '@/utils/request'
 import * as echarts from 'echarts'
 const analytics = ref({ duration:{}, sla:{} })
 const { proxy } = getCurrentInstance()
+const router = useRouter()
 const durationRef = ref(null)
 const slaRef = ref(null)
 const trendRef = ref(null)
@@ -68,6 +70,7 @@ async function load(){
     analytics.value = res.data || { duration:{}, sla:{} }
     await nextTick()
     renderCharts()
+    attachSlaClick()
   } catch(e) {
     proxy.$modal.msgError('加载失败')
   }
@@ -105,6 +108,24 @@ function renderCharts(){
       }]
     })
   }
+}
+
+// 绑定 SLA 图点击事件（下钻）
+function attachSlaClick(){
+  if (!slaRef.value) return
+  try {
+    const chart2 = echarts.getInstanceByDom(slaRef.value)
+    if (!chart2) return
+    chart2.off('click')
+    chart2.on('click', (params)=>{
+      const idx = typeof params?.dataIndex === 'number' ? params.dataIndex : -1
+      if (idx === 1) {
+        router.push({ path: '/business/ticket/list', query: { mode: 'overdue' } })
+      } else if (idx === 0) {
+        router.push({ path: '/business/ticket/list', query: { mode: 'neardue' } })
+      }
+    })
+  } catch {}
 }
 
 // 趋势

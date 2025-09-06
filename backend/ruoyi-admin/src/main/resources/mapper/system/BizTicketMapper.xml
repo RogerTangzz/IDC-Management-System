@@ -75,7 +75,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                      or reporter_id = #{params.userId}
                      or create_by = #{params.username})
             </if>
+            <!-- 下钻模式：逾期 / 近到期（warnBeforeHours 小时内到期） -->
+            <if test="params != null and params.mode != null and params.mode == 'overdue'">
+                and deadline is not null
+                and status &lt;&gt; 'closed'
+                and completion_time is null
+                and now() &gt; deadline
+            </if>
+            <if test="params != null and params.mode != null and params.mode == 'neardue'">
+                and deadline is not null
+                and status &lt;&gt; 'closed'
+                and completion_time is null
+                and deadline &gt; now()
+                <choose>
+                    <when test="params.warnBeforeMinutes != null">and deadline &lt;= date_add(now(), interval #{params.warnBeforeMinutes} minute)</when>
+                    <when test="params.warnBeforeHours != null">and deadline &lt;= date_add(now(), interval #{params.warnBeforeHours} hour)</when>
+                    <otherwise>and deadline &lt;= date_add(now(), interval 2 hour)</otherwise>
+                </choose>
+            </if>
         </where>
+        <!-- 排序：controller 已做白名单校验，注入 params.orderBy（列名 + asc/desc） -->
+        <if test="params != null and params.orderBy != null and params.orderBy != ''">
+            order by ${params.orderBy}
+        </if>
     </select>
     
     <select id="selectBizTicketByTicketId" parameterType="Long" resultMap="BizTicketResult">
@@ -329,5 +351,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <if test="reporterName != null and reporterName != ''"> and reporter_name like concat('%', #{reporterName}, '%')</if>
         <if test="params != null and params.beginTime != null and params.beginTime != ''"> and create_time &gt;= #{params.beginTime}</if>
         <if test="params != null and params.endTime != null and params.endTime != ''"> and create_time &lt;= #{params.endTime}</if>
+        <if test="params != null and params.selfOnly != null and (params.selfOnly == '1' or params.selfOnly == 'true')">
+            and (assignee_id = #{params.userId}
+                 or reporter_id = #{params.userId}
+                 or create_by = #{params.username})
+        </if>
     </select>
 </mapper>

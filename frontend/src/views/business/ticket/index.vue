@@ -218,10 +218,14 @@
 <script setup name="Ticket">
 import { ref, reactive, getCurrentInstance, toRefs, computed } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
-import { listTicket, addTicket, updateTicket, delTicket, assignTickets, reopenTicket } from '@/api/business/ticket'
+import { listTicket, addTicket, updateTicket, delTicket, assignTickets, reopenTicket, getOverdueTickets, getNearDueTickets } from '@/api/business/ticket'
+import useUserStore from '@/store/modules/user'
+import { withMineOnly } from '@/utils/business/mineOnly'
 import { useRouter, useRoute } from 'vue-router'
+import request from '@/utils/request'
 
 const { proxy } = getCurrentInstance()
+const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 const { ticket_status, equipment_specialty, ticket_action } = proxy.useDict('ticket_status', 'equipment_specialty', 'ticket_action')
@@ -237,6 +241,8 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 const dateRange = ref([])
+// 角色判断：简易管理员判断（包含 'admin' 或 'ROLE_ADMIN'）
+const isAdmin = computed(() => Array.isArray(userStore.roles) && (userStore.roles.includes('admin') || userStore.roles.includes('ROLE_ADMIN')))
 const userList = ref([])
 // 特殊模式：'' | 'overdue' | 'neardue'
 const specialMode = ref('')
@@ -276,21 +282,25 @@ const { queryParams, form, assignForm, rules } = toRefs(data)
 async function getList() {
   loading.value = true
   try {
-    const payload = { ...queryParams.value }
+    let payload = { ...queryParams.value }
     if (dateRange.value && dateRange.value.length === 2) {
       payload.beginTime = `${dateRange.value[0]} 00:00:00`
       payload.endTime = `${dateRange.value[1]} 23:59:59`
     }
+    // 非管理员仅查询与自己相关（兼容不同后端参数名）
+    payload = withMineOnly(payload, isAdmin.value)
     let data, totalCount
     if (specialMode.value === 'overdue') {
-      const res = await getOverdueTickets({ pageNum: payload.pageNum, pageSize: payload.pageSize })
+      const res = await getOverdueTickets(withMineOnly({ pageNum: payload.pageNum, pageSize: payload.pageSize } as any, isAdmin.value))
       data = res.data || res.rows; totalCount = res.total
     } else if (specialMode.value === 'neardue') {
-      const res = await getNearDueTickets({ pageNum: payload.pageNum, pageSize: payload.pageSize })
+      const res = await getNearDueTickets(withMineOnly({ pageNum: payload.pageNum, pageSize: payload.pageSize } as any, isAdmin.value))
       data = res.data || res.rows; totalCount = res.total
     } else {
       const res = await listTicket(payload)
-      data = res.data; totalCount = res.total
+      // RuoYi TableDataInfo 规范：{ rows, total }
+      data = (res && (res.rows || res.data)) || []
+      totalCount = (res && (res.total || 0)) || 0
     }
     ticketList.value = data || []
     total.value = totalCount || 0
@@ -400,12 +410,19 @@ function submitForm() {
     const payload = { ...form.value }
     if (!payload.ticketId) {
       const res = await addTicket(payload)
+      // 兼容后端返回 { code, data } 或 { code, rows }
+      const created = res?.data || res?.rows || null
+      if (created && created.ticketId) {
+        form.value.ticketId = created.ticketId
+        form.value.ticketNo = created.ticketNo
+      }
       proxy.$modal.msgSuccess('新增成功')
     } else {
       await updateTicket(payload)
       proxy.$modal.msgSuccess('修改成功')
     }
     open.value = false
+    reset()
     getList()
   })
 }
@@ -457,9 +474,7 @@ async function submitAssign() {
 }
 
 /** 导出按钮操作 */
-function handleExport() {
-  proxy.$modal.msgSuccess("导出功能待实现")
-}
+function handleExport() {\n  (async () => {\n    try {\n      let params = { ...queryParams.value } as any\n      if (Array.isArray(dateRange.value) && dateRange.value.length === 2) {\n        params.beginTime = ${dateRange.value[0]} 00:00:00\n        params.endTime = ${dateRange.value[1]} 23:59:59\n      }\n      params = withMineOnly(params, isAdmin.value)\n      if (specialMode.value === 'overdue' || specialMode.value === 'neardue') {\n        params.mode = specialMode.value\n      }\n      const filename = 	icket_.xlsx\n      if (proxy?.download) {\n        proxy.download('business/ticket/export', params, filename)\n      } else {\n        await request({ url: '/business/ticket/export', method: 'post', data: params, responseType: 'blob' })\n      }\n    } catch (e) {\n      console.error('[ticket] export failed', e)\n      proxy?..msgError?.('导出失败，请稍后重试')\n    }\n  })()\n}
 
 function showOverdue(){ specialMode.value='overdue'; queryParams.value.pageNum=1; getList() }
 function showNearDue(){ specialMode.value='neardue'; queryParams.value.pageNum=1; getList() }
@@ -475,4 +490,14 @@ function getPriorityLabel(priority) {
 }
 
 getList()
+
+// 根据路由查询参数设置特殊模式（支持从报表下钻 mode=overdue|neardue）
+if (route?.query?.mode === 'overdue') {
+  specialMode.value = 'overdue'
+  getList()
+}
+if (route?.query?.mode === 'neardue') {
+  specialMode.value = 'neardue'
+  getList()
+}
 </script>

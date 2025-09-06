@@ -1,31 +1,38 @@
 import Mock from 'mockjs'
 import mockStore from './store'
 
-// 设置延迟
+// é€šè¿‡ç�¯å¢ƒå�˜é‡�æ�§åˆ¶ mock æ˜¯å�¦å�¯ç”¨ï¼ˆé»˜è®¤å�¯ç”¨ï¼‰
+// åœ¨ .env.development.local ä¸­è®¾ç½® VITE_USE_MOCK=false å�¯å…³é—­
+const useMock = import.meta.env.VITE_USE_MOCK !== 'false'
+if (!useMock) {
+  console.log('[Mock] å·²ç¦�ç”¨ (VITE_USE_MOCK=false)')
+} else {
+
+// è®¾ç½®å»¶è¿Ÿ
 Mock.setup({
   timeout: '200-600'
 })
 
-// 登录接口
+// ç™»å½•æ�¥å�£
 Mock.mock('/dev-api/login', 'post', () => {
-  console.log('Mock拦截：登录请求')
+  console.log('Mockæ‹¦æˆªï¼šç™»å½•è¯·æ±‚')
   return {
     code: 200,
-    msg: '登录成功',
+    msg: 'ç™»å½•æˆ�åŠŸ',
     token: 'mock-token-' + Date.now()
   }
 })
 
-// 获取用户信息
+// è�·å�–ç”¨æˆ·ä¿¡æ�¯
 Mock.mock('/dev-api/getInfo', 'get', () => {
-  console.log('Mock拦截：获取用户信息')
+  console.log('Mockæ‹¦æˆªï¼šè�·å�–ç”¨æˆ·ä¿¡æ�¯')
   return {
     code: 200,
-    msg: '操作成功',
+    msg: 'æ“�ä½œæˆ�åŠŸ',
     user: {
       userId: 1,
       userName: 'admin',
-      nickName: '管理员',
+      nickName: 'ç®¡ç�†å‘˜',
       avatar: '',
       roles: ['admin'],
       permissions: ['*:*:*']
@@ -35,12 +42,12 @@ Mock.mock('/dev-api/getInfo', 'get', () => {
   }
 })
 
-// 获取路由
+// è�·å�–è·¯ç”±
 Mock.mock('/dev-api/getRouters', 'get', () => {
-  console.log('Mock拦截：获取路由')
+  console.log('Mockæ‹¦æˆªï¼šè�·å�–è·¯ç”±')
   return {
     code: 200,
-    msg: '操作成功',
+    msg: 'æ“�ä½œæˆ�åŠŸ',
     data: [
       {
         name: 'Business',
@@ -49,35 +56,35 @@ Mock.mock('/dev-api/getRouters', 'get', () => {
         redirect: '/business/ticket/list',
         component: 'Layout',
         alwaysShow: true,
-        meta: { title: '业务管理', icon: 'monitor', noCache: false },
+        meta: { title: 'ä¸šåŠ¡ç®¡ç�†', icon: 'monitor', noCache: false },
         children: [
           {
             name: 'Ticket',
             path: 'ticket',
             hidden: false,
             component: 'ParentView',
-            meta: { title: '工单管理', icon: 'edit', noCache: false },
+            meta: { title: 'å·¥å�•ç®¡ç�†', icon: 'edit', noCache: false },
             children: [
               {
                 name: 'TicketList',
                 path: 'list',
                 hidden: false,
                 component: 'business/ticket/index',
-                meta: { title: '工单列表', icon: 'edit', noCache: false }
+                meta: { title: 'å·¥å�•åˆ—è¡¨', icon: 'edit', noCache: false }
               },
               {
                 name: 'TicketDetail',
                 path: 'detail/:ticketId',
                 hidden: true,
                 component: 'business/ticket/detail',
-                meta: { title: '工单详情', icon: 'view', noCache: true, activeMenu: '/business/ticket/list' }
+                meta: { title: 'å·¥å�•è¯¦æƒ…', icon: 'view', noCache: true, activeMenu: '/business/ticket/list' }
               },
               {
                 name: 'TicketEdit',
                 path: 'edit/:ticketId',
                 hidden: true,
                 component: 'business/ticket/index',
-                meta: { title: '编辑工单', icon: 'edit', noCache: true, activeMenu: '/business/ticket/list' }
+                meta: { title: 'ç¼–è¾‘å·¥å�•', icon: 'edit', noCache: true, activeMenu: '/business/ticket/list' }
               }
             ]
           },
@@ -86,49 +93,49 @@ Mock.mock('/dev-api/getRouters', 'get', () => {
             path: 'inspection',
             hidden: false,
             component: 'business/inspection/index',
-            meta: { title: '巡检管理', icon: 'list', noCache: false }
+            meta: { title: 'å·¡æ£€ç®¡ç�†', icon: 'list', noCache: false }
           },
           {
             name: 'InspectionCreate',
             path: 'inspection/create',
             hidden: true,
             component: 'business/inspection/create',
-            meta: { title: '开始巡检', icon: 'form', noCache: true }
+            meta: { title: 'å¼€å§‹å·¡æ£€', icon: 'form', noCache: true }
           },
           {
             name: 'InspectionEdit',
             path: 'inspection/edit/:inspectionId',
             hidden: true,
             component: 'business/inspection/edit',
-            meta: { title: '继续巡检', icon: 'form', noCache: true }
+            meta: { title: 'ç»§ç»­å·¡æ£€', icon: 'form', noCache: true }
           },
           {
             name: 'InspectionDetail',
             path: 'inspection/detail/:inspectionId',
             hidden: true,
             component: 'business/inspection/detail',
-            meta: { title: '巡检详情', icon: 'view', noCache: true }
+            meta: { title: 'å·¡æ£€è¯¦æƒ…', icon: 'view', noCache: true }
           },
           {
             name: 'Maintenance',
             path: 'maintenance',
             hidden: false,
             component: 'business/maintenance/plan/index',
-            meta: { title: '维保管理', icon: 'tool', noCache: false }
+            meta: { title: 'ç»´ä¿�ç®¡ç�†', icon: 'tool', noCache: false }
           },
           {
             name: 'MaintenancePlanForm',
             path: 'maintenance/plan/form/:planId?',
             hidden: true,
             component: 'business/maintenance/plan/form',
-            meta: { title: '维保计划表单', icon: 'form', noCache: true }
+            meta: { title: 'ç»´ä¿�è®¡åˆ’è¡¨å�•', icon: 'form', noCache: true }
           },
           {
             name: 'MaintenancePlanDetail',
             path: 'maintenance/plan/detail/:planId',
             hidden: true,
             component: 'business/maintenance/plan/detail',
-            meta: { title: '维保计划详情', icon: 'view', noCache: true }
+            meta: { title: 'ç»´ä¿�è®¡åˆ’è¯¦æƒ…', icon: 'view', noCache: true }
           }
         ]
       }
@@ -136,18 +143,18 @@ Mock.mock('/dev-api/getRouters', 'get', () => {
   }
 })
 
-// 退出登录
+// é€€å‡ºç™»å½•
 Mock.mock('/dev-api/logout', 'post', () => {
-  console.log('Mock拦截：退出登录')
+  console.log('Mockæ‹¦æˆªï¼šé€€å‡ºç™»å½•')
   return {
     code: 200,
-    msg: '退出成功'
+    msg: 'é€€å‡ºæˆ�åŠŸ'
   }
 })
 
-// ==================== 业务接口 ====================
+// ==================== ä¸šåŠ¡æ�¥å�£ ====================
 
-// 辅助函数：解析URL参数
+// è¾…åŠ©å‡½æ•°ï¼šè§£æ��URLå�‚æ•°
 function parseQuery(url) {
   const query = {}
   const queryStr = url.split('?')[1]
@@ -160,15 +167,15 @@ function parseQuery(url) {
   return query
 }
 
-// 辅助函数：提取ID
+// è¾…åŠ©å‡½æ•°ï¼šæ��å�–ID
 function extractId(url) {
   const match = url.match(/\/(\d+)/)
   return match ? parseInt(match[1]) : null
 }
 
-// 工单列表
+// å·¥å�•åˆ—è¡¨
 Mock.mock(RegExp('/dev-api/business/ticket/list.*'), 'get', (options) => {
-  console.log('Mock拦截：工单列表')
+  console.log('Mockæ‹¦æˆªï¼šå·¥å�•åˆ—è¡¨')
   const query = parseQuery(options.url)
   const result = mockStore.getTickets(query)
   return {
@@ -178,7 +185,7 @@ Mock.mock(RegExp('/dev-api/business/ticket/list.*'), 'get', (options) => {
   }
 })
 
-// 获取单个工单
+// è�·å�–å�•ä¸ªå·¥å�•
 Mock.mock(RegExp('/dev-api/business/ticket/\\d+'), 'get', (options) => {
   const id = extractId(options.url)
   const ticket = mockStore.getTicket(id)
@@ -187,68 +194,68 @@ Mock.mock(RegExp('/dev-api/business/ticket/\\d+'), 'get', (options) => {
     data: ticket || {
       ticketId: id,
       ticketNo: 'TK202501001',
-      title: '空调漏水处理',
-      description: '2楼机房空调内机漏水，需要紧急处理',
+      title: 'ç©ºè°ƒæ¼�æ°´å¤„ç�†',
+      description: '2æ¥¼æœºæˆ¿ç©ºè°ƒå†…æœºæ¼�æ°´ï¼Œéœ€è¦�ç´§æ€¥å¤„ç�†',
       status: 'pending',
       priority: 'high',
-      equipment: '空调01',
-      reporter: '张三',
+      equipment: 'ç©ºè°ƒ01',
+      reporter: 'å¼ ä¸‰',
       assigneeName: null,
       specialty: 'hvac'
     }
   }
 })
 
-// 新增工单
+// æ–°å¢�å·¥å�•
 Mock.mock('/dev-api/business/ticket', 'post', (options) => {
   const data = JSON.parse(options.body)
   const newTicket = mockStore.addTicket(data)
   return {
     code: 200,
-    msg: '新增成功',
+    msg: 'æ–°å¢�æˆ�åŠŸ',
     data: newTicket
   }
 })
 
-// 修改工单
+// ä¿®æ”¹å·¥å�•
 Mock.mock('/dev-api/business/ticket', 'put', (options) => {
   const data = JSON.parse(options.body)
   const updatedTicket = mockStore.updateTicket(data)
   return {
     code: 200,
-    msg: '修改成功',
+    msg: 'ä¿®æ”¹æˆ�åŠŸ',
     data: updatedTicket
   }
 })
 
-// 删除工单
+// åˆ é™¤å·¥å�•
 Mock.mock(RegExp('/dev-api/business/ticket/\\d+'), 'delete', (options) => {
   const id = extractId(options.url)
   mockStore.deleteTicket(id)
   return {
     code: 200,
-    msg: '删除成功'
+    msg: 'åˆ é™¤æˆ�åŠŸ'
   }
 })
 
-// 批量指派工单
+// æ‰¹é‡�æŒ‡æ´¾å·¥å�•
 Mock.mock('/dev-api/business/ticket/assign', 'post', (options) => {
   const { ticketIds, assigneeId } = JSON.parse(options.body)
   const userMap = {
-    1: '张三',
-    2: '李四',
-    3: '王五'
+    1: 'å¼ ä¸‰',
+    2: 'æ��å››',
+    3: 'ç�‹äº”'
   }
-  mockStore.assignTickets(ticketIds, assigneeId, userMap[assigneeId] || '未知')
+  mockStore.assignTickets(ticketIds, assigneeId, userMap[assigneeId] || 'æœªçŸ¥')
   return {
     code: 200,
-    msg: '指派成功'
+    msg: 'æŒ‡æ´¾æˆ�åŠŸ'
   }
 })
 
-// 巡检列表
+// å·¡æ£€åˆ—è¡¨
 Mock.mock(RegExp('/dev-api/business/inspection/list.*'), 'get', (options) => {
-  console.log('Mock拦截：巡检列表')
+  console.log('Mockæ‹¦æˆªï¼šå·¡æ£€åˆ—è¡¨')
   const query = parseQuery(options.url)
   const result = mockStore.getInspections(query)
   return {
@@ -259,9 +266,9 @@ Mock.mock(RegExp('/dev-api/business/inspection/list.*'), 'get', (options) => {
         inspectionId: 1,
         inspectionNo: 'INS202501001',
         inspectionDate: '2024-01-20',
-        floor: '1楼',
-        inspectorName: '张三',
-        relayPerson: '李四',
+        floor: '1æ¥¼',
+        inspectorName: 'å¼ ä¸‰',
+        relayPerson: 'æ��å››',
         anomalyCount: 2,
         ticketCount: 1,
         status: 'completed',
@@ -272,9 +279,9 @@ Mock.mock(RegExp('/dev-api/business/inspection/list.*'), 'get', (options) => {
   }
 })
 
-// 维保列表
+// ç»´ä¿�åˆ—è¡¨
 Mock.mock(RegExp('/dev-api/business/maintenance/list.*'), 'get', (options) => {
-  console.log('Mock拦截：维保列表')
+  console.log('Mockæ‹¦æˆªï¼šç»´ä¿�åˆ—è¡¨')
   const query = parseQuery(options.url)
   const result = mockStore.getMaintenances(query)
   return {
@@ -284,13 +291,13 @@ Mock.mock(RegExp('/dev-api/business/maintenance/list.*'), 'get', (options) => {
       {
         planId: 1,
         planNo: 'MP202501001',
-        title: '月度维保计划',
+        title: 'æœˆåº¦ç»´ä¿�è®¡åˆ’',
         floor: '1',
         version: 'V1.0',
         mopCategory: 'monthly',
         approvalStatus: 'draft',
         executionStatus: 'pending',
-        approverName: '王经理',
+        approverName: 'ç�‹ç»�ç�†',
         createTime: '2024-01-15 10:00:00',
         nextExecutionTime: '2024-02-01 10:00:00'
       }
@@ -299,7 +306,7 @@ Mock.mock(RegExp('/dev-api/business/maintenance/list.*'), 'get', (options) => {
   }
 })
 
-// 维保计划详情（如果 business.js 中未覆盖）
+// ç»´ä¿�è®¡åˆ’è¯¦æƒ…ï¼ˆå¦‚æ�œ business.js ä¸­æœªè¦†ç›–ï¼‰
 Mock.mock(/\/dev-api\/business\/maintenance\/[0-9]+$/, 'get', (options) => {
   const id = options.url.split('/').pop()
   return {
@@ -308,98 +315,98 @@ Mock.mock(/\/dev-api\/business\/maintenance\/[0-9]+$/, 'get', (options) => {
     data: {
       planId: Number(id),
       planNo: 'MP' + id,
-      title: 'Mock维保计划 ' + id,
+      title: 'Mockç»´ä¿�è®¡åˆ’ ' + id,
       floor: '1',
       version: 'V1.0',
       mopCategory: 'monthly',
-      executionCycle: { frequency: 1, unit: '月' },
+      executionCycle: { frequency: 1, unit: 'æœˆ' },
       approvalStatus: 'draft',
       executionStatus: 'pending',
-      approverName: '王经理',
-      executorName: '李四',
-      mopName: '设备巡检与保养',
-      mopPurpose: '保持设备良好状态',
-      tools: '扳手, 万用表',
-      materials: '清洁剂',
-      safety: '安全帽',
-      specialTools: '压力表',
-      steps: '1. 断电检查\n2. 拆检\n3. 清洁润滑\n4. 复位测试',
+      approverName: 'ç�‹ç»�ç�†',
+      executorName: 'æ��å››',
+      mopName: 'è®¾å¤‡å·¡æ£€ä¸�ä¿�å…»',
+      mopPurpose: 'ä¿�æŒ�è®¾å¤‡è‰¯å¥½çŠ¶æ€�',
+      tools: 'æ‰³æ‰‹, ä¸‡ç”¨è¡¨',
+      materials: 'æ¸…æ´�å‰‚',
+      safety: 'å®‰å…¨å¸½',
+      specialTools: 'å�‹åŠ›è¡¨',
+      steps: '1. æ–­ç”µæ£€æŸ¥\n2. æ‹†æ£€\n3. æ¸…æ´�æ¶¦æ»‘\n4. å¤�ä½�æµ‹è¯•',
       inspectionResult: '-',
-      remark: 'Mock 数据',
+      remark: 'Mock æ•°æ�®',
       createTime: '2024-01-15 10:00:00',
       nextExecutionTime: '2024-02-01 10:00:00',
       approvalHistory: [
-        { id: 1, time: '2024-01-15 10:05:00', operatorName: '张三', action: 'submit', comment: '提交审核' }
+        { id: 1, time: '2024-01-15 10:05:00', operatorName: 'å¼ ä¸‰', action: 'submit', comment: 'æ��äº¤å®¡æ ¸' }
       ]
     }
   }
 })
 
-// 审核人列表
+// å®¡æ ¸äººåˆ—è¡¨
 Mock.mock('/dev-api/business/maintenance/approvers', 'get', () => {
   return {
     code: 200,
     msg: 'success',
     data: [
-      { userId: 1, userName: 'approver1', nickName: '审批1' },
-      { userId: 2, userName: 'approver2', nickName: '审批2' }
+      { userId: 1, userName: 'approver1', nickName: 'å®¡æ‰¹1' },
+      { userId: 2, userName: 'approver2', nickName: 'å®¡æ‰¹2' }
     ]
   }
 })
 
-// 通知人列表
+// é€šçŸ¥äººåˆ—è¡¨
 Mock.mock('/dev-api/business/maintenance/notifyUsers', 'get', () => {
   return {
     code: 200,
     msg: 'success',
     data: [
-      { userId: 3, userName: 'notify1', nickName: '通知1' },
-      { userId: 4, userName: 'notify2', nickName: '通知2' }
+      { userId: 3, userName: 'notify1', nickName: 'é€šçŸ¥1' },
+      { userId: 4, userName: 'notify2', nickName: 'é€šçŸ¥2' }
     ]
   }
 })
 
-// 用户列表
+// ç”¨æˆ·åˆ—è¡¨
 Mock.mock(RegExp('/dev-api/system/user/list.*'), 'get', () => {
   return {
     code: 200,
     rows: [
-      { userId: 1, nickName: '张三', userName: 'zhangsan' },
-      { userId: 2, nickName: '李四', userName: 'lisi' },
-      { userId: 3, nickName: '王五', userName: 'wangwu' }
+      { userId: 1, nickName: 'å¼ ä¸‰', userName: 'zhangsan' },
+      { userId: 2, nickName: 'æ��å››', userName: 'lisi' },
+      { userId: 3, nickName: 'ç�‹äº”', userName: 'wangwu' }
     ],
     total: 3
   }
 })
 
-// 字典数据
+// å­—å…¸æ•°æ�®
 Mock.mock(RegExp('/dev-api/system/dict/data/type/.*'), 'get', (options) => {
   const type = options.url.split('/').pop()
   const dictMap = {
     'ticket_status': [
-      { dictLabel: '待处理', dictValue: 'pending', cssClass: 'warning' },
-      { dictLabel: '已指派', dictValue: 'assigned', cssClass: 'primary' },
-      { dictLabel: '处理中', dictValue: 'processing', cssClass: 'info' },
-      { dictLabel: '已完成', dictValue: 'completed', cssClass: 'success' },
-      { dictLabel: '已关闭', dictValue: 'closed', cssClass: 'default' }
+      { dictLabel: 'å¾…å¤„ç�†', dictValue: 'pending', cssClass: 'warning' },
+      { dictLabel: 'å·²æŒ‡æ´¾', dictValue: 'assigned', cssClass: 'primary' },
+      { dictLabel: 'å¤„ç�†ä¸­', dictValue: 'processing', cssClass: 'info' },
+      { dictLabel: 'å·²å®Œæˆ�', dictValue: 'completed', cssClass: 'success' },
+      { dictLabel: 'å·²å…³é—­', dictValue: 'closed', cssClass: 'default' }
     ],
     'ticket_priority': [
-      { dictLabel: '高', dictValue: 'high', cssClass: 'danger' },
-      { dictLabel: '中', dictValue: 'medium', cssClass: 'warning' },
-      { dictLabel: '低', dictValue: 'low', cssClass: 'info' }
+      { dictLabel: 'é«˜', dictValue: 'high', cssClass: 'danger' },
+      { dictLabel: 'ä¸­', dictValue: 'medium', cssClass: 'warning' },
+      { dictLabel: 'ä½�', dictValue: 'low', cssClass: 'info' }
     ],
     'equipment_specialty': [
-      { dictLabel: '暖通', dictValue: 'hvac' },
-      { dictLabel: '配电', dictValue: 'power' },
-      { dictLabel: '消防', dictValue: 'fire' },
-      { dictLabel: '弱电', dictValue: 'weak' }
+      { dictLabel: 'æš–é€š', dictValue: 'hvac' },
+      { dictLabel: 'é…�ç”µ', dictValue: 'power' },
+      { dictLabel: 'æ¶ˆé˜²', dictValue: 'fire' },
+      { dictLabel: 'å¼±ç”µ', dictValue: 'weak' }
     ],
     'mop_category': [
-      { dictLabel: '日常维护', dictValue: 'daily' },
-      { dictLabel: '定期保养', dictValue: 'regular' },
-      { dictLabel: '月度检修', dictValue: 'monthly' },
-      { dictLabel: '季度检修', dictValue: 'quarterly' },
-      { dictLabel: '年度检修', dictValue: 'annual' }
+      { dictLabel: 'æ—¥å¸¸ç»´æŠ¤', dictValue: 'daily' },
+      { dictLabel: 'å®šæœŸä¿�å…»', dictValue: 'regular' },
+      { dictLabel: 'æœˆåº¦æ£€ä¿®', dictValue: 'monthly' },
+      { dictLabel: 'å­£åº¦æ£€ä¿®', dictValue: 'quarterly' },
+      { dictLabel: 'å¹´åº¦æ£€ä¿®', dictValue: 'annual' }
     ]
   }
   
@@ -409,5 +416,6 @@ Mock.mock(RegExp('/dev-api/system/dict/data/type/.*'), 'get', (options) => {
   }
 })
 
-console.log('✅ Mock服务已启动，数据持久化已启用')
-console.log('💡 提示：可使用 window.$mockStore 访问Mock数据存储')
+console.log('âœ… Mockæœ�åŠ¡å·²å�¯åŠ¨ï¼Œæ•°æ�®æŒ�ä¹…åŒ–å·²å�¯ç”¨')
+console.log('ğŸ’¡ æ��ç¤ºï¼šå�¯ä½¿ç”¨ window.$mockStore è®¿é—®Mockæ•°æ�®å­˜å‚¨')
+}

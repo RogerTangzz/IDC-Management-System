@@ -1,3 +1,5 @@
-// 临时占位：仅在某些浏览器缓存仍请求 .js 时避免 404；真实路由使用 business.ts
-// 返回空数组，不参与实际注册（router/index.ts 现已使用 extensionless TS 导入）
-export default []
+// Delegate to the TypeScript route definitions to avoid duplication
+// This ensures JS-based router index can still load full business routes.
+import routes from './business.ts'
+export default routes
+

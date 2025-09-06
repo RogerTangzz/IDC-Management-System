@@ -49,6 +49,12 @@
             <artifactId>ruoyi-framework</artifactId>
         </dependency>
 
+        <!-- 显式依赖系统模块，确保运行期可加载实体与Service（BizInspection/BizTicket等） -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-system</artifactId>
+        </dependency>
+
         <!-- 定时任务
         <dependency>
             <groupId>com.ruoyi</groupId>

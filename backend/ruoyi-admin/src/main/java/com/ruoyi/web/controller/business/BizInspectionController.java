@@ -1,3 +1,4 @@
+
 package com.ruoyi.web.controller.business;
 
 import com.ruoyi.common.core.controller.BaseController;
@@ -42,10 +43,11 @@ public class BizInspectionController extends BaseController {
 
     @PostMapping
     public AjaxResult add(@RequestBody BizInspection data) {
-        if (data.getStatus() == null) data.setStatus("draft");
-    // 容错：若前端误传对象/数组，被 Jackson 解析成 LinkedHashMap -> toString 不是合法 JSON，这里统一再序列化
-    data.setItems(normalizeJsonString(data.getItems()));
-    data.setPhotos(normalizeJsonString(data.getPhotos()));
+        if (data.getStatus() == null)
+            data.setStatus("draft");
+        // 容错：若前端误传对象/数组，被 Jackson 解析成 LinkedHashMap -> toString 不是合法 JSON，这里统一再序列化
+        data.setItems(normalizeJsonString(data.getItems()));
+        data.setPhotos(normalizeJsonString(data.getPhotos()));
         int rows = bizInspectionService.insertBizInspection(data);
         return rows > 0 ? AjaxResult.success(data) : AjaxResult.error("新增失败");
     }
@@ -53,8 +55,8 @@ public class BizInspectionController extends BaseController {
     /** 修改 */
     @PutMapping
     public AjaxResult edit(@RequestBody BizInspection data) {
-    data.setItems(normalizeJsonString(data.getItems()));
-    data.setPhotos(normalizeJsonString(data.getPhotos()));
+        data.setItems(normalizeJsonString(data.getItems()));
+        data.setPhotos(normalizeJsonString(data.getPhotos()));
         int rows = bizInspectionService.updateBizInspection(data);
         return rows > 0 ? AjaxResult.success(data) : AjaxResult.error("修改失败");
     }
@@ -72,18 +74,26 @@ public class BizInspectionController extends BaseController {
         return AjaxResult.success();
     }
 
-    /** 由巡检异常自动生成工单
-     * body: { inspectionId: Long, anomalies: [ { floor, itemId, itemName, value, priority } ] }
+    /**
+     * 由巡检异常自动生成工单
+     * body: { inspectionId: Long, anomalies: [ { floor, itemId, itemName, value,
+     * priority } ] }
      * 返回创建的工单数组
      */
     @PostMapping("/generateTickets")
     public AjaxResult generateTickets(@RequestBody Map<String, Object> body) {
         Object idObj = body.get("inspectionId");
-        if (idObj == null) return AjaxResult.error("缺少 inspectionId");
+        if (idObj == null)
+            return AjaxResult.error("缺少 inspectionId");
         Long inspectionId;
-        try { inspectionId = Long.valueOf(String.valueOf(idObj)); } catch (Exception e) { return AjaxResult.error("inspectionId 非法"); }
+        try {
+            inspectionId = Long.valueOf(String.valueOf(idObj));
+        } catch (Exception e) {
+            return AjaxResult.error("inspectionId 非法");
+        }
         BizInspection inspection = bizInspectionService.selectBizInspectionByInspectionId(inspectionId);
-        if (inspection == null) return AjaxResult.error("巡检不存在");
+        if (inspection == null)
+            return AjaxResult.error("巡检不存在");
 
         // 解析 anomalies
         Object anomaliesObj = body.get("anomalies");
@@ -93,16 +103,18 @@ public class BizInspectionController extends BaseController {
         List<?> list = (List<?>) anomaliesObj;
         List<BizTicket> created = new ArrayList<>();
         for (Object o : list) {
-            if (!(o instanceof Map)) continue;
-            Map<?,?> m = (Map<?,?>) o;
+            if (!(o instanceof Map))
+                continue;
+            Map<?, ?> m = (Map<?, ?>) o;
             String itemName = str(m.get("itemName"));
             String value = String.valueOf(m.get("value"));
             String priority = str(m.get("priority"));
-            if (priority == null || priority.isEmpty()) priority = "low";
+            if (priority == null || priority.isEmpty())
+                priority = "low";
             BizTicket t = new BizTicket();
             t.setTicketNo(generateTicketNo());
             t.setTitle(itemName != null ? itemName : "巡检异常");
-            t.setDescription("巡检异常: " + (itemName==null?"":itemName) + " 值=" + value);
+            t.setDescription("巡检异常: " + (itemName == null ? "" : itemName) + " 值=" + value);
             t.setPriority(priority);
             t.setStatus("pending");
             t.setSource("inspection");
@@ -110,8 +122,16 @@ public class BizInspectionController extends BaseController {
             t.setDiscoveryTime(DateUtils.getNowDate());
             t.setLastAction("create");
             t.setLastStatusTime(DateUtils.getNowDate());
+            // 关键：将当前用户作为报告人，避免普通用户在工单列表中看不到新建工单
+            Long uid = currentUserId();
+            String uname = currentUserName();
+            if (uid != null) t.setReporterId(uid);
+            if (uname != null) {
+                t.setReporterName(uname);
+                t.setCreateBy(uname);
+            }
             bizTicketService.insertBizTicket(t);
-            bizTicketLogService.log(t.getTicketId(), "create", null, t.getStatus(), "巡检生成", currentUserId(), currentUserName());
+            bizTicketLogService.log(t.getTicketId(), "create", null, t.getStatus(), "巡检生成", uid, uname);
             created.add(t);
         }
         // 更新巡检记录的 ticket 关联
@@ -149,32 +169,72 @@ public class BizInspectionController extends BaseController {
         // 按 RuoYi 规范实际应写入文件，这里临时返回 success
         return AjaxResult.success();
     }
+
     /**
      * 简单判断字符串是否为 JSON（对象/数组），若非字符串或为空直接返回；
      */
     private String normalizeJsonString(String raw) {
-        if (raw == null || raw.isEmpty()) return raw;
+        if (raw == null || raw.isEmpty())
+            return raw;
         char c = raw.charAt(0);
-        if (c == '{' || c == '[') return raw;
-        if (raw.contains("=")) return raw;
+        if (c == '{' || c == '[')
+            return raw;
+        if (raw.contains("="))
+            return raw;
         return raw;
     }
 
-    private String str(Object o){ return o==null?null:String.valueOf(o); }
-    private String generateTicketNo(){ return "TK" + DateUtils.dateTimeNow("yyyyMMddHHmmssSSS"); }
-    private String joinIds(List<BizTicket> tickets){
+    private String str(Object o) {
+        return o == null ? null : String.valueOf(o);
+    }
+
+    private String generateTicketNo() {
+        return "TK" + DateUtils.dateTimeNow("yyyyMMddHHmmssSSS");
+    }
+
+    private String joinIds(List<BizTicket> tickets) {
         StringBuilder sb = new StringBuilder();
-        for (BizTicket t: tickets){ if (sb.length()>0) sb.append(','); sb.append(t.getTicketId()); }
+        for (BizTicket t : tickets) {
+            if (sb.length() > 0)
+                sb.append(',');
+            sb.append(t.getTicketId());
+        }
         return sb.toString();
     }
-    private String mergeIds(String oldIds, String newIds){
-        if (oldIds==null || oldIds.isEmpty()) return newIds;
-        if (newIds==null || newIds.isEmpty()) return oldIds;
+
+    private String mergeIds(String oldIds, String newIds) {
+        if (oldIds == null || oldIds.isEmpty())
+            return newIds;
+        if (newIds == null || newIds.isEmpty())
+            return oldIds;
         return oldIds + "," + newIds;
     }
-    private Long countIds(String ids){
-        if (ids==null || ids.isEmpty()) return 0L;
-        long count = 0; for (String s: ids.split(",")) if (!s.isEmpty()) count++;
+
+    private Long countIds(String ids) {
+        if (ids == null || ids.isEmpty())
+            return 0L;
+        long count = 0;
+        for (String s : ids.split(","))
+            if (!s.isEmpty())
+                count++;
         return count;
+    }
+
+    // 兼容：当前类调用了 currentUserId/currentUserName，但 BaseController 只有
+    // getUserId/getUsername，这里做包装
+    private Long currentUserId() {
+        try {
+            return getUserId();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String currentUserName() {
+        try {
+            return getUsername();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

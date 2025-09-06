@@ -354,8 +354,36 @@ function submitForm() {
           router.push('/business/maintenance/plan');
         });
       } else {
-        addMaintenance(form.value).then(() => {
+        addMaintenance(form.value).then((res) => {
           proxy.$modal.msgSuccess("新增成功");
+          // 重置表单以便继续新建
+          const created = res?.data
+          const keepFields = ['version','executionFrequency','executionUnit']
+          const base = {
+            planId: undefined,
+            title: '',
+            floor: '',
+            version: form.value.version || 'V1.0',
+            mopCategory: '',
+            executionFrequency: form.value.executionFrequency,
+            executionUnit: form.value.executionUnit,
+            executionCycle: '',
+            approverId: undefined,
+            mopName: '',
+            mopPurpose: '',
+            notifyUsers: [],
+            tools: '',
+            materials: '',
+            safety: '',
+            specialTools: '',
+            steps: '',
+            inspectionResult: '',
+            remark: '',
+            executorId: undefined,
+            approvalStatus: 'draft',
+            executionStatus: 'pending'
+          }
+          form.value = base
           router.push('/business/maintenance/plan');
         });
       }

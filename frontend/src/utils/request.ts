@@ -1,4 +1,7 @@
-// Mock 加载放在 main.js 中集中控制，避免在此处二次引入导致生产残留
+// 按需引入 mock，避免在关闭 mock 场景仍然注册拦截与污染接口
+if (import.meta.env.VITE_USE_MOCK === 'true') {
+    import('../mock')
+}
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElNotification, ElMessageBox, ElMessage, ElLoading } from 'element-plus'
 import { getToken } from '@/utils/auth'
@@ -7,15 +10,19 @@ import { tansParams, blobValidate } from '@/utils/ruoyi'
 import cache from '@/plugins/cache'
 import { saveAs } from 'file-saver'
 import useUserStore from '@/store/modules/user'
-import type { ApiResult, PageResult } from '@/types/api/common'
 
-// --------------------------- 基础响应类型（集中于 types/api/common.ts） ----------------------------
-// 临时兼容别名（若外部仍引用）
+// --------------------------- 基础响应类型 ----------------------------
+export interface ApiResult<T = any> { code: number; msg: string; data: T }
+export interface PageResult<T = any> { total: number; rows: T[]; code?: number; msg?: string }
+
+// 与旧全局保持兼容（后续可移除 global.d.ts 中重复声明）
 export type AxiosResult<T = any> = Promise<ApiResult<T>>
 export type RequestResult<T = any> = AxiosResult<T>
 
 // 是否显示重新登录
+// isRelogin 兼容原有逻辑；增加 internalUnauthorizedHandling 防止多次并发 401 重复弹窗
 export const isRelogin: { show: boolean } = { show: false }
+let internalUnauthorizedHandling = false
 let downloadLoadingInstance: ReturnType<typeof ElLoading.service> | undefined
 
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
@@ -88,24 +95,34 @@ service.interceptors.response.use((res: AxiosResponse<ApiResult<any>>) => {
     }
 
     if (code === 401) {
-        if (!isRelogin.show) {
+        // 并发 401 仅处理一次
+        if (!internalUnauthorizedHandling) {
+            internalUnauthorizedHandling = true
             isRelogin.show = true
-            ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
+            const userStore = useUserStore()
+            // 使用消息框提示；也可根据需要直接静默跳转
+            ElMessageBox.confirm('登录状态已过期，请重新登录', '认证提示', {
                 confirmButtonText: '重新登录',
                 cancelButtonText: '取消',
                 type: 'warning',
+                closeOnClickModal: false,
+                distinguishCancelAndClose: true
+            }).then(() => {
+                return userStore.logOut()
+            }).catch(() => {
+                // 用户取消仍然清理本地 token，避免后续请求继续 401 风暴
+                return userStore.logOut()
+            }).finally(() => {
+                isRelogin.show = false
+                internalUnauthorizedHandling = false
+                // 保留当前路径用于登录后返回（排除已在 /login 时）
+                const current = location.pathname + location.search + location.hash
+                if (!/\/login$/.test(location.pathname)) {
+                    location.replace(`/login?redirect=${encodeURIComponent(current)}`)
+                }
             })
-                .then(() => {
-                    isRelogin.show = false
-                    useUserStore().logOut().then(() => {
-                        location.href = '/index'
-                    })
-                })
-                .catch(() => {
-                    isRelogin.show = false
-                })
         }
-        return Promise.reject(new Error('无效的会话，或者会话已过期，请重新登录。'))
+        return Promise.reject(new Error(msg || '登录已过期'))
     }
     if (code === 500) {
         ElMessage({ message: msg, type: 'error' })

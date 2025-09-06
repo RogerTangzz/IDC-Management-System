@@ -1,0 +1,351 @@
+node.exe : (node:77396) ESLintIgnoreWarning: The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js": https://eslint.org/docs/latest/use/configure/migration-guide#ignoring-files
+所在位置 行:1 字符: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\1\AppData\Roaming\npm/ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:77396) ES...#ignoring-files:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\api\business\index.js
+  6:26  warning  'params' is assigned a value but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\components\Crontab\index.vue
+  205:10  warning  'tabCheck' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  209:42  warning  'from' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\components\Editor\index.vue
+  153:35  warning  'file' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\components\FileUpload\index.vue
+  157:28  warning  'err' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\components\IconSelect\index.vue
+  29:7  warning  'props' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\components\Screenfull\index.vue
+  10:23  warning  'enter' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  10:30  warning  'exit' is assigned a value but never used. Allowed unused vars must match /^_/u   no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\components\SizeSelect\index.vue
+  23:7  warning  'route' is assigned a value but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  24:7  warning  'router' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\components\TopNav\index.vue
+  120:28  warning  'keyPath' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\directive\common\copyText.js
+  54:12  warning  'e' is defined but never used  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\directive\permission\hasPermi.js
+  8:24  warning  'vnode' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\directive\permission\hasRole.js
+  8:24  warning  'vnode' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\layout\components\InnerLink\index.vue
+  14:7  warning  'props' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\layout\components\TagsView\index.vue
+  105:12  warning  'err' is defined but never used  no-unused-vars
+  113:12  warning  'err' is defined but never used  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\layout\index.vue
+  18:8   warning  'Sidebar' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  31:7   warning  'sideTheme' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  44:16  warning  'height' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\mock\modules\ticket.js
+  17:15  warning  'pageNum' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\store\modules\dict.js
+  19:18  warning  'e' is defined but never used  no-unused-vars
+  42:18  warning  'e' is defined but never used  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\store\modules\permission.js
+  35:22  warning  'roles' is defined but never used. Allowed unused args must match /^_/u                no-unused-vars
+  59:44  warning  'lastRouter' is assigned a value but never used. Allowed unused args must match /^_/u  no-unused-vars
+  93:38  warning  'lastRouter' is assigned a value but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\store\modules\tagsView.js
+  111:26  warning  'view' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  119:25  warning  'view' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\utils\business\inspectionAnomaly.js
+    2:10  warning  'getInspection' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  206:19  warning  'date' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+  210:13  error    Unreachable code                                                                 no-unreachable
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\utils\business\maintenanceReminder.js
+  61:15  warning  'diffHours' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\utils\dict.js
+  10:29  warning  'index' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\utils\generator\html.js
+    1:1   warning  Unused eslint-disable directive (no problems were reported from 'max-len')
+  112:7   warning  'tag' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  244:11  warning  'max' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\utils\generator\render.js
+  23:10  warning  'useVModel' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  36:22  warning  'key' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+  44:22  warning  'key' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+  54:22  warning  'key' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+  64:28  warning  'key' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+  85:22  warning  'key' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\utils\ruoyi.js
+  144:14  warning  'e' is defined but never used  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\utils\validate.js
+  94:25  error  Unnecessary escape character: \[  no-useless-escape
+  94:50  error  Unnecessary escape character: \[  no-useless-escape
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\inspection\create.vue
+  205:15  warning  'reactive' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\inspection\detail.vue
+  241:10  warning  'getInspection' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  241:25  warning  'generateTickets' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  242:10  warning  'addTicket' is defined but never used. Allowed unused vars must match /^_/u                     no-unused-vars
+  256:9   warning  'ticket_status' is assigned a value but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  256:41  warning  'equipment_specialty' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  294:10  warning  'evaluateItems' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  367:32  warning  'item' is defined but never used. Allowed unused args must match /^_/u                          no-unused-vars
+  388:25  warning  'item' is defined but never used. Allowed unused args must match /^_/u                          no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\inspection\edit.vue
+  204:45  warning  'watch' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  206:10  warning  'getInspection' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  206:25  warning  'updateInspection' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  206:43  warning  'generateTickets' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  207:10  warning  'listUser' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  208:81  warning  'getAnomalyPriority' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  396:27  warning  'item' is defined but never used. Allowed unused args must match /^_/u                no-unused-vars
+  410:13  warning  'data' is assigned a value but never used. Allowed unused vars must match /^_/u       no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\inspection\index.vue
+  223:26  warning  'getInspection' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  223:73  warning  'getLatestInspection' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  224:18  warning  'INSPECTION_ITEMS' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  237:7   warning  'title' is assigned a value but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  271:10  warning  'cancel' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\inspection\plan.vue
+  295:10  warning  'listUser' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  423:9   warning  'id' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  448:12  warning  'error' is defined but never used                                              no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\inspection\statistics.vue
+  216:10  warning  'parseTime' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\approval.vue
+  262:27  warning  'getMaintenance' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  464:20  warning  'response' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\create.vue
+  202:10  warning  'addMaintenance' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  202:26  warning  'getLatestPlan' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  202:41  warning  'submitApproval' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  202:57  warning  'getApproverList' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  203:10  warning  'listUser' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\detail.vue
+  284:10   warning  'getMaintenance' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  284:44   warning  'submitApprovalApi' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  284:63   warning  'approvePlan' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  284:76   warning  'rejectPlan' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  284:88   warning  'startExecution' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  284:104  warning  'generateTicket' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  284:120  warning  'getApproverList' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\edit.vue
+  268:10  warning  'getMaintenance' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  268:26  warning  'updateMaintenance' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  268:45  warning  'submitApproval' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  268:61  warning  'getApproverList' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  269:10  warning  'listUser' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\execution.vue
+  477:51  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  484:48  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\execution\index.vue
+  173:10  warning  'maintenancePlanApi' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  245:12  warning  'error' is defined but never used                                                     no-unused-vars
+  308:28  warning  'row' is defined but never used. Allowed unused args must match /^_/u                 no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\index.vue
+  228:15  warning  'reactive' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  233:3   warning  'getMaintenance' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  235:3   warning  'exportMaintenance' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\plan\form.vue
+  259:93  warning  'getNotifyUserList' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  434:44  warning  'response' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+  439:41  warning  'response' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\plan\index.vue
+  287:27  warning  'getMaintenance' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  287:59  warning  'addMaintenance' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  287:75  warning  'updateMaintenance' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  288:24  warning  'getLatestPlan' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  297:7   warning  'open' is assigned a value but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  306:7   warning  'title' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  337:22  warning  'form' is assigned a value but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  453:81  warning  'response' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+  475:79  warning  'response' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+  481:78  warning  'response' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\maintenance\plan\submit.vue
+  77:12  warning  'error' is defined but never used  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\ticket\components\AssignDialog.vue
+  79:25  warning  'onMounted' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\ticket\components\TicketForm.vue
+  264:14  warning  'error' is defined but never used                                                      no-unused-vars
+  326:7   warning  'submitForm' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  347:7   warning  'cancel' is assigned a value but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\ticket\detail.vue
+  262:21  warning  'updateTicket' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  263:10  warning  'listUser' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  320:12  warning  'e' is defined but never used                                                   no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\ticket\form.vue
+  175:10  warning  'getTicket' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  176:10  warning  'listUser' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  186:47  warning  'ticket_status' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  283:31  warning  'val' is defined but never used. Allowed unused args must match /^_/u                     no-unused-vars
+  321:39  warning  'response' is defined but never used. Allowed unused args must match /^_/u                no-unused-vars
+  326:36  warning  'response' is defined but never used. Allowed unused args must match /^_/u                no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\ticket\index.vue
+  266:10  warning  'listTicket' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  266:22  warning  'getTicket' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  266:33  warning  'delTicket' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  266:44  warning  'addTicket' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  266:55  warning  'updateTicket' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  266:69  warning  'assignTickets' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  267:10  warning  'listUser' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\business\ticket\template.vue
+  420:41  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  426:38  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\monitor\cache\list.vue
+  187:38  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  215:32  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  240:24  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\monitor\job\index.vue
+  337:30  warning  'column' is defined but never used. Allowed unused args must match /^_/u         no-unused-vars
+  382:10  warning  'handleCommand' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  467:36  warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  473:33  warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\monitor\job\log.vue
+  201:28  warning  'rules' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  245:23  warning  'row' is defined but never used. Allowed unused args must match /^_/u             no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\monitor\logininfor\index.vue
+  188:35  warning  'prop' is defined but never used. Allowed unused args must match /^_/u   no-unused-vars
+  188:41  warning  'order' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\monitor\operlog\index.vue
+  211:7   warning  'single' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  214:7   warning  'title' is assigned a value but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  244:26  warning  'column' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+  269:35  warning  'prop' is defined but never used. Allowed unused args must match /^_/u             no-unused-vars
+  269:41  warning  'order' is defined but never used. Allowed unused args must match /^_/u            no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\register.vue
+  128:41  warning  'res' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  138:13  error    Must use `.value` to read or write the value wrapped by `ref()`        vue/no-ref-as-operand
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\config\index.vue
+  274:39  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  280:36  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\dept\index.vue
+  256:37  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  262:34  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\dict\data.vue
+  323:37  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  330:34  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\dict\index.vue
+  280:37  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  286:34  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\menu\index.vue
+  425:37  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  431:34  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\notice\index.vue
+  264:39  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  270:36  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\post\index.vue
+  252:37  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  258:34  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\role\authUser.vue
+  167:28  warning  'row' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\role\index.vue
+  360:10  warning  'handleCommand' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  515:37  warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  522:34  warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  569:32  warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\user\authRole.vue
+  98:58  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\user\index.vue
+  283:203  error    Unnecessary escape character: \ .                                                no-useless-escape
+  385:10   warning  'handleCommand' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  414:37   error    Unnecessary escape character: \ .                                                no-useless-escape
+  418:42   warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  445:35   warning  'event' is defined but never used. Allowed unused args must match /^_/u          no-unused-vars
+  445:42   warning  'file' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+  445:48   warning  'fileList' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  450:33   warning  'fileList' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  455:27   warning  'file' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+  455:33   warning  'fileList' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  460:44   warning  'fileList' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  537:37   warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  543:34   warning  'response' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\user\profile\resetPwd.vue
+  40:197  error    Unnecessary escape character: \ .                                           no-useless-escape
+  48:62   warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\system\user\profile\userInfo.vue
+  47:42  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\tool\build\RightPanel.vue
+  577:17  warning  'node' is defined but never used. Allowed unused args must match /^_/u   no-unused-vars
+  629:41  warning  'store' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\tool\build\index.vue
+  152:21  warning  'a' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+  267:19  warning  'data' is defined but never used. Allowed unused args must match /^_/u     no-unused-vars
+  297:11  warning  'trigger' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  303:25  warning  'e' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\tool\gen\genInfoForm.vue
+  264:26  warning  'value' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+C:\Users\1\Downloads\IDC-Management-System\IDC-Management-System\frontend\src\views\tool\gen\index.vue
+  150:8   warning  'router' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  223:33  warning  'response' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  282:35  warning  'prop' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+  282:41  warning  'order' is defined but never used. Allowed unused args must match /^_/u     no-unused-vars
+
+鉁?199 problems (7 errors, 192 warnings)
+  1 error and 1 warning potentially fixable with the `--fix` option.
+

@@ -1,0 +1,535 @@
+﻿<template>
+</style>
+}
+async function generateTicketsByIds(ids) {
+  if (generating.value) return
+  generating.value = true
+  try {
+    const resp = await generateTickets(inspectionId, ids)
+    const created = (resp && (resp.data || resp.rows)) || []
+    const n = Array.isArray(created) ? created.length : (created ? 1 : 0)
+    proxy..msgSuccess(已生成  个工单)
+    form.value.ticketCount = (form.value.ticketCount || 0) + n
+    generating.value = false
+    if (n > 0 && created[0]?.ticketId) {
+      try {
+        await proxy..confirm('是否查看生成的工单？')
+        router.push('/business/ticket/detail/' + created[0].ticketId)
+      } catch {
+        router.push('/business/ticket/list')
+      }
+    }
+  } catch (e) {
+    console.error('生成工单失败', e)
+  } finally {
+    generating.value = false
+  }
+} 个工单`)
+    form.value.ticketCount = (form.value.ticketCount || 0) + n
+    generating.value = false
+    if (n > 0 && created[0]?.ticketId) {
+      try {
+        await proxy.$modal.confirm('是否查看生成的工单？')
+        router.push('/business/ticket/detail/' + created[0].ticketId)
+      } catch {
+        router.push('/business/ticket/list')
+      }
+    }
+  } catch (e) {
+    console.error('生成工单失败', e)
+  } finally {
+    generating.value = false
+  }
+}
+<template>
+  <div class="app-container">
+    <el-card class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <el-button link type="primary" icon="Back" @click="handleClose">返回列表</el-button>
+        </div>
+        <div class="header-center">
+          <h2>巡检详情 - {{ form.inspectionNo }}</h2>
+        </div>
+        <div class="header-right">
+          <el-button type="primary" icon="Document" @click="generateTicket" :loading="generating"
+            :disabled="generating">生成工单</el-button>
+          <el-button type="primary" icon="Printer" @click="handlePrint">打印</el-button>
+          <el-button type="success" icon="Download" @click="handleExport">导出报告</el-button>
+        </div>
+      </div>
+    </el-card>
+
+    <el-card class="info-card" v-loading="loading">
+      <template #header>
+        <div class="card-header">
+          <span class="descriptions-title">基本信息</span>
+          <div>
+            <el-tag v-if="form.isCopied === 'Y'" type="info">复制</el-tag>
+            <el-tag v-if="form.anomalyCount > 0" type="danger">异常：{{ form.anomalyCount }}项</el-tag>
+            <el-tag v-else type="success">正常</el-tag>
+          </div>
+        </div>
+      </template>
+
+      <el-descriptions :column="3" border>
+        <el-descriptions-item label="巡检编号">
+          <span class="text-primary">{{ form.inspectionNo }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="巡检楼层">
+          <dict-tag :options="floor_dict" :value="form.floor" />
+        </el-descriptions-item>
+        <el-descriptions-item label="巡检日期">
+          {{ parseTime(form.inspectionDate, '{y}-{m}-{d}') }}
+        </el-descriptions-item>
+        <el-descriptions-item label="巡检人员">
+          {{ form.inspectorName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="接力人员">
+          {{ form.relayPerson || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="完成进度">
+          <el-progress :percentage="form.progress" :status="form.progress === 100 ? 'success' : ''" />
+        </el-descriptions-item>
+        <el-descriptions-item label="检查项">
+          {{ completedItems }}/{{ totalItems }}项
+        </el-descriptions-item>
+        <el-descriptions-item label="生成工单">
+          <el-link v-if="form.ticketCount > 0" type="primary" @click="viewTickets">{{ form.ticketCount }}个</el-link>
+          <span v-else>0个</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">
+          {{ parseTime(form.createTime) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="备注" :span="3">
+          {{ form.remark || '-' }}
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-card>
+
+    <el-card class="items-card">
+      <template #header>
+        <div class="card-header">
+          <span class="descriptions-title">巡检项目结果</span>
+          <el-radio-group v-model="filterType" @change="handleFilterChange">
+            <el-radio-button label="all">全部</el-radio-button>
+            <el-radio-button label="normal">正常</el-radio-button>
+            <el-radio-button label="anomaly">异常</el-radio-button>
+          </el-radio-group>
+        </div>
+      </template>
+
+      <el-row :gutter="20" class="statistics-row">
+        <el-col :span="6">
+          <el-statistic title="总检查项" :value="statistics.total">
+            <template #suffix>项</template>
+          </el-statistic>
+        </el-col>
+        <el-col :span="6">
+          <el-statistic title="正常项" :value="statistics.normal" value-style="color: #67c23a">
+            <template #suffix>项</template>
+          </el-statistic>
+        </el-col>
+        <el-col :span="6">
+          <el-statistic title="异常项" :value="statistics.anomaly" value-style="color: #f56c6c">
+            <template #suffix>项</template>
+          </el-statistic>
+        </el-col>
+        <el-col :span="6">
+          <el-statistic title="异常率" :value="statistics.anomalyRate" :precision="1">
+            <template #suffix>%</template>
+          </el-statistic>
+        </el-col>
+      </el-row>
+
+      <el-table :data="filteredItems" stripe :row-class-name="getRowClassName" class="items-table">
+        <el-table-column label="序号" type="index" width="60" align="center" />
+        <el-table-column label="检查项" prop="label" min-width="300" show-overflow-tooltip />
+        <el-table-column label="类型" prop="type" width="80" align="center">
+          <template #default="scope">
+            <el-tag size="small" type="info">{{ scope.row.type === 'boolean' ? '状态' : '数值' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="检查结果" prop="value" width="150" align="center">
+          <template #default="scope">
+            <el-tag v-if="scope.row.value === true" type="success">正常</el-tag>
+            <el-tag v-else-if="scope.row.value === false" type="danger">异常</el-tag>
+            <span v-else>{{ formatValue(scope.row) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100" align="center">
+          <template #default="scope">
+            <el-tag v-if="scope.row.isAnomaly" type="danger" effect="dark">异常</el-tag>
+            <el-tag v-else type="success">正常</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="生成工单" width="120" align="center">
+          <template #default="scope">
+            <el-link v-if="scope.row.ticketNo" type="primary" @click="viewTicketDetail(scope.row.ticketId)">{{
+              scope.row.ticketNo }}</el-link>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <el-card class="anomaly-card" v-if="anomalyItems.length > 0">
+      <template #header>
+        <div class="card-header">
+          <span class="descriptions-title">异常项汇总</span>
+          <div>
+            <el-button type="warning" icon="Tickets" :disabled="selectedAnomalyIds.length === 0 || generating"
+              :loading="generating" @click="generateSelectedTickets">仅生成选中异常</el-button>
+            <el-button text size="small" @click="selectAllAnomalies">全选</el-button>
+            <el-button text size="small" @click="clearSelectedAnomalies">清空</el-button>
+          </div>
+        </div>
+      </template>
+      <el-alert title="发现以下异常项，请及时处理" type="warning" :closable="false" show-icon />
+      <div class="anomaly-list">
+        <el-checkbox-group v-model="selectedAnomalyIds">
+          <div v-for="(item, index) in anomalyItems" :key="index" class="anomaly-item">
+            <div class="anomaly-header">
+              <el-checkbox :label="item.id" style="margin-right: 10px" />
+              <span class="anomaly-index">{{ index + 1 }}</span>
+              <span class="anomaly-title">{{ item.label }}</span>
+              <dict-tag :options="ticket_priority" :value="item.priority" />
+            </div>
+            <div class="anomaly-content">
+              <el-row>
+                <el-col :span="8">
+                  <span class="label">异常值：</span>
+                  <span class="value danger">{{ formatValue(item) }}</span>
+                </el-col>
+                <el-col :span="8">
+                  <span class="label">正常范围：</span>
+                  <span class="value">{{ formatRange(item) }}</span>
+                </el-col>
+                <el-col :span="8">
+                  <span class="label">工单状态：</span>
+                  <span class="value">
+                    <el-link v-if="item.ticketNo" type="primary" @click="viewTicketDetail(item.ticketId)">{{
+                      item.ticketNo
+                    }}</el-link>
+                    <el-button v-else link type="primary" size="small" @click="generateTicket(item)"
+                      :loading="generating" :disabled="generating">生成工单</el-button>
+                  </span>
+                </el-col>
+              </el-row>
+              <div class="suggestion">
+                <span class="label">处理建议：</span>
+                {{ getHandlingSuggestion(item) }}
+              </div>
+            </div>
+          </div>
+        </el-checkbox-group>
+      </div>
+    </el-card>
+  </div>
+</template>
+
+<script setup name="InspectionDetail">
+import { getCurrentInstance, ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { parseTime } from '@/utils/ruoyi'
+import { generateTickets } from '@/api/business/inspection'
+import anomalyService from '@/utils/business/inspectionAnomaly.js'
+
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const route = useRoute()
+
+const inspectionId = route.params && (route.params.inspectionId || route.params.id)
+const loading = ref(false)
+const filterType = ref('all')
+const form = ref({})
+const inspectionItems = ref([])
+const selectedAnomalyIds = ref([])
+const generating = ref(false)
+const floor_dict = ref([])
+const ticket_priority = ref([])
+
+const completedItems = computed(() => inspectionItems.value.filter(i => i.value !== null && i.value !== undefined).length)
+const totalItems = computed(() => inspectionItems.value.length)
+
+const statistics = computed(() => {
+  const total = inspectionItems.value.length
+  const normal = inspectionItems.value.filter(item => !item.isAnomaly && item.value !== null).length
+  const anomaly = inspectionItems.value.filter(item => item.isAnomaly).length
+  const anomalyRate = total > 0 ? (anomaly / total) * 100 : 0
+
+  return { total, normal, anomaly, anomalyRate }
+})
+
+const filteredItems = computed(() => {
+  if (filterType.value === 'normal') {
+    return inspectionItems.value.filter(item => !item.isAnomaly && item.value !== null)
+  }
+  if (filterType.value === 'anomaly') {
+    return inspectionItems.value.filter(item => item.isAnomaly)
+  }
+  return inspectionItems.value
+})
+
+const anomalyItems = computed(() => inspectionItems.value.filter(item => item.isAnomaly))
+
+function formatValue(item) {
+  if (item.type === 'boolean') {
+    return item.value ? '正常' : '异常'
+  }
+  return `${item.value} ${item.unit || ''}`
+}
+
+function formatRange(item) {
+  if (item.type === 'boolean') {
+    return '正常'
+  }
+  if (item.min !== undefined) {
+    return `${item.min}-${item.max} ${item.unit || ''}`
+  }
+  return '-'
+}
+
+function getRowClassName({ row }) {
+  if (row.isAnomaly) {
+    return 'anomaly-row'
+  }
+  if (row.value === null || row.value === undefined) {
+    return 'unchecked-row'
+  }
+  return ''
+}
+
+function getHandlingSuggestion(item) {
+  return item.suggestion || '请根据设备手册进行处理'
+}
+
+async function generateTicket(item) {
+  await generateTicketsByIds([item.id])
+}
+
+async function generateTicketsByIds(ids) {
+  if (generating.value) return
+  generating.value = true
+  try {
+    const resp = await generateTickets(inspectionId, ids)
+    proxy.$modal.msgSuccess(`已生成 ${resp.data.length} 个工单`)
+    form.value.ticketCount = (form.value.ticketCount || 0) + resp.data.length
+  } catch (e) {
+    console.error('生成工单失败', e)
+  } finally {
+    generating.value = false
+  }
+}
+
+async function generateSelectedTickets() {
+  if (!selectedAnomalyIds.value.length) {
+    proxy.$modal.msgWarning('请至少选择一个异常项')
+    return
+  }
+  await generateTicketsByIds(selectedAnomalyIds.value)
+  selectedAnomalyIds.value = []
+}
+
+function selectAllAnomalies() {
+  selectedAnomalyIds.value = anomalyItems.value.map(i => i.id)
+}
+
+function clearSelectedAnomalies() {
+  selectedAnomalyIds.value = []
+}
+
+function viewTicketDetail(id) {
+  router.push('/business/ticket/detail/' + id)
+}
+
+function viewTickets() {
+  router.push('/business/ticket/list')
+}
+
+function handlePrint() {
+  window.print()
+}
+
+function handleExport() {
+  proxy.$modal.msgSuccess('导出功能正在开发中')
+}
+
+function handleClose() {
+  router.back()
+}
+
+function handleFilterChange() {
+  // 筛选变化处理（如需要可添加逻辑）
+}
+
+// 获取巡检详情
+async function getDetail() {
+  loading.value = true
+  try {
+    // 模拟API请求
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // 模拟数据
+    form.value = {
+      inspectionId: inspectionId,
+      inspectionNo: 'INS202501001',
+      floor: '1楼',
+      inspectionDate: new Date(),
+      inspectorName: '张三',
+      relayPerson: '李四',
+      progress: 100,
+      anomalyCount: 2,
+      ticketCount: 1,
+      createTime: new Date(),
+      remark: '本次巡检发现2处异常',
+      isCopied: 'N'
+    }
+
+    inspectionItems.value = [
+      { id: 'item1', label: '设备运行状态', type: 'boolean', value: true, isAnomaly: false },
+      { id: 'item2', label: '电压检测', type: 'number', value: 220, unit: 'V', min: 200, max: 240, isAnomaly: false },
+      { id: 'item3', label: '温度检测', type: 'number', value: 50, unit: '℃', min: 20, max: 40, isAnomaly: true, suggestion: '温度过高，请检查冷却系统' },
+      { id: 'item4', label: '压力检测', type: 'number', value: 0.5, unit: 'MPa', min: 0.3, max: 0.6, isAnomaly: false }
+    ]
+  } catch (e) {
+    console.error('获取详情失败', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+getDetail()
+defineExpose({ form, inspectionItems, generateTicketsByIds })
+</script>
+
+
+<style lang="scss" scoped>
+.header-card {
+  margin-bottom: 20px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .header-center h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+  }
+}
+
+.info-card,
+.items-card,
+.anomaly-card {
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.descriptions-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.text-primary {
+  color: #409EFF;
+  font-weight: bold;
+}
+
+.statistics-row {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.items-table {
+  :deep(.anomaly-row) {
+    background-color: #fef0f0;
+  }
+
+  :deep(.unchecked-row) {
+    background-color: #f5f5f5;
+  }
+}
+
+.anomaly-list {
+  margin-top: 20px;
+
+  .anomaly-item {
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #fff7e6;
+    border: 1px solid #ffd666;
+    border-radius: 4px;
+
+    .anomaly-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+
+      .anomaly-index {
+        width: 30px;
+        height: 30px;
+        background: #ff4d4f;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 10px;
+      }
+
+      .anomaly-title {
+        flex: 1;
+        font-weight: bold;
+        font-size: 14px;
+      }
+    }
+
+    .anomaly-content {
+      margin-left: 40px;
+
+      .label {
+        color: #909399;
+        margin-right: 5px;
+      }
+
+      .value {
+        font-weight: 500;
+
+        &.danger {
+          color: #f56c6c;
+        }
+      }
+
+      .suggestion {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dcdfe6;
+        color: #606266;
+      }
+    }
+  }
+}
+
+@media print {
+  .header-card .header-right {
+    display: none;
+  }
+
+  .el-radio-group {
+    display: none;
+  }
+}
+</style>
+
+

@@ -3,13 +3,15 @@ import { request, get, post, put, del } from '@/utils/request'
 import { parseStrEmpty } from "@/utils/ruoyi";
 
 // 查询用户列表
-// 查询用户列表 (支持泛型指定行类型)
-// @param query
+/**
+ * 查询用户列表 (支持泛型指定行类型)
+ * @template T
+ * @param {object} query
+ * @returns {Promise<ApiResult<PageResult<T>>>}
+ */
 export function listUser(query) {
   return get('/system/user/list', query)
 }
-
-// （保持 getUser 定义在后，不在注释块里以免被 tree-shaking 忽略）
 
 // 查询用户详细
 /**

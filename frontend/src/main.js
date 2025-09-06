@@ -1,11 +1,7 @@
 // src/main.js
 import { createApp } from 'vue'
-// 按需加载 mock：使用构建期常量彻底 tree-shake
-/* global __ENABLE_MOCK__ */
-if (typeof __ENABLE_MOCK__ !== 'undefined' && __ENABLE_MOCK__) {
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  import('./mock').then(() => console.log('[mock] loaded')).catch(() => {})
-}
+// Note: mock should only be enabled when explicitly configured via VITE_USE_MOCK
+// import './mock'
 
 import Cookies from 'js-cookie'
 

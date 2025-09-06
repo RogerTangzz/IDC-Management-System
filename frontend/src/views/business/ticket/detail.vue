@@ -266,8 +266,8 @@ const attachmentList = ref([])
   const { ticket_status, ticket_priority, equipment_specialty, ticket_action } = proxy.useDict('ticket_status', 'ticket_priority', 'equipment_specialty', 'ticket_action')
 
 onMounted(() => {
-  // 动态字典填充动作选项
-  actionOptions.value = (ticket_action || []).map(d => ({ value: d.value, label: d.label }))
+  // 动态字典填充动作选项（注意 ticket_action 是 ref）
+  actionOptions.value = (ticket_action?.value || []).map(d => ({ value: d.value, label: d.label }))
 })
 
 // 表单数据
@@ -470,7 +470,7 @@ function resetLogFilters(){ logFilters.value = { action:'', daterange:[] }; logP
 function reloadLogs(){ logPagination.value.pageNum=1; loadLogs() }
 
 function actionLabel(a){
-  const item = (ticket_action||[]).find(d=>d.value===a)
+  const item = (ticket_action?.value || []).find(d=>d.value===a)
   return item?item.label:a
 }
 function getLogType(a){
