@@ -1,0 +1,1 @@
+import{_ as o}from"./index-Cw83YE5u.js";import{l as e,m as t}from"./vue-SR65qDCS.js";import"./element-D8D5Bqo2.js";import"./vendor-C71Ev03J.js";const r={class:"maintenance-form-placeholder"},a={__name:"form",setup(c){return(s,_)=>(t(),e("div",r))}},i=o(a,[["__scopeId","data-v-b60862d5"]]);export{i as default};

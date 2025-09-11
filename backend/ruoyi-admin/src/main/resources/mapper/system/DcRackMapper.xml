@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.DcRackMapper">
+    <resultMap id="DcRackResult" type="DcRack">
+        <result property="rackId" column="rack_id"/>
+        <result property="roomId" column="room_id"/>
+        <result property="code" column="code"/>
+        <result property="uTotal" column="u_total"/>
+        <result property="powerRated" column="power_rated"/>
+        <result property="powerCurrent" column="power_current"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectById" parameterType="long" resultMap="DcRackResult">
+        select * from dc_rack where rack_id = #{rackId} and del_flag='0'
+    </select>
+
+    <select id="selectList" parameterType="DcRack" resultMap="DcRackResult">
+        select * from dc_rack
+        <where>
+            <if test="roomId != null"> and room_id = #{roomId}</if>
+            <if test="code != null and code != ''"> and code like concat('%',#{code},'%')</if>
+            <if test="status != null and status != ''"> and status = #{status}</if>
+            and del_flag='0'
+        </where>
+        order by code
+    </select>
+
+    <insert id="insert" parameterType="DcRack" useGeneratedKeys="true" keyProperty="rackId">
+        insert into dc_rack(room_id, code, u_total, power_rated, power_current, status, del_flag, create_by, create_time, remark)
+        values(#{roomId}, #{code}, #{uTotal}, #{powerRated}, #{powerCurrent}, #{status}, '0', #{createBy}, #{createTime}, #{remark})
+    </insert>
+
+    <update id="update" parameterType="DcRack">
+        update dc_rack
+        <set>
+            <if test="roomId != null">room_id=#{roomId},</if>
+            <if test="code != null">code=#{code},</if>
+            <if test="uTotal != null">u_total=#{uTotal},</if>
+            <if test="powerRated != null">power_rated=#{powerRated},</if>
+            <if test="powerCurrent != null">power_current=#{powerCurrent},</if>
+            <if test="status != null">status=#{status},</if>
+            <if test="updateBy != null">update_by=#{updateBy},</if>
+            <if test="updateTime != null">update_time=#{updateTime},</if>
+            <if test="remark != null">remark=#{remark},</if>
+        </set>
+        where rack_id=#{rackId}
+    </update>
+
+    <update id="deleteById" parameterType="long">
+        update dc_rack set del_flag='1' where rack_id = #{rackId}
+    </update>
+
+    <select id="countOccupiedUnits" parameterType="long" resultType="long">
+        select count(*) from dc_rack_unit where rack_id = #{rackId} and occupied='Y'
+    </select>
+    <select id="countTotalUnits" parameterType="long" resultType="long">
+        select count(*) from dc_rack_unit where rack_id = #{rackId}
+    </select>
+</mapper>
+

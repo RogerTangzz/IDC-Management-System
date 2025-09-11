@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BizMaintenanceMapper">
+    
+    <resultMap type="BizMaintenance" id="BizMaintenanceResult">
+        <result property="planId"    column="plan_id"    />
+        <result property="planNo"    column="plan_no"    />
+        <result property="title"    column="title"    />
+        <result property="floor"    column="floor"    />
+        <result property="version"    column="version"    />
+        <result property="mopCategory"    column="mop_category"    />
+        <result property="mopName"    column="mop_name"    />
+        <result property="mopPurpose"    column="mop_purpose"    />
+        <result property="executionCycle"    column="execution_cycle"    />
+        <result property="executionFrequency"    column="execution_frequency"    />
+        <result property="executionUnit"    column="execution_unit"    />
+        <result property="approverId"    column="approver_id"    />
+        <result property="approverName"    column="approver_name"    />
+        <result property="approvalStatus"    column="approval_status"    />
+        <result property="approvalTime"    column="approval_time"    />
+        <result property="approvalComment"    column="approval_comment"    />
+        <result property="executionStatus"    column="execution_status"    />
+        <result property="nextExecutionTime"    column="next_execution_time"    />
+        <result property="lastExecutionTime"    column="last_execution_time"    />
+        <result property="notifyUsers"    column="notify_users"    />
+        <result property="executorId"    column="executor_id"    />
+        <result property="tools"    column="tools"    />
+        <result property="materials"    column="materials"    />
+        <result property="safety"    column="safety"    />
+        <result property="specialTools"    column="special_tools"    />
+        <result property="steps"    column="steps"    />
+        <result property="inspectionResult"    column="inspection_result"    />
+        <result property="submitTime"    column="submit_time"    />
+        <result property="applicantId"    column="applicant_id"    />
+        <result property="applicantName"    column="applicant_name"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectBizMaintenanceVo">
+        select plan_id, plan_no, title, floor, version, mop_category, mop_name, mop_purpose, execution_cycle, execution_frequency, execution_unit, approver_id, approver_name, approval_status, approval_time, approval_comment, execution_status, next_execution_time, last_execution_time, notify_users, executor_id, tools, materials, safety, special_tools, steps, inspection_result, submit_time, applicant_id, applicant_name, del_flag, create_by, create_time, update_by, update_time, remark from biz_maintenance
+    </sql>
+
+    <select id="selectBizMaintenanceList" parameterType="BizMaintenance" resultMap="BizMaintenanceResult">
+        <include refid="selectBizMaintenanceVo"/>
+        <where>  
+            <if test="planNo != null  and planNo != ''"> and plan_no = #{planNo}</if>
+            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="floor != null  and floor != ''"> and floor = #{floor}</if>
+            <if test="version != null  and version != ''"> and version = #{version}</if>
+            <if test="mopCategory != null  and mopCategory != ''"> and mop_category = #{mopCategory}</if>
+            <if test="mopName != null  and mopName != ''"> and mop_name like concat('%', #{mopName}, '%')</if>
+            <if test="mopPurpose != null  and mopPurpose != ''"> and mop_purpose = #{mopPurpose}</if>
+            <if test="executionCycle != null  and executionCycle != ''"> and execution_cycle = #{executionCycle}</if>
+            <if test="executionFrequency != null "> and execution_frequency = #{executionFrequency}</if>
+            <if test="executionUnit != null  and executionUnit != ''"> and execution_unit = #{executionUnit}</if>
+            <if test="approverId != null "> and approver_id = #{approverId}</if>
+            <if test="approverName != null  and approverName != ''"> and approver_name like concat('%', #{approverName}, '%')</if>
+            <if test="approvalStatus != null  and approvalStatus != ''"> and approval_status = #{approvalStatus}</if>
+            <if test="approvalTime != null "> and approval_time = #{approvalTime}</if>
+            <if test="approvalComment != null  and approvalComment != ''"> and approval_comment = #{approvalComment}</if>
+            <if test="executionStatus != null  and executionStatus != ''"> and execution_status = #{executionStatus}</if>
+            <if test="nextExecutionTime != null "> and next_execution_time = #{nextExecutionTime}</if>
+            <if test="lastExecutionTime != null "> and last_execution_time = #{lastExecutionTime}</if>
+            <if test="notifyUsers != null  and notifyUsers != ''"> and notify_users = #{notifyUsers}</if>
+            <if test="executorId != null "> and executor_id = #{executorId}</if>
+            <if test="tools != null  and tools != ''"> and tools = #{tools}</if>
+            <if test="materials != null  and materials != ''"> and materials = #{materials}</if>
+            <if test="safety != null  and safety != ''"> and safety = #{safety}</if>
+            <if test="specialTools != null  and specialTools != ''"> and special_tools = #{specialTools}</if>
+            <if test="steps != null  and steps != ''"> and steps = #{steps}</if>
+            <if test="inspectionResult != null  and inspectionResult != ''"> and inspection_result = #{inspectionResult}</if>
+            <if test="submitTime != null "> and submit_time = #{submitTime}</if>
+            <if test="applicantId != null "> and applicant_id = #{applicantId}</if>
+            <if test="applicantName != null  and applicantName != ''"> and applicant_name like concat('%', #{applicantName}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectBizMaintenanceByPlanId" parameterType="Long" resultMap="BizMaintenanceResult">
+        <include refid="selectBizMaintenanceVo"/>
+        where plan_id = #{planId}
+    </select>
+
+    <insert id="insertBizMaintenance" parameterType="BizMaintenance" useGeneratedKeys="true" keyProperty="planId">
+        insert into biz_maintenance
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="planNo != null and planNo != ''">plan_no,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="floor != null">floor,</if>
+            <if test="version != null">version,</if>
+            <if test="mopCategory != null">mop_category,</if>
+            <if test="mopName != null">mop_name,</if>
+            <if test="mopPurpose != null">mop_purpose,</if>
+            <if test="executionCycle != null">execution_cycle,</if>
+            <if test="executionFrequency != null">execution_frequency,</if>
+            <if test="executionUnit != null">execution_unit,</if>
+            <if test="approverId != null">approver_id,</if>
+            <if test="approverName != null">approver_name,</if>
+            <if test="approvalStatus != null">approval_status,</if>
+            <if test="approvalTime != null">approval_time,</if>
+            <if test="approvalComment != null">approval_comment,</if>
+            <if test="executionStatus != null">execution_status,</if>
+            <if test="nextExecutionTime != null">next_execution_time,</if>
+            <if test="lastExecutionTime != null">last_execution_time,</if>
+            <if test="notifyUsers != null">notify_users,</if>
+            <if test="executorId != null">executor_id,</if>
+            <if test="tools != null">tools,</if>
+            <if test="materials != null">materials,</if>
+            <if test="safety != null">safety,</if>
+            <if test="specialTools != null">special_tools,</if>
+            <if test="steps != null">steps,</if>
+            <if test="inspectionResult != null">inspection_result,</if>
+            <if test="submitTime != null">submit_time,</if>
+            <if test="applicantId != null">applicant_id,</if>
+            <if test="applicantName != null">applicant_name,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="planNo != null and planNo != ''">#{planNo},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="floor != null">#{floor},</if>
+            <if test="version != null">#{version},</if>
+            <if test="mopCategory != null">#{mopCategory},</if>
+            <if test="mopName != null">#{mopName},</if>
+            <if test="mopPurpose != null">#{mopPurpose},</if>
+            <if test="executionCycle != null">#{executionCycle},</if>
+            <if test="executionFrequency != null">#{executionFrequency},</if>
+            <if test="executionUnit != null">#{executionUnit},</if>
+            <if test="approverId != null">#{approverId},</if>
+            <if test="approverName != null">#{approverName},</if>
+            <if test="approvalStatus != null">#{approvalStatus},</if>
+            <if test="approvalTime != null">#{approvalTime},</if>
+            <if test="approvalComment != null">#{approvalComment},</if>
+            <if test="executionStatus != null">#{executionStatus},</if>
+            <if test="nextExecutionTime != null">#{nextExecutionTime},</if>
+            <if test="lastExecutionTime != null">#{lastExecutionTime},</if>
+            <if test="notifyUsers != null">#{notifyUsers},</if>
+            <if test="executorId != null">#{executorId},</if>
+            <if test="tools != null">#{tools},</if>
+            <if test="materials != null">#{materials},</if>
+            <if test="safety != null">#{safety},</if>
+            <if test="specialTools != null">#{specialTools},</if>
+            <if test="steps != null">#{steps},</if>
+            <if test="inspectionResult != null">#{inspectionResult},</if>
+            <if test="submitTime != null">#{submitTime},</if>
+            <if test="applicantId != null">#{applicantId},</if>
+            <if test="applicantName != null">#{applicantName},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBizMaintenance" parameterType="BizMaintenance">
+        update biz_maintenance
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="planNo != null and planNo != ''">plan_no = #{planNo},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="floor != null">floor = #{floor},</if>
+            <if test="version != null">version = #{version},</if>
+            <if test="mopCategory != null">mop_category = #{mopCategory},</if>
+            <if test="mopName != null">mop_name = #{mopName},</if>
+            <if test="mopPurpose != null">mop_purpose = #{mopPurpose},</if>
+            <if test="executionCycle != null">execution_cycle = #{executionCycle},</if>
+            <if test="executionFrequency != null">execution_frequency = #{executionFrequency},</if>
+            <if test="executionUnit != null">execution_unit = #{executionUnit},</if>
+            <if test="approverId != null">approver_id = #{approverId},</if>
+            <if test="approverName != null">approver_name = #{approverName},</if>
+            <if test="approvalStatus != null">approval_status = #{approvalStatus},</if>
+            <if test="approvalTime != null">approval_time = #{approvalTime},</if>
+            <if test="approvalComment != null">approval_comment = #{approvalComment},</if>
+            <if test="executionStatus != null">execution_status = #{executionStatus},</if>
+            <if test="nextExecutionTime != null">next_execution_time = #{nextExecutionTime},</if>
+            <if test="lastExecutionTime != null">last_execution_time = #{lastExecutionTime},</if>
+            <if test="notifyUsers != null">notify_users = #{notifyUsers},</if>
+            <if test="executorId != null">executor_id = #{executorId},</if>
+            <if test="tools != null">tools = #{tools},</if>
+            <if test="materials != null">materials = #{materials},</if>
+            <if test="safety != null">safety = #{safety},</if>
+            <if test="specialTools != null">special_tools = #{specialTools},</if>
+            <if test="steps != null">steps = #{steps},</if>
+            <if test="inspectionResult != null">inspection_result = #{inspectionResult},</if>
+            <if test="submitTime != null">submit_time = #{submitTime},</if>
+            <if test="applicantId != null">applicant_id = #{applicantId},</if>
+            <if test="applicantName != null">applicant_name = #{applicantName},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where plan_id = #{planId}
+    </update>
+
+    <delete id="deleteBizMaintenanceByPlanId" parameterType="Long">
+        delete from biz_maintenance where plan_id = #{planId}
+    </delete>
+
+    <delete id="deleteBizMaintenanceByPlanIds" parameterType="String">
+        delete from biz_maintenance where plan_id in 
+        <foreach item="planId" collection="array" open="(" separator="," close=")">
+            #{planId}
+        </foreach>
+    </delete>
+
+    <!-- 查询当日最新编号: prefix 形如 MP20250901 -->
+    <select id="selectLatestPlanNo" resultType="string">
+        select plan_no from biz_maintenance 
+        where plan_no like concat(#{prefix}, '%') 
+        order by plan_no desc limit 1
+    </select>
+</mapper>

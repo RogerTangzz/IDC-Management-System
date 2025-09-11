@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BizTicketTemplateMapper">
+    
+    <resultMap type="BizTicketTemplate" id="BizTicketTemplateResult">
+        <result property="templateId"    column="template_id"    />
+        <result property="templateNo"    column="template_no"    />
+        <result property="templateName"    column="template_name"    />
+        <result property="faultType"    column="fault_type"    />
+        <result property="priority"    column="priority"    />
+        <result property="specialty"    column="specialty"    />
+        <result property="defaultTitle"    column="default_title"    />
+        <result property="defaultDescription"    column="default_description"    />
+        <result property="defaultEmergencyAction"    column="default_emergency_action"    />
+        <result property="defaultSolution"    column="default_solution"    />
+        <result property="useCount"    column="use_count"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectBizTicketTemplateVo">
+        select template_id, template_no, template_name, fault_type, priority, specialty, default_title, default_description, default_emergency_action, default_solution, use_count, status, del_flag, create_by, create_time, update_by, update_time, remark from biz_ticket_template
+    </sql>
+
+    <select id="selectBizTicketTemplateList" parameterType="BizTicketTemplate" resultMap="BizTicketTemplateResult">
+        <include refid="selectBizTicketTemplateVo"/>
+        <where>  
+            <if test="templateNo != null  and templateNo != ''"> and template_no = #{templateNo}</if>
+            <if test="templateName != null  and templateName != ''"> and template_name like concat('%', #{templateName}, '%')</if>
+            <if test="faultType != null  and faultType != ''"> and fault_type = #{faultType}</if>
+            <if test="priority != null  and priority != ''"> and priority = #{priority}</if>
+            <if test="specialty != null  and specialty != ''"> and specialty = #{specialty}</if>
+            <if test="defaultTitle != null  and defaultTitle != ''"> and default_title = #{defaultTitle}</if>
+            <if test="defaultDescription != null  and defaultDescription != ''"> and default_description = #{defaultDescription}</if>
+            <if test="defaultEmergencyAction != null  and defaultEmergencyAction != ''"> and default_emergency_action = #{defaultEmergencyAction}</if>
+            <if test="defaultSolution != null  and defaultSolution != ''"> and default_solution = #{defaultSolution}</if>
+            <if test="useCount != null "> and use_count = #{useCount}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectBizTicketTemplateByTemplateId" parameterType="Long" resultMap="BizTicketTemplateResult">
+        <include refid="selectBizTicketTemplateVo"/>
+        where template_id = #{templateId}
+    </select>
+
+    <insert id="insertBizTicketTemplate" parameterType="BizTicketTemplate" useGeneratedKeys="true" keyProperty="templateId">
+        insert into biz_ticket_template
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="templateNo != null and templateNo != ''">template_no,</if>
+            <if test="templateName != null and templateName != ''">template_name,</if>
+            <if test="faultType != null">fault_type,</if>
+            <if test="priority != null">priority,</if>
+            <if test="specialty != null">specialty,</if>
+            <if test="defaultTitle != null">default_title,</if>
+            <if test="defaultDescription != null">default_description,</if>
+            <if test="defaultEmergencyAction != null">default_emergency_action,</if>
+            <if test="defaultSolution != null">default_solution,</if>
+            <if test="useCount != null">use_count,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="templateNo != null and templateNo != ''">#{templateNo},</if>
+            <if test="templateName != null and templateName != ''">#{templateName},</if>
+            <if test="faultType != null">#{faultType},</if>
+            <if test="priority != null">#{priority},</if>
+            <if test="specialty != null">#{specialty},</if>
+            <if test="defaultTitle != null">#{defaultTitle},</if>
+            <if test="defaultDescription != null">#{defaultDescription},</if>
+            <if test="defaultEmergencyAction != null">#{defaultEmergencyAction},</if>
+            <if test="defaultSolution != null">#{defaultSolution},</if>
+            <if test="useCount != null">#{useCount},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBizTicketTemplate" parameterType="BizTicketTemplate">
+        update biz_ticket_template
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="templateNo != null and templateNo != ''">template_no = #{templateNo},</if>
+            <if test="templateName != null and templateName != ''">template_name = #{templateName},</if>
+            <if test="faultType != null">fault_type = #{faultType},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="specialty != null">specialty = #{specialty},</if>
+            <if test="defaultTitle != null">default_title = #{defaultTitle},</if>
+            <if test="defaultDescription != null">default_description = #{defaultDescription},</if>
+            <if test="defaultEmergencyAction != null">default_emergency_action = #{defaultEmergencyAction},</if>
+            <if test="defaultSolution != null">default_solution = #{defaultSolution},</if>
+            <if test="useCount != null">use_count = #{useCount},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where template_id = #{templateId}
+    </update>
+
+    <delete id="deleteBizTicketTemplateByTemplateId" parameterType="Long">
+        delete from biz_ticket_template where template_id = #{templateId}
+    </delete>
+
+    <delete id="deleteBizTicketTemplateByTemplateIds" parameterType="String">
+        delete from biz_ticket_template where template_id in 
+        <foreach item="templateId" collection="array" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+    </delete>
+</mapper>

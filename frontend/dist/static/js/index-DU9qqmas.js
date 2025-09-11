@@ -1,0 +1,1 @@
+import{_ as s}from"./index-DVDjrYUq.js";import{r as a,l as t,m as l,J as o,u}from"./vue-SR65qDCS.js";const _={__name:"index",setup(c){const e=a("undefined/druid/login.html");return(m,r)=>(l(),t("div",null,[o(u(s),{src:e.value,"onUpdate:src":r[0]||(r[0]=n=>e.value=n)},null,8,["src"])]))}};export{_ as default};

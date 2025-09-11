@@ -1,0 +1,301 @@
+阅读结论
+
+已通读并提炼 docs/agent.md、docs/CLAUDE.md、docs/CLAUDE-IDC.md、docs/CODE-QUALITY.md、docs/DC系统开发功能与业务逻辑设计规范 V2.0.md、docs/dev-report_20250906_stageB.md，并交叉核对前端实现与文档一致性。
+文档要点
+
+agent.md: 明确你是 RuoYi-Vue3 全栈助手；前后端技术栈、模块划分、权限矩阵及前端/接口模板均已标准化，优先保证 Ticket/Inspection/Maintenance 三大核心模块一致性与性能目标。
+CLAUDE.md: 前端实现规范与目录标准；v2.0/v2.3 增量涵盖 last_action/last_status_time、reopen 流程、SLA 预警 idc.sla.warnBeforeHours、列表字段统一和排序、报表 summary/analytics、nearDue/overdue 模式切换、消息中心、TS 迁移优先级与类型约定。
+CLAUDE-IDC.md: IDC 业务映射到 RuoYi 规范的落地说明；v2.2 增量包括数据权限参数别名 VITE_API_MINE_ONLY_PARAM、报表下钻到列表、维保导入模板/结果反馈、巡检-工单联动、测试基线提升。
+CODE-QUALITY.md: 五维质量标准（可读性/可维护性/可靠性/性能/安全与测试），强调 KISS/DRY/YAGNI、模块化依赖、类型治理、可测试性设计、性能反模式治理、评审清单、量化指标。
+DC 业务规范 V2.0: 全模块蓝图（登录/维保/工单/巡检/资产/知识/审批/统计/通知/消息/报表/权限/监控…），统一返回结构、性能指标、上传/导出限制、搜索/筛选维度、并发与异常处理口径，nearDue/overdue 及角色数据权限规则明确。
+dev-report_20250906_stageB: 阶段A（导出/下钻/数据权限）收尾，阶段B（维保审批/执行闭环）启动。已定义导出/列表/nearDue 接口与分钟口径、别名参数双写策略，列出阶段B接口草案与前端改动、单测建议与待确认问题。
+当前实现核对
+
+工单列表已落地导出与近到期/逾期模式、排序与数据权限：
+frontend/src/views/business/ticket/index.vue：含“导出”、“逾期/近到期”按钮、withMineOnly 注入、排序透传、下钻模式处理。
+frontend/src/api/business/ticket.js：包含 overdue/nearDue/assign/reopen/summary/analytics 等接口。
+frontend/src/utils/business/mineOnly.ts：实现别名 key 解析与灰度期双写；.env.example 已提供 VITE_API_MINE_ONLY_PARAM。
+文档契约 docs/backend-contracts/ticket-export.md 就绪。
+维保模块已有审批/执行前端基础骨架与 API：
+frontend/src/views/business/maintenance/plan/index.vue：包含提交审批、审批通过/拒绝、开始执行、生成工单等交互位。
+frontend/src/api/business/maintenance.js：已提供 submitApproval/approve/reject/start/complete/history/approvers 及导入/模板下载等接口。
+巡检与联动：文档已明确巡检异常→工单生成与日志要求；前端/后端实现程度需再对齐。
+差距与风险
+
+审批/执行「后端契约未完全确认」：需最终敲定字段名与状态机（remark/result/attachments、planId/executionId 命名、合法流转 + 权限校验），并补齐后端接口与日志模型。
+数据权限「模块覆盖差异」：工单已统一 withMineOnly，维保/巡检列表是否按角色/范围过滤尚未统一应用。
+报表「前端图表与下钻串联」：工单侧已对齐，维保/巡检报表与导出未完全覆盖。
+TS 迁移「进行中」：类型与 API/Store 迁移比例需提升，维保/巡检 DTO/类型未统一沉淀。
+测试覆盖「需补齐」：导出/下钻已有用例，维保审批/执行流、导入结果弹窗/下载错误明细需单测；指令/权限/异步交互的稳定性要加固。
+后续开发流程（阶段B优先）
+
+需求与契约确认
+审批状态机：draft -> pending -> approved/rejected -> executing -> completed，明确合法 next 与权限边界。
+字段命名与数据结构：remark/result/attachments/operatorId、planId/executionId、导入返回 { total, success, failed, errors[], taskId? }。
+数据权限：非管理员默认仅本人范围，支持按部门/角色扩展；统一 withMineOnly 策略到维保/巡检。
+后端落地
+维护 BizMaintenanceController/Service/Mapper：实现 submit/approve/reject/start/complete/history/approvers/import/importTemplate/importErrors，并统一 TableDataInfo/AjaxResult 与限流。
+日志与索引：审批日志、执行日志，必要索引（approvalStatus/executionStatus/last_status_time）。
+安全与白名单：排序列白名单、文件导入校验、数据权限注入（控制层 + Mapper 双保险）。
+前端联调
+API 对齐与 TS 类型：在 src/types/api/maintenance.ts/src/types/domain/maintenance.ts 抽象 DTO/枚举（状态常量、记录类型）。
+维保计划页 plan/index.vue：完善禁用/加载/空态、审批/执行按钮显隐与 v-hasPermi，导入失败明细弹窗（含下载错误明细）。
+详情页与日志区块 plan/detail.vue：审批记录/执行记录时间线、附件上传/预览、执行结果提交流程。
+搜索与导出：与工单一致的时间/排序/模式/数据权限透传；必要时新增 nearDue/overdue 口径。
+测试与质量
+单测：审批通过/驳回/开始/完成的 UI 流、消息提示、禁用态、导入结果态；下载错误明细分支；mineOnly 注入断言。
+静态检查：ESLint + TS 严格模式、关键路径性能复核；权限指令/异步稳定性微任务等待抽象。
+文档与运维
+新增 docs/backend-contracts/maintenance-approval.md 与前端用法片段；更新 CLAUDE-IDC.md 和 README 的配置提示。
+配置校验：.env.* 中 VITE_API_MINE_ONLY_PARAM、导出/导入大小限制对齐 DC 规范。
+建议里程碑
+
+里程碑 M1（1–2 天）
+确认审批/执行契约与状态机、落实后端接口；前端 API/类型对齐。
+里程碑 M2（2–3 天）
+完成 plan/index.vue 审批/执行/导入 UI 全流程与日志时间线；数据权限统一。
+里程碑 M3（1–2 天）
+单测补齐（审批/执行/导入/错误明细/权限与下载）；CODE-QUALITY 自查与小幅重构。
+里程碑 M4（0.5 天）
+文档签入与回归验收（导出/下钻/分钟口径/别名参数/审批闭环）。
+
+已按优先级推进
+
+起草后端契约、补充前端类型/权限注入、完善维保导入结果与导出失败明细，并新增针对导出的用例。
+本次变更
+
+文档
+新增: docs/backend-contracts/maintenance-approval.md:1（维保审批与执行接口契约草案，含状态机/字段/权限/错误码与示例）
+前端-维保计划列表
+权限参数: frontend/src/views/business/maintenance/plan/index.vue:1 引入 useUserStore 与 withMineOnly，新增 isAdmin，在 getList 与 handleExport 注入数据权限参数（非管理员带 mineOnly/别名）。
+时间导出: handleExport 支持时间范围 begin/end 拼接与文件名规范。
+导入结果: 捕获后端 taskId，新增“导出失败明细”函数 exportImportErrors（支持 proxy.download 与 API 兜底），补充 downloadMaintenanceImportErrors 引入。
+结构修正: 将文件末尾的第二个 <template> 片段禁用为注释，避免重复模板导致 SFC 解析失败。
+TS 解析: 将脚本标记为 lang="ts" 以兼容现有 : any 与 as any 写法。
+前端-测试
+新增: frontend/src/__tests__/maintenance.export.test.ts:1（验证导出参数组装与权限注入；mock 掉 API 与字典，独立可运行）
+验证情况
+
+独立用例通过: npx vitest run src/__tests__/maintenance.export.test.ts 通过。
+全量测试: 仓库内已存在的 ticket 页面与布局等用例仍有历史问题（与本 PR 无关），暂不在此修复。若需，我可分支逐项对齐。
+对齐 dev-report_20250906_stageB 与 1124 要点
+
+数据权限: 维保列表与导出已统一注入 mineOnly/别名，与工单一致。
+导入结果: 支持 { total, success, failed, errors[], taskId? }，可下载失败明细。
+契约推进: 已产出维保“审批/执行”契约草案，便于后端实现与前端联调。
+后续开发流程（建议里程碑）
+
+里程碑 M1（契约落地）
+确认并冻结接口与字段：remark/result/attachments/operatorId、planId/executionId 命名、审批/执行合法流转与权限边界。
+后端实现 submit/approve/reject/start/complete/history/approvers/importTemplate/importErrors，控制层+Mapper 注入数据权限；排序白名单。
+里程碑 M2（前端闭环）
+plan/index.vue：完善按钮禁用/加载态；把“导入结果弹窗”合入主模板展示；统一导出/时间/排序参数。
+plan/detail.vue：新增审批记录/执行记录时间线、附件、执行结果提交流程。
+withMineOnly 扩展应用至巡检/维保其他列表页。
+里程碑 M3（测试与质量）
+新增审批/执行流的用例（通过/驳回/开始/完成）、导入失败明细弹窗用例；指令/异步的稳定性校正。
+TS 类型梳理：抽离/扩充 src/types/api/maintenance.ts 枚举与 DTO。
+里程碑 M4（文档与验收）
+更新 README、CLAUDE-IDC 与后端契约；联调回归：权限参数灰度双写/分钟口径/报表下钻。
+
+已推进事项
+
+文档契约
+
+新增: docs/backend-contracts/maintenance-approval.md:1 维保审批/执行契约草案（接口清单、状态机、字段命名、数据权限口径、错误码与控制器示例）。
+维保列表页对齐
+
+数据权限统一: frontend/src/views/business/maintenance/plan/index.vue:1 引入 useUserStore、withMineOnly，新增 isAdmin，在 getList 与 handleExport 注入 mineOnly/别名参数。
+导出完善: handleExport 统一开始/结束时间拼接与文件名；与工单导出一致。
+导入结果闭环:
+捕获 taskId 并新增失败明细下载：exportImportErrors（支持 proxy.download 与 API 兜底）。
+将“导入结果弹窗”嵌入主模板（避免重复 <template> 造成 SFC 解析错误），位置在分页与隐藏文件输入之后。
+TS 兼容: <script setup lang="ts"> 启用，解决 as any 报错。
+前端测试（最小集成）
+
+新增: frontend/src/__tests__/maintenance.export.test.ts:1 验证维保导出参数（时间与 mineOnly 注入、下载调用）并全量 mock API/字典/全局方法。
+新增: frontend/src/__tests__/maintenance.approveExecute.test.ts:1
+校验“审核”对话框打开与表单状态准备（不走表单校验链，避免 $refs 限制）。
+校验“开始执行”流程可触发 confirm + API 调用。
+两个用例均通过；全量测试仍存在历史问题（工单与布局相关），未在本次修改范围内处理。
+变更文件
+
+文档: docs/backend-contracts/maintenance-approval.md:1
+维保页: frontend/src/views/business/maintenance/plan/index.vue:1
+API 引用: frontend/src/api/business/maintenance.js:1（已有 downloadMaintenanceImportErrors，本次已引入使用）
+工具: frontend/src/utils/business/mineOnly.ts:1（沿用）
+测试:
+frontend/src/__tests__/maintenance.export.test.ts:1
+frontend/src/__tests__/maintenance.approveExecute.test.ts:1
+当前效果
+
+非管理员请求自动携带 mineOnly（与别名灰度策略兼容）。
+维保导出参数与工单一致（筛选/时间/权限）。
+导入结果弹窗展示总计/成功/失败与错误明细，可下载失败清单。
+下一步建议
+
+审批/执行闭环前端完善
+frontend/src/views/business/maintenance/plan/detail.vue：加入审批时间线、执行记录时间线、附件/图片区、执行完成表单（result/attachments）。
+plan/index.vue：按钮禁用/加载态细化、异常场景提示与确认交互。
+后端联调与契约冻结
+按 maintenance-approval.md 实现 submit/approve/reject/start/complete/history/approvers/importTemplate/importErrors；控制层+Mapper 注入数据权限与排序白名单。
+数据权限与模式统一
+将 withMineOnly 扩展应用到巡检/维保其他列表；评估维保 nearDue/overdue 视图需求（如需，同步接口与 UI）。
+测试与质量
+新增审批通过/驳回/完成执行的 UI 状态与消息提示用例；导入失败明细弹窗用例。
+梳理 src/types/api/maintenance.ts（状态枚举/DTO）并补充使用处断言。
+
+已继续推进
+
+新增详情页: frontend/src/views/business/maintenance/plan/detail.vue:1
+展示计划信息、附件、审批记录与执行记录时间线（el-timeline）。
+操作按钮: 审批已通过且未执行时显示“开始执行”；执行中显示“完成执行”对话框（录入结果并提交）。
+数据拉取: getMaintenance(planId)、getApprovalHistory(planId)、listExecution({ planId })（注入 withMineOnly 数据权限）。
+列表页联动已完善（之前已完成）
+plan/index.vue：统一 mineOnly 注入、导出参数（含 begin/end）、导入结果弹窗与失败明细导出。
+用例新增（之前已完成）
+maintenance.export.test.ts：验证导出参数与权限注入。
+maintenance.approveExecute.test.ts：验证“开始执行”流程触发与“审核对话框状态”准备。
+你可以这样验证
+
+通过菜单/路由访问: /business/maintenance/plan/detail/:id（需后端菜单或路由配置指向 views/business/maintenance/plan/detail）。
+在详情页中:
+审批记录和执行记录按时间线展示。
+审批已通过且执行状态为 pending 时显示“开始执行”；执行中显示“完成执行”。
+点击“完成执行”录入“结果”并提交后，状态刷新。
+推荐下一步
+
+路由对齐: 确认后端菜单路由是否指向 business/maintenance/plan/detail 并携带 :id；如未配置，我可补前端路由占位与文档说明。
+执行记录完善: 在详情页增加执行结果附件上传/预览；completeExecution(planId, { result, attachments }) 对齐契约。
+审批时间线增强: 审批节点的操作者/备注/下一处理人（如有）补齐展示；失败态错误提示统一。
+列表体验: 在 plan/index.vue 执行中/完成后行内状态刷新动画与禁用态细化。
+单测补齐: 增加详情页加载/切换状态/完成执行后刷新断言；导入失败明细弹窗的下载行为测试。
+
+已完成对齐与增强
+
+路由对齐
+前端路由已存在: frontend/src/router/modules/business.ts:153 配置了 business/maintenance/plan/detail/:planId，指向 views/business/maintenance/plan/detail.vue。我已将详情页改为读取 route.params.planId，与路由占位符一致。
+维保详情页
+新增: frontend/src/views/business/maintenance/plan/detail.vue:1
+信息区: PlanNo/Title/Floor/Approval/Execution/Owner/Start/End。
+时间线: 审批记录（含操作者、备注、下一处理人 Next）、执行记录（含操作者、结果）。
+操作: 根据状态显示 Start/Complete；完成执行弹窗中新增附件上传（集成 FileUpload），提交 result + attachments。
+数据权限: listExecution({ planId }) 注入 withMineOnly（非管理员）。
+交互提示: 统一错误提示（Load failed/Start failed/Submit failed）与成功提示（Started/Completed）。
+API 契约对齐
+frontend/src/api/business/maintenance.js:1
+completeExecution(planId, payload) 兼容字符串或对象；对象时直接透传（以支持 { result, attachments }）。
+维保计划列表
+数据权限与导出参数已与工单一致（先前完成）。
+导入结果弹窗已整合至主模板，新增“导出失败明细”按钮（通过 proxy.download('/business/maintenance/importErrors', { taskId? })）。
+执行/生成工单操作增加全局表格 loading（执行开始与生成工单完成后刷新并自动结束 loading）。
+文档/契约
+
+新增: docs/backend-contracts/maintenance-approval.md:1
+审批/执行闭环接口清单、状态机与字段命名、数据权限注入、错误码；Controller 示例与 Mapper 提示。
+最小测试集（新增）
+
+frontend/src/__tests__/maintenance.export.test.ts:1 通过
+校验维保导出参数组装（时间范围/数据权限）与 proxy.download 调用。
+frontend/src/__tests__/maintenance.approveExecute.test.ts:1 通过
+校验“开始执行”流程触发与“审核对话框状态”准备。
+frontend/src/__tests__/maintenance.detail.test.ts:1 已添加但存在环境问题
+目标用例: 加载详情 + 触发 Start；提交完成（携带 attachments）。
+当前阻塞: 测试环境对 FileUpload 的 mock 注入存在残留换行符（语法报错）。建议在下一个提交中用 vi.mock('@/components/FileUpload/index.vue', () => ({ default: { name:'FileUpload', template:'<div />' }})) 重新整理，或在测试 setup 中做组件 stub。
+后续推进建议（落地顺序）
+
+后端接口与数据口径
+落地 submit/approve/reject/start/complete/history/approvers/importTemplate/importErrors，控制层+Mapper 注入数据权限与排序白名单。
+complete 支持 { result, attachments }；审批记录返回 operatorName/nextAssigneeName/comment/time；执行记录返回 operatorName/result/time。
+详情页完善
+附件上传预览细节（限制/类型/进度）与后端接受字段对齐（需要最终命名确认）。
+将文案回到中文（当前为 ASCII 以规避测试编码问题），确保 UTF-8 无 BOM 存盘，避免环境转码。
+列表页体验
+行内按钮 :loading/:disabled（目前已加全局 table loading，行内 loading 需要在 index.vue 上添加 actioningId 并给按钮绑定条件；我可继续按字符上下文补丁，以避免 mojibake 匹配失败）。
+测试补齐
+详情页加载/开始执行/完成执行（含 attachments）断言。
+导入失败明细弹窗的下载调用断言。
+行内按钮 loading/disabled 的 UI 行为（可通过 DOM 属性存在性与点击防抖来验证）。
+你现在可以
+
+打开 frontend/src/views/business/maintenance/plan/detail.vue:1 查看详情页；从列表进入 business/maintenance/plan/detail/:planId 即可联动。
+若后端接口字段准备就绪，我可基于最终命名补齐详情页的字段映射与附件回显。
+
+已知悉：不做“统一转 UTF-8”的操作。我会严格避免全局或批量的文件编码转换，并在后续改动中保持现有文件编码不变。
+
+执行约束
+
+不做批量“另存为 UTF-8/去除 BOM/统一编码”等操作。
+新增/修改文件尽量使用 ASCII 文本或通过字典/i18n 取值，避免在源码内直接嵌入多语言文案导致编码歧义。
+对于需要中文展示处，优先使用字典数据、后端返回的 label、或资源文件（必要时使用 Unicode 转义）；不通过转换源码文件编码来解决乱码。
+当前进展（已完成且不涉及统一转码）
+
+路由对齐: 已确认并使用 business/maintenance/plan/detail/:planId，详情页读取 route.params.planId。
+详情页: 新增 views/business/maintenance/plan/detail.vue，包含信息区、审批/执行时间线、完成执行弹窗（支持附件上传：FileUpload），调用 completeExecution(planId, { result, attachments })。
+列表页: 保持原编码不变的前提下，完善导出参数/数据权限注入、导入结果弹窗与失败明细下载；执行/生成工单增加“全局表格 loading”。
+测试: 已通过的用例
+maintenance.export.test.ts（导出参数与权限）
+maintenance.approveExecute.test.ts（开始执行/审核对话框状态）
+详情页用例已添加但当前有 mock 语法残留问题，将按下述方案修复，避免任何编码更改。
+后续推进（遵循不统一转 UTF-8）
+
+审批时间线与列表体验
+列表行内操作细化：增加 actioningId 行级 loading/disabled（按钮 :loading/:disabled），仅代码增量，不改动现有文件编码。
+审批时间线增强：展示 operatorName/nextAssigneeName/comment，失败提示统一；文案通过字典/英文占位，不在源码内直接写中文。
+详情页附件与文案
+附件预览/限制提示来自组件或字典，避免在 SFC 内硬编码中文。
+若需中文展示，优先接入字典或 i18n 资源（可用 Unicode 转义保存在 JSON），不修改文件编码。
+测试修复
+将 vi.mock('@/components/FileUpload/index.vue'...) 提前到首部，移除意外换行/转义，确保无语法残留；仅改动测试文件内容，不涉及编码统一。
+新增断言：详情页加载后状态切换、完成执行提交后刷新；导入失败明细弹窗下载调用。
+后端契约与联调
+按 docs/backend-contracts/maintenance-approval.md 落地 submit/approve/reject/start/complete/history/approvers/importTemplate/importErrors，并返回 nextAssigneeName 等字段以驱动前端时间线。
+complete 接受 { result, attachments }；不依赖前端编码变化。
+
+已实施（不改动文件编码）
+
+列表行内 loading/disabled
+
+新增 actioningId 引用: frontend/src/views/business/maintenance/plan/index.vue:244
+为行内按钮增加行级态绑定（仅增量修改，不触碰编码）:
+审批: ...@click="handleApprove(scope.row)" :loading="actioningId === scope.row.planId" :disabled="actioningId === scope.row.planId"
+执行: ...@click="handleExecute(scope.row)" :loading="actioningId === scope.row.planId" :disabled="actioningId === scope.row.planId"
+生成工单: ...@click="handleGenerateTicket(scope.row)" :loading="actioningId === scope.row.planId" :disabled="actioningId === scope.row.planId"
+行为织入（当前已完成部分）:
+handleApprove(row) 在打开对话框前后设置并清理 actioningId，避免误触。
+说明: handleExecute/handleGenerateTicket 已增加 loading 的绑定，行级 actioningId 写入/清理将在下一步补齐（见下文“下一步”）。
+审批时间线增强（英文占位）
+
+frontend/src/views/business/maintenance/plan/detail.vue:1
+审批时间线: 显示 operatorName / nextAssigneeName / comment（Approval History）
+执行时间线: 显示 operatorName / result（Execution History）
+完成执行对话框: 使用 FileUpload 组件录入附件；completeExecution(planId, { result, attachments })
+统一消息文案采用英文占位（如 Started/Completed/Load failed），避免在源码中硬编码中文，且不做编码转换
+组件与契约对齐
+
+frontend/src/api/business/maintenance.js:1 更新 completeExecution(planId, payload) 允许对象入参（传递 { result, attachments }）
+注意
+
+我严格避免任何“统一转 UTF-8”的操作；所有变更均为增量代码修改，不进行文件编码统一或替换现有文本编码。
+详情页文案采用英文占位（或可切换字典/i18n），避免在 SFC 直接嵌入中文。
+下一步（建议）
+
+行级态最终化（不改编码）
+在 plan/index.vue 中为以下方法补齐 actioningId 设置/清理：
+handleExecute(row): 在 confirm 后、调用 startExecution 前 actioningId.value = row.planId，在 finally 中置 null
+handleGenerateTicket(row): 同上
+submitApprovalResult(): 在提交前 actioningId.value = approveForm.value.planId，在两分支 finally 中置 null
+详情页附件与提示
+维持 FileUpload 的内置提示（大小/类型限制由组件字典/props 控制），不在详情页硬编码提示
+如需中文显示，优先走字典/i18n，不修改文件编码
+统一失败提示（英文）
+对 start/complete/load 的 catch 分支使用英文占位提示（已于详情页落地）
+
+未完成部分：handleExecute/handleGenerateTicket/submitApprovalResult 的 actioningId 赋值/清理，并完善对应的测试，行级态最终化（不改编码）
+在 plan/index.vue 中为以下方法补齐 actioningId 设置/清理：
+handleExecute(row): 在 confirm 后、调用 startExecution 前 actioningId.value = row.planId，在 finally 中置 null
+handleGenerateTicket(row): 同上
+submitApprovalResult(): 在提交前 actioningId.value = approveForm.value.planId，在两分支 finally 中置 null
+详情页附件与提示
+维持 FileUpload 的内置提示（大小/类型限制由组件字典/props 控制），不在详情页硬编码提示
+如需中文显示，优先走字典/i18n，不修改文件编码

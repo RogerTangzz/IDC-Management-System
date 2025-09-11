@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    druid:
+      master:
+        url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        username: sa
+        password:
+      initialSize: 1
+      minIdle: 1
+      maxActive: 5
+      maxWait: 60000
+      connectTimeout: 30000
+      socketTimeout: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      maxEvictableIdleTimeMillis: 900000
+      validationQuery: SELECT 1
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    password:
+
+logging:
+  level:
+    com.ruoyi: warn

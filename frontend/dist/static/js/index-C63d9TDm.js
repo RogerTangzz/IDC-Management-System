@@ -1,0 +1,1 @@
+import{_ as a}from"./index-DVDjrYUq.js";import{r as t,B as o,m as u,h as l,u as s}from"./vue-SR65qDCS.js";const _={__name:"index",setup(c){const r=t("undefined/swagger-ui/index.html");return(f,e)=>(u(),o(s(a),{src:s(r),"onUpdate:src":e[0]||(e[0]=n=>l(r)?r.value=n:null)},null,8,["src"]))}};export{_ as default};

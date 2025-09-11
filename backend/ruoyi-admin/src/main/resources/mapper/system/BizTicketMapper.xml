@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BizTicketMapper">
+    
+    <resultMap type="BizTicket" id="BizTicketResult">
+        <result property="ticketId"    column="ticket_id"    />
+        <result property="ticketNo"    column="ticket_no"    />
+        <result property="title"    column="title"    />
+        <result property="description"    column="description"    />
+        <result property="priority"    column="priority"    />
+        <result property="status"    column="status"    />
+        <result property="equipment"    column="equipment"    />
+        <result property="location"    column="location"    />
+        <result property="specialty"    column="specialty"    />
+        <result property="faultType"    column="fault_type"    />
+        <result property="reporterId"    column="reporter_id"    />
+        <result property="reporterName"    column="reporter_name"    />
+        <result property="reporterPhone"    column="reporter_phone"    />
+        <result property="assigneeId"    column="assignee_id"    />
+        <result property="assigneeName"    column="assignee_name"    />
+        <result property="source"    column="source"    />
+        <result property="sourceId"    column="source_id"    />
+        <result property="discoveryTime"    column="discovery_time"    />
+        <result property="deadline"    column="deadline"    />
+        <result property="completionTime"    column="completion_time"    />
+        <result property="solution"    column="solution"    />
+        <result property="escalationHistory"    column="escalation_history"    />
+        <result property="attachments"    column="attachments"    />
+    <result property="lastStatusTime"    column="last_status_time"    />
+    <result property="lastAction"    column="last_action"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    <!-- 非表字段 lastAction/lastStatusTime 通过后续增强设置，不在此 resultMap 中直接映射 -->
+    </resultMap>
+
+    <sql id="selectBizTicketVo">
+    select ticket_id, ticket_no, title, description, priority, status, equipment, location, specialty, fault_type, reporter_id, reporter_name, reporter_phone, assignee_id, assignee_name, source, source_id, discovery_time, deadline, completion_time, solution, escalation_history, attachments, last_status_time, last_action, del_flag, create_by, create_time, update_by, update_time, remark from biz_ticket
+    </sql>
+
+    <select id="selectBizTicketList" parameterType="BizTicket" resultMap="BizTicketResult">
+        <include refid="selectBizTicketVo"/>
+        <where>  
+            <if test="ticketNo != null  and ticketNo != ''"> and ticket_no = #{ticketNo}</if>
+            <if test="title != null  and title != ''"> and title like concat('%', #{title}, '%')</if>
+            <if test="description != null  and description != ''"> and description = #{description}</if>
+            <if test="priority != null  and priority != ''"> and priority = #{priority}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="equipment != null  and equipment != ''"> and equipment = #{equipment}</if>
+            <if test="location != null  and location != ''"> and location = #{location}</if>
+            <if test="specialty != null  and specialty != ''"> and specialty = #{specialty}</if>
+            <if test="faultType != null  and faultType != ''"> and fault_type = #{faultType}</if>
+            <if test="reporterId != null "> and reporter_id = #{reporterId}</if>
+            <if test="reporterName != null  and reporterName != ''"> and reporter_name like concat('%', #{reporterName}, '%')</if>
+            <if test="reporterPhone != null  and reporterPhone != ''"> and reporter_phone = #{reporterPhone}</if>
+            <if test="assigneeId != null "> and assignee_id = #{assigneeId}</if>
+            <if test="assigneeName != null  and assigneeName != ''"> and assignee_name like concat('%', #{assigneeName}, '%')</if>
+            <if test="source != null  and source != ''"> and source = #{source}</if>
+            <if test="sourceId != null "> and source_id = #{sourceId}</if>
+            <if test="discoveryTime != null "> and discovery_time = #{discoveryTime}</if>
+            <if test="deadline != null "> and deadline = #{deadline}</if>
+            <if test="completionTime != null "> and completion_time = #{completionTime}</if>
+            <if test="params != null and params.beginTime != null and params.beginTime != ''"> and create_time &gt;= #{params.beginTime}</if>
+            <if test="params != null and params.endTime != null and params.endTime != ''"> and create_time &lt;= #{params.endTime}</if>
+            <if test="solution != null  and solution != ''"> and solution = #{solution}</if>
+            <if test="escalationHistory != null  and escalationHistory != ''"> and escalation_history = #{escalationHistory}</if>
+            <if test="attachments != null  and attachments != ''"> and attachments = #{attachments}</if>
+            <if test="params != null and params.selfOnly != null and (params.selfOnly == '1' or params.selfOnly == 'true')">
+                and (assignee_id = #{params.userId}
+                     or reporter_id = #{params.userId}
+                     or create_by = #{params.username})
+            </if>
+            <!-- 下钻模式：逾期 / 近到期（warnBeforeHours 小时内到期） -->
+            <if test="params != null and params.mode != null and params.mode == 'overdue'">
+                and deadline is not null
+                and status &lt;&gt; 'closed'
+                and completion_time is null
+                and now() &gt; deadline
+            </if>
+            <if test="params != null and params.mode != null and params.mode == 'neardue'">
+                and deadline is not null
+                and status &lt;&gt; 'closed'
+                and completion_time is null
+                and deadline &gt; now()
+                <choose>
+                    <when test="params.warnBeforeMinutes != null">and deadline &lt;= date_add(now(), interval #{params.warnBeforeMinutes} minute)</when>
+                    <when test="params.warnBeforeHours != null">and deadline &lt;= date_add(now(), interval #{params.warnBeforeHours} hour)</when>
+                    <otherwise>and deadline &lt;= date_add(now(), interval 2 hour)</otherwise>
+                </choose>
+            </if>
+        </where>
+        <!-- 排序：controller 已做白名单校验，注入 params.orderBy（列名 + asc/desc） -->
+        <if test="params != null and params.orderBy != null and params.orderBy != ''">
+            order by ${params.orderBy}
+        </if>
+    </select>
+    
+    <select id="selectBizTicketByTicketId" parameterType="Long" resultMap="BizTicketResult">
+        <include refid="selectBizTicketVo"/>
+        where ticket_id = #{ticketId}
+    </select>
+
+    <insert id="insertBizTicket" parameterType="BizTicket" useGeneratedKeys="true" keyProperty="ticketId">
+        insert into biz_ticket
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="ticketNo != null and ticketNo != ''">ticket_no,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="description != null">description,</if>
+            <if test="priority != null">priority,</if>
+            <if test="status != null">status,</if>
+            <if test="equipment != null">equipment,</if>
+            <if test="location != null">location,</if>
+            <if test="specialty != null">specialty,</if>
+            <if test="faultType != null">fault_type,</if>
+            <if test="reporterId != null">reporter_id,</if>
+            <if test="reporterName != null">reporter_name,</if>
+            <if test="reporterPhone != null">reporter_phone,</if>
+            <if test="assigneeId != null">assignee_id,</if>
+            <if test="assigneeName != null">assignee_name,</if>
+            <if test="source != null">source,</if>
+            <if test="sourceId != null">source_id,</if>
+            <if test="discoveryTime != null">discovery_time,</if>
+            <if test="deadline != null">deadline,</if>
+            <if test="completionTime != null">completion_time,</if>
+            <if test="solution != null">solution,</if>
+            <if test="escalationHistory != null">escalation_history,</if>
+            <if test="attachments != null">attachments,</if>
+            <if test="lastStatusTime != null">last_status_time,</if>
+            <if test="lastAction != null">last_action,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="ticketNo != null and ticketNo != ''">#{ticketNo},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="description != null">#{description},</if>
+            <if test="priority != null">#{priority},</if>
+            <if test="status != null">#{status},</if>
+            <if test="equipment != null">#{equipment},</if>
+            <if test="location != null">#{location},</if>
+            <if test="specialty != null">#{specialty},</if>
+            <if test="faultType != null">#{faultType},</if>
+            <if test="reporterId != null">#{reporterId},</if>
+            <if test="reporterName != null">#{reporterName},</if>
+            <if test="reporterPhone != null">#{reporterPhone},</if>
+            <if test="assigneeId != null">#{assigneeId},</if>
+            <if test="assigneeName != null">#{assigneeName},</if>
+            <if test="source != null">#{source},</if>
+            <if test="sourceId != null">#{sourceId},</if>
+            <if test="discoveryTime != null">#{discoveryTime},</if>
+            <if test="deadline != null">#{deadline},</if>
+            <if test="completionTime != null">#{completionTime},</if>
+            <if test="solution != null">#{solution},</if>
+            <if test="escalationHistory != null">#{escalationHistory},</if>
+            <if test="attachments != null">#{attachments},</if>
+            <if test="lastStatusTime != null">#{lastStatusTime},</if>
+            <if test="lastAction != null">#{lastAction},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBizTicket" parameterType="BizTicket">
+        update biz_ticket
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="ticketNo != null and ticketNo != ''">ticket_no = #{ticketNo},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="equipment != null">equipment = #{equipment},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="specialty != null">specialty = #{specialty},</if>
+            <if test="faultType != null">fault_type = #{faultType},</if>
+            <if test="reporterId != null">reporter_id = #{reporterId},</if>
+            <if test="reporterName != null">reporter_name = #{reporterName},</if>
+            <if test="reporterPhone != null">reporter_phone = #{reporterPhone},</if>
+            <if test="assigneeId != null">assignee_id = #{assigneeId},</if>
+            <if test="assigneeName != null">assignee_name = #{assigneeName},</if>
+            <if test="source != null">source = #{source},</if>
+            <if test="sourceId != null">source_id = #{sourceId},</if>
+            <if test="discoveryTime != null">discovery_time = #{discoveryTime},</if>
+            <if test="deadline != null">deadline = #{deadline},</if>
+            <if test="completionTime != null">completion_time = #{completionTime},</if>
+            <if test="solution != null">solution = #{solution},</if>
+            <if test="escalationHistory != null">escalation_history = #{escalationHistory},</if>
+            <if test="attachments != null">attachments = #{attachments},</if>
+            <if test="lastStatusTime != null">last_status_time = #{lastStatusTime},</if>
+            <if test="lastAction != null">last_action = #{lastAction},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where ticket_id = #{ticketId}
+    </update>
+
+    <delete id="deleteBizTicketByTicketId" parameterType="Long">
+        delete from biz_ticket where ticket_id = #{ticketId}
+    </delete>
+
+    <delete id="deleteBizTicketByTicketIds" parameterType="String">
+        delete from biz_ticket where ticket_id in 
+        <foreach item="ticketId" collection="array" open="(" separator="," close=")">
+            #{ticketId}
+        </foreach>
+    </delete>
+
+    <!-- ================== 扩展统计 SQL ================== -->
+    <select id="countGroupByStatus" resultType="java.util.HashMap">
+        select status as k, count(*) as v from biz_ticket group by status
+    </select>
+    <select id="countGroupByPriority" resultType="java.util.HashMap">
+        select priority as k, count(*) as v from biz_ticket group by priority
+    </select>
+    <select id="countToday" resultType="java.util.HashMap">
+        select 
+            sum(case when date(create_time)=current_date then 1 else 0 end) as todayNew,
+            sum(case when completion_time is not null and date(completion_time)=current_date then 1 else 0 end) as todayCompleted
+        from biz_ticket
+    </select>
+    <!-- 处理时长分布区间: lt1h / 1-4h / 4-8h / 8-24h / ge24h -->
+        <select id="durationDistribution" resultType="java.util.HashMap">
+                select 
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 60 then 1 else 0 end) as lt1h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=60 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 240 then 1 else 0 end) as bt1to4h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=240 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 480 then 1 else 0 end) as bt4to8h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=480 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 1440 then 1 else 0 end) as bt8to24h,
+                    sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=1440 then 1 else 0 end) as ge24h,
+                    count(*) as total
+                from biz_ticket
+                where completion_time is not null
+        </select>
+    <!-- SLA 超时: deadline 不为空且 (完成时间>deadline 或 未完成且当前时间>deadline) 视为超时 -->
+        <select id="slaStats" resultType="java.util.HashMap">
+                select 
+                    sum(case when deadline is not null then 1 else 0 end) as withDeadline,
+                    sum(case when deadline is not null and (
+                                (completion_time is not null and completion_time &gt; deadline) or
+                                (completion_time is null and now() &gt; deadline)
+                            ) then 1 else 0 end) as timeoutCount,
+                    sum(case when deadline is not null and completion_time is not null and completion_time &lt;= deadline then 1 else 0 end) as ontimeCompleted
+                from biz_ticket
+        </select>
+
+    <!-- 带范围的分析：参数 beginTime/endTime 可选，过滤 create_time/完成时间 -->
+    <select id="durationAnalytics" parameterType="map" resultType="java.util.HashMap">
+        select 
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 60 then 1 else 0 end) as lt1h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=60 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 240 then 1 else 0 end) as bt1to4h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=240 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 480 then 1 else 0 end) as bt4to8h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=480 and TIMESTAMPDIFF(MINUTE, create_time, completion_time) &lt; 1440 then 1 else 0 end) as bt8to24h,
+            sum(case when TIMESTAMPDIFF(MINUTE, create_time, completion_time) &gt;=1440 then 1 else 0 end) as ge24h,
+            count(*) as total
+        from biz_ticket
+        where completion_time is not null
+        <if test="beginTime != null and beginTime != ''"> and completion_time &gt;= #{beginTime}</if>
+        <if test="endTime != null and endTime != ''"> and completion_time &lt;= #{endTime}</if>
+    </select>
+
+    <select id="slaAnalytics" parameterType="map" resultType="java.util.HashMap">
+        select 
+            sum(case when deadline is not null then 1 else 0 end) as withDeadline,
+            sum(case when deadline is not null and (
+                        (completion_time is not null and completion_time &gt; deadline) or
+                        (completion_time is null and now() &gt; deadline)
+                    ) then 1 else 0 end) as timeoutCount,
+            sum(case when deadline is not null and completion_time is not null and completion_time &lt;= deadline then 1 else 0 end) as ontimeCompleted
+        from biz_ticket
+        <where>
+            <if test="beginTime != null and beginTime != ''"> and create_time &gt;= #{beginTime}</if>
+            <if test="endTime != null and endTime != ''"> and create_time &lt;= #{endTime}</if>
+        </where>
+    </select>
+
+    <!-- 趋势：按天统计 -->
+    <select id="trendCreated" parameterType="map" resultType="java.util.HashMap">
+        select date(create_time) as d, count(*) as v
+        from biz_ticket
+        <where>
+            <if test="beginTime != null and beginTime != ''"> and create_time &gt;= #{beginTime}</if>
+            <if test="endTime != null and endTime != ''"> and create_time &lt;= #{endTime}</if>
+        </where>
+        group by date(create_time)
+        order by d
+    </select>
+
+    <select id="trendCompleted" parameterType="map" resultType="java.util.HashMap">
+        select date(completion_time) as d, count(*) as v
+        from biz_ticket
+        <where>
+            and completion_time is not null
+            <if test="beginTime != null and beginTime != ''"> and completion_time &gt;= #{beginTime}</if>
+            <if test="endTime != null and endTime != ''"> and completion_time &lt;= #{endTime}</if>
+        </where>
+        group by date(completion_time)
+        order by d
+    </select>
+    <select id="countOverdue" resultType="long">
+        select count(*) from biz_ticket
+        where deadline is not null
+            and status &lt;> 'closed'
+            and completion_time is null
+            and now() &gt; deadline
+    </select>
+
+    <!-- 近即将超时（warnBeforeHours 小时内到期） -->
+    <select id="countNearDue" parameterType="int" resultType="long">
+        select count(*) from biz_ticket
+        where deadline is not null
+          and status &lt;&gt; 'closed'
+          and completion_time is null
+          and deadline &gt; now()
+          and deadline &lt;= date_add(now(), interval #{_parameter} hour)
+    </select>
+
+    <select id="selectNearDueList" parameterType="int" resultMap="BizTicketResult">
+        <include refid="selectBizTicketVo"/>
+        where deadline is not null
+          and status &lt;&gt; 'closed'
+          and completion_time is null
+          and deadline &gt; now()
+          and deadline &lt;= date_add(now(), interval #{_parameter} hour)
+    </select>
+
+    <!-- 逾期工单列表 -->
+    <select id="selectOverdueList" parameterType="BizTicket" resultMap="BizTicketResult">
+        <include refid="selectBizTicketVo"/>
+        where deadline is not null
+          and status &lt;&gt; 'closed'
+          and completion_time is null
+          and now() &gt; deadline
+        <if test="assigneeId != null"> and assignee_id = #{assigneeId}</if>
+        <if test="priority != null and priority != ''"> and priority = #{priority}</if>
+        <if test="title != null and title != ''"> and title like concat('%', #{title}, '%')</if>
+        <if test="reporterName != null and reporterName != ''"> and reporter_name like concat('%', #{reporterName}, '%')</if>
+        <if test="params != null and params.beginTime != null and params.beginTime != ''"> and create_time &gt;= #{params.beginTime}</if>
+        <if test="params != null and params.endTime != null and params.endTime != ''"> and create_time &lt;= #{params.endTime}</if>
+        <if test="params != null and params.selfOnly != null and (params.selfOnly == '1' or params.selfOnly == 'true')">
+            and (assignee_id = #{params.userId}
+                 or reporter_id = #{params.userId}
+                 or create_by = #{params.username})
+        </if>
+    </select>
+</mapper>

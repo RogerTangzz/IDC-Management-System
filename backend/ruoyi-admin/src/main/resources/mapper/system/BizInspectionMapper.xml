@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BizInspectionMapper">
+    
+    <resultMap type="BizInspection" id="BizInspectionResult">
+        <result property="inspectionId"    column="inspection_id"    />
+        <result property="inspectionNo"    column="inspection_no"    />
+        <result property="inspectionDate"    column="inspection_date"    />
+        <result property="floor"    column="floor"    />
+        <result property="inspectorId"    column="inspector_id"    />
+        <result property="inspectorName"    column="inspector_name"    />
+        <result property="relayPerson"    column="relay_person"    />
+        <result property="items"    column="items"    />
+        <result property="progress"    column="progress"    />
+        <result property="anomalyCount"    column="anomaly_count"    />
+        <result property="ticketCount"    column="ticket_count"    />
+        <result property="ticketIds"    column="ticket_ids"    />
+        <result property="ticketMap"    column="ticket_map"    />
+        <result property="isCopied"    column="is_copied"    />
+        <result property="photos"    column="photos"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectBizInspectionVo">
+        select inspection_id, inspection_no, inspection_date, floor, inspector_id, inspector_name, relay_person, items, progress, anomaly_count, ticket_count, ticket_ids, ticket_map, is_copied, photos, status, del_flag, create_by, create_time, update_by, update_time, remark from biz_inspection
+    </sql>
+
+    <select id="selectBizInspectionList" parameterType="BizInspection" resultMap="BizInspectionResult">
+        <include refid="selectBizInspectionVo"/>
+        <where>  
+            <if test="inspectionNo != null  and inspectionNo != ''"> and inspection_no = #{inspectionNo}</if>
+            <if test="inspectionDate != null "> and inspection_date = #{inspectionDate}</if>
+            <if test="floor != null  and floor != ''"> and floor = #{floor}</if>
+            <if test="inspectorId != null "> and inspector_id = #{inspectorId}</if>
+            <if test="inspectorName != null  and inspectorName != ''"> and inspector_name like concat('%', #{inspectorName}, '%')</if>
+            <if test="relayPerson != null  and relayPerson != ''"> and relay_person = #{relayPerson}</if>
+            <if test="items != null  and items != ''"> and items = #{items}</if>
+            <if test="progress != null "> and progress = #{progress}</if>
+            <if test="anomalyCount != null "> and anomaly_count = #{anomalyCount}</if>
+            <if test="ticketCount != null "> and ticket_count = #{ticketCount}</if>
+            <if test="ticketIds != null  and ticketIds != ''"> and ticket_ids = #{ticketIds}</if>
+            <if test="ticketMap != null  and ticketMap != ''"> and ticket_map = #{ticketMap}</if>
+            <if test="isCopied != null  and isCopied != ''"> and is_copied = #{isCopied}</if>
+            <if test="photos != null  and photos != ''"> and photos = #{photos}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectBizInspectionByInspectionId" parameterType="Long" resultMap="BizInspectionResult">
+        <include refid="selectBizInspectionVo"/>
+        where inspection_id = #{inspectionId}
+    </select>
+
+    <insert id="insertBizInspection" parameterType="BizInspection" useGeneratedKeys="true" keyProperty="inspectionId">
+        insert into biz_inspection
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="inspectionNo != null and inspectionNo != ''">inspection_no,</if>
+            <if test="inspectionDate != null">inspection_date,</if>
+            <if test="floor != null and floor != ''">floor,</if>
+            <if test="inspectorId != null">inspector_id,</if>
+            <if test="inspectorName != null">inspector_name,</if>
+            <if test="relayPerson != null">relay_person,</if>
+            <if test="items != null">items,</if>
+            <if test="progress != null">progress,</if>
+            <if test="anomalyCount != null">anomaly_count,</if>
+            <if test="ticketCount != null">ticket_count,</if>
+            <if test="ticketIds != null">ticket_ids,</if>
+            <if test="ticketMap != null">ticket_map,</if>
+            <if test="isCopied != null">is_copied,</if>
+            <if test="photos != null">photos,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="inspectionNo != null and inspectionNo != ''">#{inspectionNo},</if>
+            <if test="inspectionDate != null">#{inspectionDate},</if>
+            <if test="floor != null and floor != ''">#{floor},</if>
+            <if test="inspectorId != null">#{inspectorId},</if>
+            <if test="inspectorName != null">#{inspectorName},</if>
+            <if test="relayPerson != null">#{relayPerson},</if>
+            <if test="items != null">#{items},</if>
+            <if test="progress != null">#{progress},</if>
+            <if test="anomalyCount != null">#{anomalyCount},</if>
+            <if test="ticketCount != null">#{ticketCount},</if>
+            <if test="ticketIds != null">#{ticketIds},</if>
+            <if test="ticketMap != null">#{ticketMap},</if>
+            <if test="isCopied != null">#{isCopied},</if>
+            <if test="photos != null">#{photos},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBizInspection" parameterType="BizInspection">
+        update biz_inspection
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="inspectionNo != null and inspectionNo != ''">inspection_no = #{inspectionNo},</if>
+            <if test="inspectionDate != null">inspection_date = #{inspectionDate},</if>
+            <if test="floor != null and floor != ''">floor = #{floor},</if>
+            <if test="inspectorId != null">inspector_id = #{inspectorId},</if>
+            <if test="inspectorName != null">inspector_name = #{inspectorName},</if>
+            <if test="relayPerson != null">relay_person = #{relayPerson},</if>
+            <if test="items != null">items = #{items},</if>
+            <if test="progress != null">progress = #{progress},</if>
+            <if test="anomalyCount != null">anomaly_count = #{anomalyCount},</if>
+            <if test="ticketCount != null">ticket_count = #{ticketCount},</if>
+            <if test="ticketIds != null">ticket_ids = #{ticketIds},</if>
+            <if test="ticketMap != null">ticket_map = #{ticketMap},</if>
+            <if test="isCopied != null">is_copied = #{isCopied},</if>
+            <if test="photos != null">photos = #{photos},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where inspection_id = #{inspectionId}
+    </update>
+
+    <delete id="deleteBizInspectionByInspectionId" parameterType="Long">
+        delete from biz_inspection where inspection_id = #{inspectionId}
+    </delete>
+
+    <delete id="deleteBizInspectionByInspectionIds" parameterType="String">
+        delete from biz_inspection where inspection_id in 
+        <foreach item="inspectionId" collection="array" open="(" separator="," close=")">
+            #{inspectionId}
+        </foreach>
+    </delete>
+
+    <!-- 查询当日最新巡检编号 -->
+    <select id="selectLatestInspectionNo" resultType="string">
+        select inspection_no from biz_inspection 
+        where inspection_no like concat(#{prefix}, '%') 
+        order by inspection_no desc limit 1
+    </select>
+</mapper>
