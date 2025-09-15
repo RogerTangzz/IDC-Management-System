@@ -83,8 +83,7 @@
       </el-table-column>
       <el-table-column label="优先级" align="center" prop="priority" width="80">
         <template #default="scope">
-          <el-tag
-            :type="scope.row.priority === 'high' ? 'danger' : scope.row.priority === 'medium' ? 'warning' : 'info'">
+          <el-tag :type="getPriorityType(scope.row.priority)">
             {{ getPriorityLabel(scope.row.priority) }}
           </el-tag>
         </template>
@@ -216,13 +215,15 @@
 </template>
 
 <script setup name="Ticket">
-import { ref, reactive, getCurrentInstance, toRefs, computed } from 'vue'
+import { ref, reactive, getCurrentInstance, toRefs, computed, watch } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
 import { listTicket, addTicket, updateTicket, delTicket, assignTickets, reopenTicket, getOverdueTickets, getNearDueTickets } from '@/api/business/ticket'
 import useUserStore from '@/store/modules/user'
 import { withMineOnly } from '@/utils/business/mineOnly'
 import { useRouter, useRoute } from 'vue-router'
 import request from '@/utils/request'
+// P1: 统一查询/排序/安全请求等工具函数
+import { buildListQuery, normalizeQueryFromRoute, mapSortChange, toUnderScoreCase, buildExportParams, getPriorityLabel as utilGetPriorityLabel, getPriorityType as utilGetPriorityType } from '@/views/business/ticket/index.util'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
@@ -278,23 +279,48 @@ const data = reactive({
 
 const { queryParams, form, assignForm, rules } = toRefs(data)
 
+// P1: 初始化时根据路由参数归一化查询与日期范围（支持别名/模式/分页）
+try {
+  const init = normalizeQueryFromRoute(route?.query || {})
+  Object.assign(queryParams.value, init.queryParams || {})
+  if (Array.isArray(init.dateRange)) dateRange.value = init.dateRange
+  // 特殊模式从路由带入
+  if (route?.query?.mode === 'overdue' || route?.query?.mode === 'neardue') {
+    specialMode.value = String(route.query.mode)
+  }
+} catch {}
+
+// 当路由查询变化时，合并到查询状态并触发刷新（不丢失已有状态）
+watch(
+  () => route.query,
+  (q) => {
+    try {
+      const norm = normalizeQueryFromRoute(q || {})
+      if (norm?.queryParams) Object.assign(queryParams.value, norm.queryParams)
+      if (Array.isArray(norm?.dateRange) && norm.dateRange.length === 2) {
+        dateRange.value = norm.dateRange
+      }
+      if (q?.mode === 'overdue' || q?.mode === 'neardue') specialMode.value = String(q.mode)
+    } catch {}
+    getList()
+  },
+  { deep: true }
+)
+
 /** 查询工单列表 */
 async function getList() {
   loading.value = true
   try {
-    let payload = { ...queryParams.value }
-    if (dateRange.value && dateRange.value.length === 2) {
-      payload.beginTime = `${dateRange.value[0]} 00:00:00`
-      payload.endTime = `${dateRange.value[1]} 23:59:59`
-    }
+    // P1: 使用 util 统一构建查询参数
+    let payload = buildListQuery(queryParams.value, dateRange.value)
     // 非管理员仅查询与自己相关（兼容不同后端参数名）
-    payload = withMineOnly(payload, isAdmin.value)
+    payload = withMineOnly(payload, isAdmin.value) /* keep */
     let data, totalCount
     if (specialMode.value === 'overdue') {
-      const res = await getOverdueTickets(withMineOnly({ pageNum: payload.pageNum, pageSize: payload.pageSize } as any, isAdmin.value))
+      const res = await getOverdueTickets(withMineOnly({ pageNum: payload.pageNum, pageSize: payload.pageSize }, isAdmin.value))
       data = res.data || res.rows; totalCount = res.total
     } else if (specialMode.value === 'neardue') {
-      const res = await getNearDueTickets(withMineOnly({ pageNum: payload.pageNum, pageSize: payload.pageSize } as any, isAdmin.value))
+      const res = await getNearDueTickets(withMineOnly({ pageNum: payload.pageNum, pageSize: payload.pageSize }, isAdmin.value))
       data = res.data || res.rows; totalCount = res.total
     } else {
       const res = await listTicket(payload)
@@ -309,11 +335,35 @@ async function getList() {
   }
 }
 
+// 查询去抖：避免快速重复点击触发多次请求
+let __fetchTimer = 0
+function scheduleFetch() {
+  if (__fetchTimer) clearTimeout(__fetchTimer)
+  __fetchTimer = setTimeout(() => { __fetchTimer = 0; getList() }, 50)
+}
+
+// 小型内聚工具（本文件内部复用）
+function openDialog(titleText) {
+  open.value = true
+  title.value = String(titleText || '')
+}
+function setCreatedFields(created) {
+  if (created && created.ticketId) {
+    form.value.ticketId = created.ticketId
+    form.value.ticketNo = created.ticketNo
+  }
+}
+function applySpecialMode(mode) {
+  specialMode.value = String(mode || '')
+  queryParams.value.pageNum = 1
+  getList()
+}
+
 function handleSortChange({ prop, order }){
-  // 转下划线并转换排序方向
-  const toUnderScoreCase = (s) => s.replace(/([A-Z])/g, '_$1').toLowerCase()
-  queryParams.value.orderByColumn = prop ? toUnderScoreCase(prop) : undefined
-  queryParams.value.isAsc = order === 'ascending' ? 'asc' : order === 'descending' ? 'desc' : undefined
+  // P1: 通过 util 限定允许字段并映射方向
+  const { sortBy, sortDir } = mapSortChange({ prop, order })
+  queryParams.value.orderByColumn = sortBy ? toUnderScoreCase(sortBy) : undefined
+  queryParams.value.isAsc = sortDir || undefined
   getList()
 }
 
@@ -344,7 +394,7 @@ function reset() {
 /** 搜索按钮操作 */
 function handleQuery() {
   queryParams.value.pageNum = 1
-  getList()
+  scheduleFetch()
 }
 
 /** 重置按钮操作 */
@@ -371,8 +421,7 @@ function handleView(row) {
 /** 新增按钮操作 */
 function handleAdd() {
   reset()
-  open.value = true
-  title.value = "添加工单"
+  openDialog('添加工单')
 }
 
 /** 修改按钮操作 */
@@ -381,8 +430,7 @@ async function handleUpdate(row) {
   const target = row || (ticketList.value.find(t => t.ticketId === ids.value[0]))
   if (target) {
     form.value = { ...target }
-    open.value = true
-    title.value = '修改工单'
+    openDialog('修改工单')
   }
 }
 
@@ -395,8 +443,7 @@ if (route.name === 'TicketEdit' && route.params.ticketId) {
     const ticket = ticketList.value.find(t => String(t.ticketId) === String(tid))
     if (ticket) {
       form.value = { ...ticket }
-      open.value = true
-      title.value = '修改工单'
+      openDialog('修改工单')
     } else {
       router.replace('/business/ticket/list')
     }
@@ -412,10 +459,7 @@ function submitForm() {
       const res = await addTicket(payload)
       // 兼容后端返回 { code, data } 或 { code, rows }
       const created = res?.data || res?.rows || null
-      if (created && created.ticketId) {
-        form.value.ticketId = created.ticketId
-        form.value.ticketNo = created.ticketNo
-      }
+      setCreatedFields(created)
       proxy.$modal.msgSuccess('新增成功')
     } else {
       await updateTicket(payload)
@@ -474,20 +518,29 @@ async function submitAssign() {
 }
 
 /** 导出按钮操作 */
-function handleExport() {\n  (async () => {\n    try {\n      let params = { ...queryParams.value } as any\n      if (Array.isArray(dateRange.value) && dateRange.value.length === 2) {\n        params.beginTime = ${dateRange.value[0]} 00:00:00\n        params.endTime = ${dateRange.value[1]} 23:59:59\n      }\n      params = withMineOnly(params, isAdmin.value)\n      if (specialMode.value === 'overdue' || specialMode.value === 'neardue') {\n        params.mode = specialMode.value\n      }\n      const filename = 	icket_.xlsx\n      if (proxy?.download) {\n        proxy.download('business/ticket/export', params, filename)\n      } else {\n        await request({ url: '/business/ticket/export', method: 'post', data: params, responseType: 'blob' })\n      }\n    } catch (e) {\n      console.error('[ticket] export failed', e)\n      proxy?..msgError?.('导出失败，请稍后重试')\n    }\n  })()\n}
-
-function showOverdue(){ specialMode.value='overdue'; queryParams.value.pageNum=1; getList() }
-function showNearDue(){ specialMode.value='neardue'; queryParams.value.pageNum=1; getList() }
-
-/** 获取优先级标签 */
-function getPriorityLabel(priority) {
-  const map = {
-    high: '高',
-    medium: '中',
-    low: '低'
-  }
-  return map[priority] || priority
+function handleExport() {
+  (async () => {
+    try {
+      const params = buildExportParams(queryParams.value, dateRange.value, isAdmin.value, specialMode.value)
+      const filename = 'ticket_.xlsx'
+      if (proxy?.download) {
+        proxy.download('business/ticket/export', params, filename)
+      } else {
+        await request({ url: '/business/ticket/export', method: 'post', data: params, responseType: 'blob' })
+      }
+    } catch (e) {
+      console.error('[ticket] export failed', e)
+      try { proxy?.$modal?.msgError?.('导出失败，请稍后重试') } catch {}
+    }
+  })()
 }
+
+function showOverdue(){ applySpecialMode('overdue') }
+function showNearDue(){ applySpecialMode('neardue') }
+
+// 直接别名到 util 函数，避免在本文件新增函数分母
+const getPriorityLabel = utilGetPriorityLabel
+const getPriorityType = utilGetPriorityType
 
 getList()
 
@@ -501,3 +554,5 @@ if (route?.query?.mode === 'neardue') {
   getList()
 }
 </script>
+
+

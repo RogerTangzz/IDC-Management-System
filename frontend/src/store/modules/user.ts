@@ -1,5 +1,8 @@
 /// <reference path="../../types/entities.d.ts" />
 import router from '@/router'
+import FeatureFlags from '@/config/FeatureFlags'
+import { isFlagOn } from '@/config/FlagEvaluator'
+import { track, setTelemetryContext } from '@/infra/telemetry'
 import { ElMessageBox } from 'element-plus'
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
@@ -108,6 +111,21 @@ const useUserStore = defineStore('user', {
                 ElMessageBox.confirm('您的密码已过期，请尽快修改密码！', '安全提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
                     .then(() => { router.push({ name: 'Profile', params: { activeTab: 'resetPwd' } }) }).catch(() => { })
             }
+
+            // Stage 7：根据放量规则评估并应用模板 V2 开关（按用户/角色/组织逐步放量）
+            try {
+                const mode = import.meta.env.MODE
+                const env = mode === 'production' ? 'prod' : (mode === 'staging' ? 'stage' : 'dev')
+                const ctx = { userId: this.id, roles: this.roles }
+                const effective = isFlagOn('USE_TICKET_TEMPLATE_V2', env as any, ctx)
+                const prev = FeatureFlags.isEnabled('USE_TICKET_TEMPLATE_V2')
+                if (effective !== prev) {
+                    FeatureFlags.setFlag('USE_TICKET_TEMPLATE_V2', effective)
+                    try { track('flag_switched', { to: effective, reason: 'rollout' }) } catch {}
+                }
+                // 更新 Telemetry 基础上下文，便于观测按用户维度聚合
+                try { setTelemetryContext({ env, userId: this.id, roles: this.roles, flags: FeatureFlags.snapshot?.() || {} }) } catch {}
+            } catch {}
             return data
         },
         async logOut(): Promise<void> {

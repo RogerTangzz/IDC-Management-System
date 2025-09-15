@@ -40,7 +40,16 @@ function registerElStubs(app: any) {
             }
         }
     })
-    const tags = ['el-card','el-tag','el-progress','el-link','el-descriptions','el-descriptions-item','el-radio-group','el-radio-button','el-statistic','el-col','el-row','el-alert','el-checkbox','el-checkbox-group','dict-tag']
+    // 专门为 el-form-item 提供 data-prop，便于聚焦首个错误项
+    app.component('el-form-item', {
+        props: ['label','prop'],
+        setup(props: any, { slots, attrs }: any) {
+            const a: Record<string, any> = { ...attrs }
+            if (props.prop) a['data-prop'] = props.prop
+            return () => h('el-form-item' as any, a, slots?.default?.())
+        }
+    })
+    const tags = ['el-card','el-tag','el-progress','el-link','el-descriptions','el-descriptions-item','el-radio-group','el-radio','el-radio-button','el-switch','el-statistic','el-col','el-row','el-alert','el-checkbox','el-checkbox-group','dict-tag','el-input','el-select','el-option','el-date-picker','right-toolbar','pagination','el-dialog']
     tags.forEach(t => app.component(t, passthrough(t)))
     // 表格/列：列默认调用默认插槽并传入最小 scope，避免 scope.row 为空
     app.component('el-table', passthrough('el-table'))
@@ -50,8 +59,23 @@ function registerElStubs(app: any) {
             return () => h('el-table-column' as any, {}, slots?.default ? slots.default({ row: {}, column: {} }) : null)
         }
     })
+    // el-form：提供最小 validate/reset 接口，供 $refs.ticketRef 使用
+    app.component('el-form', {
+        name: 'ElFormStub',
+        props: ['model','rules','inline','labelWidth'],
+        setup(_props: any, { slots, attrs }: any) {
+            const api = {
+                validate(cb?: any) { try { cb?.(true) } catch {} },
+                resetFields() {}
+            }
+            ;(api as any).__isElFormStub = true
+            return Object.assign(() => h('form' as any, attrs, slots?.default?.()), api)
+        }
+    })
     // loading 指令桩
     app.directive('loading', { mounted() {}, updated() {} })
+    // 权限指令桩
+    app.directive('hasPermi', { mounted() {}, updated() {} })
     return app
 }
 

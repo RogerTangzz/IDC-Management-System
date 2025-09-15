@@ -1,0 +1,144 @@
+P2 阶段总结（至 Stage 5）
+
+代码分层:
+组合式: src/views/business/ticket/useTicketTemplate.ts:1（状态机 idle/loading/success/fail/canceled；重入防抖/软中断；submit/cancel 暴露）
+工具层: src/views/business/ticket/template.util.ts:1（校验/分支路由/ensureSafeRequest；isSuccess 钩子；成功/失败回调；统一错误提示）
+视图层: src/views/business/ticket/template.vue:316（接入组合式与 util；Enter 提交；首错聚焦；打开聚焦）
+覆盖与门禁:
+template.vue 目标阈值（行≥85/句≥90/分≥80/函=40，例外）已超标：行/句≈98.6%、分支≈86–90%、函数≈42%
+template.util.ts 高门禁（行/句/函≥90、分≥85）已达成：函数 100%、分支≈86.5%
+配置位置: frontend/scripts/coverage-check.mjs:16
+用例矩阵:
+util 直测：ticket.template.util.submitFlow.test.ts（validateFalse、add/update 成功/失败、isSuccess 判定、回调与容错）
+组合式：ticket.template.composable.debounce.test.ts（busy 防抖；cancel 重置）
+视图：ticket.template.* 系列（新增/更新/取消/错误兜底/回车提交/首错聚焦）
+P2 配置: frontend/vitest.ticket.p2.config.ts:10
+CI:
+Ticket-only 与 P2 解耦，P2 走独立 test:ci:p2 任务；可增设 template_telemetry_smoke（见 Stage 6 计划）
+参考: .github/workflows/ci.yml:1
+是否继续拉升 template 覆盖
+
+建议不再继续拉升。P2 已达 Target，且与 ticket-only 解耦；继续堆覆盖收益很低，优先转向运行期可观测与可回滚（Stage 6+）。
+Stage 6（观测与旗标治理）计划
+
+事件埋点
+事件: dialog_open/submit/cancel/validate_false/success/error/busy/abort
+载荷: type(add/update)/耗时ms/错误码与消息/校验首错字段/重入否/被中断否
+实现: 新增 src/infra/telemetry.ts 暴露 track(event, payload)；默认 NOOP，可通过 provider 注入 Console/Sentry/埋点平台
+接入点:
+组合式: useTicketTemplate.ts:1 的 submit/cancel 分支全覆盖；busy/validateFalse/success/error/abort 路径打点
+视图: template.vue:316 的打开聚焦/首错聚焦/Enter 提交路径
+旗标治理
+监听 USE_TICKET_TEMPLATE_V2 热切换（FeatureFlags.onChange）；切换后做一次轻量 smoke（验证打开、提交、关闭）
+FlagPresets 确认 dev/stage 开、prod 关；回滚 applySafeRollback() 文档化
+回滚演练与文档
+添加 npm run demo:rollback（脚本演示 applySafeRollback、验证旧路径仍可用）
+文档更新: P2 报告与 refactoring-progress 追加“观测指标/回滚阈值/演练记录”
+CI 增强
+新增 job template_telemetry_smoke（vitest mock provider，断言关键 track 被调用且载荷字段齐全）
+与现有 P2 门禁并行，不影响 ticket-only
+验收标准
+本地与 CI：npm run test:ticket:p2、npm run coverage:check、npm run test:ci:p2 全绿
+Telemetry smoke 通过；dev/stage 热切换无白屏/无报错；回滚演练成功
+Stage 7（灰度放量）计划
+
+环境灰度: stage 环境默认开启 V2，观察 3–5 天
+指标面板: 错误率（含 4xx/5xx）、提交成功率、平均提交耗时、取消率、busy 命中率
+放量策略: 按租户/角色/组织逐步放量；阈值（如异常率>阈值或成功率<阈值）自动回滚并告警
+验收标准: 指标稳定在阈值内；回滚通路可用、自动告警/回滚验证通过
+Stage 8（GA 与收尾）计划
+
+切换默认: 评估将 FlagPresets.prod 的 USE_TICKET_TEMPLATE_V2 置 true 并保留软回滚期（1–2 周）
+清理收敛: 删除死代码/冗余路径；统一工具函数与消息文案；精简仅剩价值用例
+文档与移交: 更新 P2 报告与进度记录；沉淀“模板层可测试化”最佳实践；移交维护指南
+风险与对策
+
+埋点性能与体积: Provider 延迟注入、tree-shaking；NOOP 默认
+热切换状态一致性: 组合式清理/重建状态；切换后触发轻 smoke
+指标误报: 定义抖动容忍/滑动窗口统计；和后端统一错误码语义
+下一次对话建议议程（落地 Stage 6）
+
+创建 src/infra/telemetry.ts 与 Provider 接口（默认 NOOP）
+在 useTicketTemplate.ts 与 template.vue 接入 track()（全分支打点）
+新增 template_telemetry_smoke.test.ts（对 track 进行 vi.mock 校验）
+新增 CI 任务 template_telemetry_smoke
+更新文档:
+docs/重构文档/P2-启动报告.md 增补“观测/回滚/阈值”
+docs/refactoring-progress.md 记录 Stage 6 目标与达成项
+演练脚本: npm run demo:rollback 与步骤说明
+常用命令
+
+运行 P2 用例: cd frontend && npm run test:ticket:p2
+覆盖率门禁: npm run coverage:check
+CI 本地组合: npm run test:ci:p2
+准备好后我就开始落地 Stage 6 代码与 CI/文档更新。
+
+Docs
+
+docs/重构文档/P2-启动报告.md: P2 目标/范围/门禁/回滚与用例矩阵
+docs/refactoring-progress.md: 各阶段推进记录与阈值变化
+docs/REFACTORING.md: 目录规范、迁移注意事项（若需查）
+backend-contracts/ticket-export.md: 字段与返回体风格参考
+Coverage & Config
+
+frontend/scripts/coverage-check.mjs: 分文件门禁（template.vue Target、template.util.ts 高函数门禁）
+frontend/vitest.ticket.p2.config.ts: P2 测试包含范围与覆盖统计
+frontend/package.json: test:ticket:p2、test:ci:p2、coverage:check 脚本
+Feature Flags
+
+frontend/src/config/FeatureFlags.ts: 开关实现、监听接口
+frontend/src/config/FlagPresets.ts: dev/stage/prod 预设、applySafeRollback()
+frontend/src/main.js: applyPreset 挂载入口（按 MODE 注入旗标）
+Template 模块（实现与注入点）
+
+frontend/src/views/business/ticket/template.vue: 视图编排、Enter 提交、首错聚焦、打开聚焦、isSuccess 判定
+frontend/src/views/business/ticket/useTicketTemplate.ts: 状态机与提交/取消、重入防抖（Stage 6 埋点首选注入点）
+frontend/src/views/business/ticket/template.util.ts: 纯逻辑提交流程、isSuccess 钩子、统一错误提示
+frontend/src/views/business/ticket/index.util.ts: ensureSafeRequest 与通用工具
+frontend/src/api/business/ticketTemplate.js: add/update/list 等 API 契约
+Tests（理解用例矩阵与门禁）
+
+frontend/src/__tests__/ticket.template.submit.add.update.test.ts: 新增/更新成功路径
+frontend/src/__tests__/ticket.template.error.fallback.test.ts: 网络/服务端错误兜底
+frontend/src/__tests__/ticket.template.submit.validateFalse.test.ts: 校验失败阻断
+frontend/src/__tests__/ticket.template.cancel.test.ts: 取消关闭与重置
+frontend/src/__tests__/ticket.template.functions.callAll.test.ts: 视图函数触达
+frontend/src/__tests__/ticket.template.util.submitFlow.test.ts: util 成功/失败/isSuccess/回调健壮性
+frontend/src/__tests__/ticket.template.composable.debounce.test.ts: 并发 busy 与取消
+frontend/src/__tests__/ticket.template.a11y.enterSubmit.test.ts: Enter 提交流程
+frontend/src/__tests__/ticket.template.a11y.focusInvalid.test.ts: 首错聚焦
+frontend/src/__tests__/setup.ts: Element Plus 组件与 el-form/指令桩
+CI
+
+.github/workflows/ci.yml: ticket_only 与 template_only（P2）任务；后续可加 telemetry smoke
+Stage 6 准备（阅读聚焦）
+
+注入点: useTicketTemplate.ts 的 submit/cancel 分支与 template.vue 的打开/校验失败路径
+判定口: template.util.ts 的 isSuccess 与 ensureSafeRequest 错误回调
+旗标切换: FeatureFlags.onChange 用于监听 USE_TICKET_TEMPLATE_V2 热切换
+
+上次对话开发清单
+Added
+
+frontend/src/views/business/ticket/template.util.ts: Submit flow utilities (isUpdate/isSuccess hook/ensureSafeRequest wrapping).
+frontend/src/views/business/ticket/useTicketTemplate.ts: Composable with state machine, debounce/soft-cancel, submit/cancel APIs.
+frontend/src/tests/ticket.template.submit.validateFalse.test.ts: Validate-false blocks submission.
+frontend/src/tests/ticket.template.submit.add.update.test.ts: Add/Update success flows.
+frontend/src/tests/ticket.template.cancel.test.ts: Cancel closes dialog and resets form.
+frontend/src/tests/ticket.template.error.fallback.test.ts: Network/backend error fallback.
+frontend/src/tests/ticket.template.functions.callAll.test.ts: View functions touch coverage.
+frontend/src/tests/ticket.template.util.submitFlow.test.ts: Util success/fail/isSuccess/callback robustness.
+frontend/src/tests/ticket.template.composable.debounce.test.ts: Busy debounce and cancel behavior.
+frontend/src/tests/ticket.template.a11y.enterSubmit.test.ts: Enter key submits.
+frontend/src/tests/ticket.template.a11y.focusInvalid.test.ts: Focus first invalid field on validate-false.
+Updated
+
+frontend/src/views/business/ticket/template.vue: Stage 1→5 refactor; ensureSafeRequest integration; switch to util/composable; Enter submit; first-error focus; open focus; result isSuccess check.
+frontend/scripts/coverage-check.mjs: Raise template.vue gates to Stage 2/3/Target; add high gates for template.util.ts.
+frontend/vitest.ticket.p2.config.ts: Include template.util.ts in coverage scope.
+.github/workflows/ci.yml: Add P2 job ticket_template_only (runs test:ci:p2).
+frontend/src/tests/setup.ts: Add Element Plus stubs (el-switch/el-radio/...); el-form passthrough attrs; el-form-item data-prop support.
+docs/refactoring-progress.md: Note P2 gates escalation, new CI task, and decoupling from ticket-only.
+Deleted
+
+frontend/src/tests/ticket.template.dom.events.coverage.test.ts: Temporary DOM events coverage test (added then removed during stabilization).

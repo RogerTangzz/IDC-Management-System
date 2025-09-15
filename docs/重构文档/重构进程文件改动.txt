@@ -1,0 +1,394 @@
+README.md
+79 lines
+
+md
+
+
+CLAUDE-IDC.md
+978 lines
+
+md
+
+
+agent.md
+876 lines
+
+md
+
+
+CLAUDE.md
+905 lines
+
+md
+
+
+CODE-QUALITY.md
+1,710 lines
+
+md
+
+考虑到要重构，这几个文件是否要修改，如果需要给我完整版
+
+在重构过程中，这几个文档确实需要同步更新。让我为你提供完整的更新版本：
+
+📝 需要更新的文档及原因
+README.md - 需要添加重构相关章节
+CLAUDE-IDC.md - 需要更新开发状态和重构指南
+agent.md - 需要添加重构相关的Agent指令
+CLAUDE.md - 基础规范，保持稳定，小幅更新
+CODE-QUALITY.md - 需要添加重构质量标准
+让我提供完整的更新版本：
+
+1. README.md (更新版)
+markdown
+# IDC-Management-System · Docs Index
+
+Purpose: One-stop navigation for specs, contracts, quality guides, reports, and scripts. Defines document roles and update policy.
+
+## 🔴 重构进行中 (2025-01)
+
+**当前状态**: 大规模架构重构进行中  
+**重构文档**: [REFACTORING.md](./docs/REFACTORING.md)  
+**进度追踪**: [refactoring-progress.md](./docs/refactoring-progress.md)
+
+### 重构期间注意事项
+- ✅ 前端始终保持可用（特性开关控制）
+- ✅ 新旧代码并存，渐进式迁移
+- ✅ 所有改动在feature flag保护下
+- 📋 每日同步进度，避免冲突
+
+## Core Specs
+- Business Spec: `docs/DC系统开发功能业务逻辑与规范 V2.0.md` — full module blueprint, KPIs, search/filters, error handling, monitoring
+- Frontend Spec: `docs/CLAUDE.md` — RuoYi-Vue3 app structure, API rules, TS migration strategy, charts/drilldown, message center
+- IDC Extensions: `docs/CLAUDE-IDC.md` — business→RuoYi mapping, mineOnly alias, report drilldown, maintenance import
+- Code Quality: `docs/CODE-QUALITY.md` — readability/maintainability/testability/performance/security
+- **[NEW] Refactoring Guide**: `docs/REFACTORING.md` — 重构计划、里程碑、实施细节
+
+## Quick Start (Ports · Startup · Mock)
+- Backend Port: 8088 (fixed)
+- Frontend: `cd frontend && pnpm i && pnpm dev`
+- **重构模式**: 添加 `?refactor=true` 到URL启用新架构预览
+
+## 重构快速命令
+```bash
+# 启用新架构开发
+pnpm dev:refactor
+
+# 运行重构测试套件
+pnpm test:refactor
+
+# 检查重构进度
+pnpm refactor:status
+
+# 回滚到稳定版本
+pnpm refactor:rollback
+[其余内容保持不变...]
+
+
+## 2. CLAUDE-IDC.md (添加重构章节)
+
+在现有内容基础上添加：
+```markdown
+## 11. 重构实施指南（2025-01新增）
+
+### 11.1 重构架构图
+旧架构                    →    新架构
+├── 混乱的服务调用          →    ├── 清晰的分层
+├── 视图包含业务逻辑        →    ├── 领域层处理业务
+├── Store职责不清          →    ├── 单一职责Store
+└── 强耦合API调用          →    └── 依赖注入+事件驱动
+
+
+### 11.2 重构期间开发规范
+```javascript
+// 所有新代码必须在特性开关保护下
+if (FeatureFlags.isEnabled('USE_NEW_ARCHITECTURE')) {
+  // 新架构代码
+  const ticketDomain = container.get('ticketDomain')
+  return ticketDomain.create(data)
+} else {
+  // 保留旧代码
+  return addTicket(data)
+}
+11.3 重构检查清单
+ 新代码有特性开关保护
+ 旧代码未被删除
+ 有对应的测试用例
+ 文档已更新
+ 代码评审通过
+11.4 回滚策略
+javascript
+// 一键回滚所有特性
+window.EMERGENCY_ROLLBACK = () => {
+  FeatureFlags.setFlag('USE_NEW_ARCHITECTURE', false)
+  FeatureFlags.setFlag('USE_DOMAIN_LAYER', false)
+  FeatureFlags.setFlag('USE_EVENT_BUS', false)
+  location.reload()
+}
+
+## 3. agent.md (添加重构能力)
+
+在Agent能力部分添加：
+```markdown
+## Agent 重构专项能力
+
+### 重构分析能力
+- **耦合度分析**: 识别模块间依赖，生成耦合度报告
+- **代码坏味道检测**: 识别需要重构的代码模式
+- **影响范围评估**: 分析重构对现有功能的影响
+- **重构方案制定**: 提供详细的重构步骤和时间表
+
+### 重构实施支持
+Agent，帮我重构工单模块：
+
+分析当前耦合问题
+制定重构方案
+实现领域层
+添加特性开关
+编写测试用例
+
+### 重构模板
+```javascript
+// Agent可以生成的重构模板
+
+// 1. 领域模型模板
+export class TicketDomain extends BaseDomain {
+  constructor(repository, eventBus) {
+    super(repository, eventBus)
+  }
+  
+  async create(dto: TicketCreateDto): Promise<Ticket> {
+    // 业务逻辑
+  }
+}
+
+// 2. 适配器模板
+export class TicketAdapter {
+  static async create(data) {
+    if (FeatureFlags.isEnabled('USE_NEW_TICKET')) {
+      return container.get('ticketDomain').create(data)
+    }
+    return legacyCreateTicket(data)
+  }
+}
+
+// 3. 测试模板
+describe('TicketDomain Refactoring', () => {
+  it('should maintain backward compatibility', () => {
+    // 测试新旧行为一致性
+  })
+})
+重构命令示例
+# 分析耦合度
+Agent，分析ticket模块和inspection模块的耦合度
+
+# 生成重构方案
+Agent，为ticketEscalation服务生成解耦方案
+
+# 实施重构
+Agent，将TicketList.vue的业务逻辑抽取到领域层
+
+# 添加测试
+Agent，为重构后的TicketDomain添加测试用例
+
+## 4. CODE-QUALITY.md (添加重构质量标准)
+
+在第7节重构指南后添加：
+```markdown
+## 7.4 大规模重构质量标准
+
+### 重构前评估标准
+| 指标 | 阈值 | 说明 |
+|------|------|------|
+| 测试覆盖率 | >80% | 确保重构有保护网 |
+| 耦合度评分 | >6/10 | 值得重构的模块 |
+| Bug密度 | >5/KLOC | 问题多的模块优先 |
+| 变更频率 | >10次/月 | 热点模块优先 |
+
+### 重构过程质量门禁
+```yaml
+# .github/workflows/refactoring-quality.yml
+name: Refactoring Quality Gates
+
+on:
+  pull_request:
+    paths:
+      - 'src/domain/**'
+      - 'src/services/**'
+
+jobs:
+  quality-check:
+    steps:
+      - name: Check Feature Flags
+        run: |
+          # 确保所有新代码有特性开关保护
+          grep -r "FeatureFlags.isEnabled" src/domain/
+          
+      - name: Test Coverage
+        run: |
+          # 新代码测试覆盖率必须>90%
+          pnpm test:coverage --threshold=90
+          
+      - name: Backward Compatibility
+        run: |
+          # 运行兼容性测试套件
+          pnpm test:compat
+          
+      - name: Performance Regression
+        run: |
+          # 性能不能退化>10%
+          pnpm test:perf --max-regression=10
+重构代码规范
+javascript
+// ✅ 好的重构代码
+class TicketDomain {
+  constructor(
+    private repository: TicketRepository,
+    private eventBus: EventBus,
+    private logger: Logger
+  ) {
+    // 依赖注入
+  }
+  
+  async create(dto: TicketCreateDto): Promise<Ticket> {
+    // 1. 验证
+    this.validate(dto)
+    
+    // 2. 业务逻辑
+    const ticket = this.buildTicket(dto)
+    
+    // 3. 持久化
+    const saved = await this.repository.save(ticket)
+    
+    // 4. 发布事件
+    this.eventBus.emit('ticket.created', saved)
+    
+    // 5. 返回结果
+    return saved
+  }
+}
+
+// ❌ 需要避免的重构
+class TicketService {
+  create(data) {
+    // 直接调用其他模块
+    const inspection = InspectionService.get(data.inspectionId)
+    
+    // 硬编码依赖
+    const db = new Database()
+    
+    // 混合关注点
+    const html = this.renderEmail(data)
+    EmailService.send(html)
+    
+    return db.save(data)
+  }
+}
+重构效果度量
+javascript
+class RefactoringMetrics {
+  measure(before: CodeMetrics, after: CodeMetrics) {
+    return {
+      // 耦合度改善
+      couplingImprovement: 
+        ((before.coupling - after.coupling) / before.coupling) * 100,
+      
+      // 复杂度降低
+      complexityReduction:
+        ((before.complexity - after.complexity) / before.complexity) * 100,
+      
+      // 可测试性提升
+      testabilityGain:
+        ((after.testability - before.testability) / before.testability) * 100,
+      
+      // 代码行数变化
+      locChange:
+        ((after.loc - before.loc) / before.loc) * 100,
+      
+      // 是否达标
+      isSuccessful: function() {
+        return this.couplingImprovement > 30 &&
+               this.complexityReduction > 20 &&
+               this.testabilityGain > 40
+      }
+    }
+  }
+}
+
+## 5. 新增 REFACTORING.md
+```markdown
+# 系统重构实施手册
+
+## 重构概览
+
+### 为什么重构
+- 当前耦合度：7-8/10（严重）
+- 目标耦合度：4-5/10（健康）
+- 预期收益：开发效率提升30%，Bug减少50%
+
+### 重构原则
+1. **零风险**: 前端始终可用
+2. **渐进式**: 小步迭代，持续交付
+3. **可回滚**: 任何时候可以回到稳定版本
+4. **可度量**: 每个阶段有明确的成功标准
+
+## 重构里程碑
+
+[这里插入之前提供的完整里程碑计划]
+
+## 特性开关使用指南
+
+### 开发环境配置
+```javascript
+// .env.development
+VITE_ENABLE_REFACTORING=true
+VITE_FEATURE_FLAGS_PANEL=true
+代码中使用
+javascript
+import FeatureFlags from '@/config/FeatureFlags'
+
+// 检查特性
+if (FeatureFlags.isEnabled('USE_NEW_ARCHITECTURE')) {
+  // 新代码
+} else {
+  // 旧代码
+}
+
+// 监听变化
+FeatureFlags.onChange('USE_NEW_ARCHITECTURE', (enabled) => {
+  console.log('Architecture switched:', enabled)
+})
+重构进度追踪
+当前进度（实时更新）
+ Phase 0: 准备阶段
+ Phase 1: 基础设施解耦（进行中）
+ Phase 2: Store层重构
+ Phase 3: 工单模块重构
+ Phase 4: 巡检模块重构
+ Phase 5: 维保模块重构
+ Phase 6: 集成测试
+ Phase 7: 文档交付
+每日站会模板
+markdown
+## 重构日报 - [日期]
+
+### 昨日完成
+- 
+
+### 今日计划
+- 
+
+### 遇到的问题
+- 
+
+### 需要的支持
+-
+问题与解答
+Q: 重构会影响现有功能吗？
+A: 不会。所有重构代码都在特性开关保护下，不会影响现有功能。
+
+Q: 如何回滚？
+A: 执行 window.EMERGENCY_ROLLBACK() 或关闭所有特性开关。
+
+Q: 如何参与重构？
+A: 1. 阅读本文档 2. 领取任务 3. 遵循重构规范 4. 提交PR

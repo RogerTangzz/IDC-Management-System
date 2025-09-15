@@ -1,4 +1,7 @@
-<!-- src/views/ticket/components/AssignDialog.vue -->
+<!-- src/views/ticket/components/AssignDialog.vue 
+     DEPRECATION-CANDIDATE: Not imported; index.vue/detail.vue embed their own dialogs.
+     Keep for 1–2 weeks post-GA; remove if no usages emerge.
+     See docs/重构文档/dead-code-candidates.md -->
 <template>
   <el-dialog v-model="dialogVisible" title="工单指派" width="500px" append-to-body>
     <div v-if="ticketIds.length > 0" class="ticket-info">

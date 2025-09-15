@@ -96,7 +96,8 @@
 
     <!-- 添加或修改对话框 -->
     <el-dialog :title="title" v-model="open" width="700px" append-to-body>
-      <el-form ref="templateRef" :model="form" :rules="rules" label-width="100px">
+      <div ref="dialogBody" @keydown.enter.prevent="onEnterSubmit">
+      <el-form ref="templateRef" :model="form" :rules="rules" label-width="100px" @keydown.enter.prevent="onEnterSubmit">
         <el-row>
           <el-col :span="12">
             <el-form-item label="模板名称" prop="templateName">
@@ -148,10 +149,11 @@
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
+      </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" :loading="submitting" :disabled="submitting" @click="submitForm">确 定</el-button>
+          <el-button :disabled="submitting" @click="cancel">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -187,9 +189,15 @@
 </template>
 
 <script setup name="TicketTemplate">
-import { ref, reactive, toRefs, getCurrentInstance } from 'vue'
+import { ref, reactive, toRefs, getCurrentInstance, computed, onMounted, onUnmounted } from 'vue'
 import { listTemplate, getTemplate, delTemplate, addTemplate, updateTemplate, changeTemplateStatus } from "@/api/business/ticketTemplate";
 import { parseTime } from '@/utils/ruoyi'
+import { ensureSafeRequest } from '@/views/business/ticket/index.util'
+import { submitTemplateForm, buildInitialForm } from '@/views/business/ticket/template.util'
+import useTicketTemplate from '@/views/business/ticket/useTicketTemplate'
+import { nextTick, watch } from 'vue'
+import { track } from '@/infra/telemetry'
+import FeatureFlags from '@/config/FeatureFlags'
 
 const { proxy } = getCurrentInstance();
 
@@ -242,6 +250,9 @@ const data = reactive({
 
 const { queryParams, form, rules } = toRefs(data);
 
+// 使用 composable 承载状态机与提交
+const { submitState, submitting, submit: submitWithMachine, cancel: cancelWithMachine } = useTicketTemplate()
+
 /** 查询模板列表 */
 function getList() {
   loading.value = true;
@@ -253,28 +264,11 @@ function getList() {
 }
 
 /** 取消按钮 */
-function cancel() {
-  open.value = false;
-  reset();
-}
+function cancel() { cancelWithMachine(open, reset) }
 
 /** 表单重置 */
 function reset() {
-  form.value = {
-    templateId: undefined,
-    templateNo: undefined,
-    templateName: undefined,
-    faultType: undefined,
-    priority: 'medium',
-    specialty: undefined,
-    defaultTitle: undefined,
-    defaultDescription: undefined,
-    defaultEmergencyAction: undefined,
-    defaultSolution: undefined,
-    useCount: 0,
-    status: "0",
-    remark: undefined
-  };
+  form.value = buildInitialForm();
   proxy.resetForm("templateRef");
 }
 
@@ -323,25 +317,70 @@ function handleUpdate(row) {
   });
 }
 
+// 打开弹窗后，将焦点移到首个输入（模板名称）以提升可达性
+watch(open, async (v) => {
+  if (v) {
+    try { track('dialog_open', {}) } catch {}
+    await nextTick()
+    try {
+      const host = proxy.$refs?.dialogBody
+      const target = host?.querySelector('[data-prop="templateName"] el-input, [data-prop="templateName"] input, [data-prop="templateName"] textarea')
+      if (target && typeof target === 'object') {
+        const anyTarget = target
+        const fn = anyTarget['focus']
+        if (typeof fn === 'function') fn.call(target)
+      }
+    } catch {}
+  }
+})
+
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["templateRef"].validate(valid => {
-    if (valid) {
-      if (form.value.templateId != undefined) {
-        updateTemplate(form.value).then(_response => {
-          proxy.$modal.msgSuccess("修改成功");
-          open.value = false;
-          getList();
-        });
-      } else {
-        addTemplate(form.value).then(_response => {
-          proxy.$modal.msgSuccess("新增成功");
-          open.value = false;
-          getList();
-        });
-      }
+  const formRef = proxy.$refs?.["templateRef"]
+  if (!formRef || typeof formRef.validate !== 'function') {
+    // 安全兜底：无表单引用时直接提示
+    try { proxy.$modal?.msgError?.('表单未就绪') } catch {}
+    return
+  }
+  formRef.validate(async (valid, fields) => {
+    const validate = async () => valid
+    const ret = await submitWithMachine({
+      form: form.value,
+      validate,
+      addTemplate,
+      updateTemplate,
+      modal: proxy.$modal,
+      isSuccess: (resp) => !!(resp && (resp.code === 200 || resp.ok === true)),
+      onSuccess: () => { open.value = false; getList() }
+    })
+    // composable 已处理状态机，这里仅兜底
+    if (!ret.ok && ret.type === 'busy') { /* no-op */ }
+    if (!valid) {
+      try {
+        try {
+          const firstProp = fields && typeof fields === 'object' ? Object.keys(fields)[0] : ''
+          if (firstProp) track('validate_false', { firstInvalidField: firstProp })
+        } catch {}
+        const firstProp = fields && typeof fields === 'object' ? Object.keys(fields)[0] : ''
+        const host = proxy.$refs?.dialogBody
+        if (host) {
+            let target = firstProp ? host.querySelector(`[data-prop="${firstProp}"] el-input, [data-prop="${firstProp}"] input, [data-prop="${firstProp}"] textarea`) : null
+          if (!target) target = host.querySelector('el-input, input, textarea')
+          if (target) {
+            const anyTarget = target
+            const fn = anyTarget && anyTarget['focus']
+            if (typeof fn === 'function') fn.call(anyTarget)
+          }
+        }
+      } catch {}
     }
-  });
+  })
+}
+
+// Enter 提交路径埋点
+function onEnterSubmit() {
+  try { track('enter_press', { target: 'submit' }) } catch {}
+  submitForm()
 }
 
 /** 删除按钮操作 */
@@ -375,4 +414,27 @@ function handleExport() {
 }
 
 getList();
+
+// 监听 Feature Flag 热切换（非 prod 进行轻量 smoke）
+let offFlag = null
+onMounted(() => {
+  try {
+    offFlag = FeatureFlags.onChange?.('USE_TICKET_TEMPLATE_V2', (enabled) => {
+      try { track('flag_switched', { to: !!enabled }) } catch {}
+      if (import.meta.env && (import.meta.env.PROD === true)) return
+      if (open.value) return
+      const run = async () => {
+        try {
+          open.value = true
+          await nextTick()
+          submitForm()
+          await Promise.resolve()
+          cancel()
+        } catch {}
+      }
+      run()
+    }) || null
+  } catch {}
+})
+onUnmounted(() => { try { offFlag?.() } catch {} })
 </script>

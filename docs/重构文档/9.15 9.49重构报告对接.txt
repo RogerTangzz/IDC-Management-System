@@ -1,0 +1,560 @@
+开发报告（对接下次会话）
+
+根路径约定
+唯一根: IDC-Management-System/IDC-Management-System
+三层嵌套目录不再创建任何 IDC-Management-System 子目录
+前端: IDC-Management-System/IDC-Management-System/frontend
+文档: IDC-Management-System/IDC-Management-System/docs
+后端: 如需恢复/补齐，路径固定为 IDC-Management-System/IDC-Management-System/backend
+当前状态
+
+基线代码
+已落地 Feature Flags 与预设: frontend/src/config/FeatureFlags.ts、frontend/src/config/FlagPresets.ts
+Ticket 适配/领域/服务: frontend/src/adapters/TicketAdapter.ts、frontend/src/domain/ticket/TicketDomain.ts、frontend/src/services/ticket.service.ts
+ticket-only 配置: frontend/vitest.ticket.config.ts
+覆盖率校验脚本: frontend/scripts/coverage-check.mjs（阈值先宽松，后续按标准上调）
+文档（双层目录）
+docs/重构文档/覆盖率标准.md（按原标准定义覆盖率）
+docs/README.md（索引）
+docs/REFACTORING.md（阶段与回滚）
+docs/refactoring-progress.md（进度追踪）
+docs/CLAUDE-IDC-REFACTORING.md、docs/CLAUDE-REFACTORING.md、docs/agent-REFACTORING.md、docs/CODE-QUALITY-REFACTORING.md（重构补充）
+迁移与清理
+已将误放在三层目录的新增基线文件迁移至双层目录并删除副本
+文档路径统一到双层目录；不会在三层目录再新建 IDC 子目录
+阶段与目标
+
+P0 基线（已开始）
+目标: 完成开关/适配/领域、ticket-only 测试回路、覆盖率脚本
+待补: 在 frontend/src/main.js 引入 applyPreset 按环境加载 Flag 预设；在 frontend/package.json 加便捷脚本（test:ticket/coverage:check/test:ci）
+P1 列表页（index.vue）
+目标: 动作/列统一、查询别名/回退、路由监听收敛；覆盖率函数≥85%、语句≥90（后续抬到 90/85/90/90 聚合）
+P2 模板（template.vue）
+目标: 提交状态机（validate false/add/update）、取消/失败链路与测试
+P3 详情（detail.vue）
+目标: start/close 异常/取消、动态日志加载 fallback
+P4 报表（report.vue）
+目标: 导出失败兜底、趋势图 xAxis/series 健壮性
+P5 目录与门禁
+目标: 彻底移除三层嵌套遗留、接入预检（禁止再引用三层路径）、CI 门禁固定在双层目录
+覆盖率标准（摘录）
+
+Ticket 视图 src/views/business/ticket/**: 行 90 / 分支 85 / 函数 90 / 语句 90
+Inspection src/views/business/inspection/**: 85/80/85/85
+Maintenance src/views/business/maintenance/**: 80/75/80/80
+API src/api/**: 85/80/85/85
+Store src/store/**: 85/75/85/85
+Services src/services/**: 81/71/85/81
+Utils 关键 src/utils/auth.ts: 95/95/100/95
+执行指令
+
+ticket-only（单线程降压）: cd IDC-Management-System/IDC-Management-System/frontend && npx vitest run -c vitest.ticket.config.ts --coverage
+覆盖率校验: node scripts/coverage-check.mjs
+建议设置内存: PowerShell setx NODE_OPTIONS "--max-old-space-size=4096" 或临时 $env:NODE_OPTIONS="--max-old-space-size=4096"
+风险与限制
+
+编码一致性: 原有部分文档非 UTF-8，直接改写会乱码；已以“重构补充”新文档形式添加更新，后续如需并入原文档，需要先转 UTF-8
+目录规范: 所有开发与脚本均以双层目录为准；严禁在三层目录创建/引用任何新内容
+Flag 策略: dev/stage 默认开启 USE_NEW_TICKET，prod 默认关闭；所有新路径需受开关保护，可随时回退
+需要二次确认的操作（大改动/破坏性）
+
+删除/迁移大量文件或目录
+例如: 移动整个 frontend/src/views/business/ticket/**、大规模重命名组件/模块
+例如: 清理 IDC-Management-System/IDC-Management-System/IDC-Management-System/** 残留大体量目录
+目录结构调整
+将项目从三层迁回双层（一次性移动大量文件）或对前后端大目录进行分拆/合并
+批量编码转换
+将 CLAUDE-*.md、CODE-QUALITY.md 等从本地编码转为 UTF-8 并就地修改
+CI 门禁生效前上调覆盖率阈值
+将 frontend/scripts/coverage-check.mjs 调整为“覆盖率标准.md”目标值
+上述操作执行前须再次与你确认，确认范围、回滚方案与预期影响。
+
+后续建议
+
+将 applyPreset 接入 frontend/src/main.js，并在 frontend/package.json 增加 test:ticket、test:ci 与 coverage:check 脚本，方便日常运行
+在双层根增加预检脚本，禁止引入 IDC-Management-System/IDC-Management-System/IDC-Management-System 路径字面量（CI 阶段失败即阻断）
+P1 开始前，先以 --reporter=default 跑一轮 ticket-only，收集覆盖率基线，再决定本阶段阈值提升幅度
+交接清单
+
+代码位置: 双层目录 IDC-Management-System/IDC-Management-System（仅此处为有效根）
+新增文件（双层目录）
+frontend/src/config/FeatureFlags.ts、frontend/src/config/FlagPresets.ts
+frontend/src/adapters/TicketAdapter.ts、frontend/src/domain/ticket/TicketDomain.ts、frontend/src/services/ticket.service.ts
+frontend/vitest.ticket.config.ts、frontend/scripts/coverage-check.mjs
+文档（双层目录）
+docs/重构文档/覆盖率标准.md、docs/README.md
+docs/REFACTORING.md、docs/refactoring-progress.md
+docs/CLAUDE-IDC-REFACTORING.md、docs/CLAUDE-REFACTORING.md、docs/agent-REFACTORING.md、docs/CODE-QUALITY-REFACTORING.md
+如需，我可以立刻：
+
+在 frontend/src/main.js 补入 applyPreset 调用
+在 frontend/package.json 增加 test:ticket、coverage:check、test:ci 脚本
+起草 P1（列表页）重构的改动清单与测试用例大纲
+
+适用范围与前提
+
+根路径唯一且固定
+根: IDC-Management-System/IDC-Management-System
+前端: IDC-Management-System/IDC-Management-System/frontend
+文档: IDC-Management-System/IDC-Management-System/docs
+三层嵌套目录不再新建/改动任何内容（不得再新建 IDC-Management-System 子目录）
+凡涉及“大量文件删除/迁移/重命名”的操作，必须二次确认（列清单→你确认→再执行）
+覆盖率与门禁以 docs/重构文档/覆盖率标准.md 为准；ticket-only 先跑通，再逐步收紧阈值
+总体目标（对齐重构进程 P0–P4）
+
+按 P0→P4 的顺序推进 Ticket 域重构与测试，保证新旧路径可控切换、可随时回滚
+阶段完成后将覆盖率门槛提升到标准目标（Ticket 视图聚合：lines 90 / branches 85 / functions 90 / statements 90）
+不触碰目录结构直至 P5（目录归一），期间所有代码与文档操作仅在双层目录执行
+P0 基线（FeatureFlags + Adapter + Domain/Service + ticket-only）
+
+目标
+打通新旧实现路径的开关与适配层，保证 ticket-only 可独立运行并具备覆盖率输出
+代码触点
+frontend/src/config/FeatureFlags.ts（已建）
+frontend/src/config/FlagPresets.ts（已建；dev/stage 开，prod 关：USE_NEW_TICKET）
+frontend/src/adapters/TicketAdapter.ts（已建；新旧路径切换）
+frontend/src/domain/ticket/TicketDomain.ts、frontend/src/services/ticket.service.ts（已建）
+frontend/vitest.ticket.config.ts、frontend/scripts/coverage-check.mjs（已建）
+建议小改动：frontend/src/main.js 引入并调用 applyPreset(env)；frontend/package.json 增加 test:ticket/test:ci/coverage:check
+任务清单
+将 applyPreset 接入 main.js，基于 import.meta.env.MODE 设置 dev/stage/prod 预设
+为 package.json 增加脚本：test:ticket、test:ticket:list|template|detail|report、coverage:check、test:ci
+在 docs/README.md、docs/REFACTORING.md 标注 P0 完成项与运行手册
+测试清单
+ticket-only 跑通；验证开/关 USE_NEW_TICKET 的双路径行为
+覆盖率可生成并通过“当前（宽松）阈值”
+验收标准
+npx vitest run -c vitest.ticket.config.ts --coverage 通过
+node scripts/coverage-check.mjs 通过（P0 阶段阈值宽松）
+文档更新已落地
+工期建议
+0.5–1 天
+P1 列表页 index.vue（功能抽象/回退/监听收敛）
+
+目标
+统一动作渲染与列展示；查询别名/回退；路由监听与查询状态收敛；稳定异常/空态行为
+代码触点
+src/views/business/ticket/index.vue 及其内部工具/小组件（若需抽取）
+src/api/business/ticket.js（仅在旧路径仍用到时校对参数/别名）
+TicketAdapter（如需补充列表功能透传）
+任务清单
+抽象“动作列”渲染（查看/编辑/删除/指派/重开），统一权限指令与禁用态
+列展示统一（状态、优先级、时间字段、字典标签、tooltip/ellipsis）
+查询参数别名/fallback（keyword/ticketNo/title 等），不合法值容错与回退
+路由-query 与本地查询状态的双向同步（监听合并与防抖），手动重置时清理脏状态
+排序（createTime/lastStatusTime）custom 排序钩子修复边界
+异常/空数据 UI（空数据占位、错误提示、自动重试策略是否需要）
+测试清单
+list.basic/list.actions.more/list.autoClick.buttons
+list.modeFromRoute/list.route.watch
+list.sort.delete.cancel/list.submit.validateFalse 等
+覆盖率目标
+函数 ≥ 85%、语句 ≥ 90%（阶段性）；聚合目标在 P4 再冲顶
+验收标准
+ticket-only: list* 用例全绿；覆盖率达阶段目标
+旧路径与新路径在 USE_NEW_TICKET 切换下功能等价
+工期建议
+1–2 天
+P2 模板页 template.vue（提交状态机与失败/取消链路）
+
+目标
+规范化提交状态机：validate=false / add / update 三分支；取消/失败 UI 反馈有据可查
+代码触点
+src/views/business/ticket/template.vue（表单、校验、状态切换、提交/取消）
+可能的表格子组件/handler（如有）
+任务清单
+提交前验证（validate=false 分支），错误提示与高亮校验项
+新建（add）与更新（update）分支的加载态/禁用态/重复提交防抖
+提交成功后的路由跳转/提示；失败时回退与重试建议
+表状态切换（起草/启用/禁用）与序列化/去抖（如需）
+测试清单
+template.submit/template.submit.validateFalse
+template.status.toggle.sequence/template.table.handlers.exec
+template.functions.callAll（如存在）
+覆盖率目标
+与 P1 类似，阶段性达标
+验收标准
+ticket-only 对应用例通过；覆盖率达阶段目标
+工期建议
+1 天
+P3 详情页 detail.vue（生命周期/日志加载 fallback）
+
+目标
+start/close 全链路，异常/取消可恢复；日志动态加载与失败兜底
+代码触点
+src/views/business/ticket/detail.vue（操作按钮、状态变更、日志区、加载逻辑）
+任务清单
+start/close 操作：并发/重复点击防护、取消确认、失败提示
+日志 loadLogs：分页/懒加载/防抖；网络异常/空数据兜底
+详情初始加载：根据路由 id 获取详情；非法 id 提示与回退
+测试清单
+detail.actions/detail.validateFalse/detail.logs.fallback/detail.misc
+detail.util.branches（边界分支）
+覆盖率目标
+逐步对齐 Ticket 聚合目标
+验收标准
+ticket-only 对应用例通过；覆盖率稳步提升
+工期建议
+0.5–1 天
+P4 报表页 report.vue（导出兜底/趋势健壮性）
+
+目标
+export 失败兜底提示；趋势图 series/xAxis 数据形态健壮与交互稳定
+代码触点
+src/views/business/ticket/report.vue（导出、趋势图、统计卡片、SLA 分布）
+utils/request 的下载封装（如需校对）
+任务清单
+exportReport 包裹 try/catch，失败时提示（已在某版本实现；确认现分支是否生效）
+趋势图 renderTrend：时间范围计算、缺失日期补零、xAxis/series 对空/错数据健壮
+饼图/点击联动：nearDue/overdue 路由跳转参数与行为验证
+测试清单
+report.basic/report.fallback/report.drilldown/report.trend.points/report.more.branches
+覆盖率目标
+对齐 Ticket 视图聚合 90/85/90/90
+验收标准
+ticket-only 全集通过；coverage-check.mjs 对 Ticket 路径的聚合阈值达标
+工期建议
+0.5–1 天
+质量门禁与运行
+
+ticket-only
+cd IDC-Management-System/IDC-Management-System/frontend
+npx vitest run -c vitest.ticket.config.ts --coverage
+覆盖率门禁
+node scripts/coverage-check.mjs（P0 阶段阈值宽松，P1–P4 按“覆盖率标准”逐步上调至目标）
+内存设置
+PowerShell（临时）$env:NODE_OPTIONS="--max-old-space-size=4096"
+风险与回滚
+
+开关
+主开关：USE_NEW_TICKET（默认 dev/stage 开、prod 关）
+任一阶段出现问题，先关开关回退到旧路径，再分析修复
+目录与大批量操作
+目录迁移/大量删除/重命名前，必须列出清单并二次确认
+不得在三层目录再新建任何 IDC-Management-System 子目录
+编码一致性
+非 UTF-8 文档合并改写前需统一编码（UTF-8），以免乱码
+交付与对接
+
+每阶段交付物
+代码变更（Adapter/Domain/Service/视图）
+用例与覆盖率报告（ticket-only + 全量）
+文档更新（在 docs/REFACTORING.md、docs/refactoring-progress.md 追加条目）
+对接流程
+提交 MR 前：运行 ticket-only + 覆盖率校验
+需要目录或大规模重命名：先发清单征求你确认
+
+阅读目的
+
+统一上下文和名词，便于下次对接直接落地实现。
+只在双层目录阅读与修改；任何三层嵌套目录不再使用。
+涉及大量文件删除/迁移/重命名前，需二次确认。
+阅读顺序
+
+导航与进度 → 2) 重构流程与门槛 → 3) 代码开关与结构 → 4) Ticket 核心代码 → 5) 测试与门禁 → 6) 运行手册 → 7) 历史规范参考 → 8) 风险与目录规范
+1. 导航与进度（必须）
+
+IDC-Management-System/IDC-Management-System/docs/README.md
+文档索引；重构指南与进度入口；FeatureFlags/Adapter/Domain/Service 说明。
+IDC-Management-System/IDC-Management-System/docs/refactoring-progress.md
+重构进度追踪；当月完成项/风险；用于同步状态。
+2. 重构流程与覆盖率（必须）
+
+IDC-Management-System/IDC-Management-System/docs/REFACTORING.md
+P0–P5 阶段目标、开关策略、回滚指引、CI 建议与约束。
+IDC-Management-System/IDC-Management-System/docs/重构文档/重构进程P0.md
+当前阶段具体事项与交付要求。
+IDC-Management-System/IDC-Management-System/docs/重构文档/覆盖率标准.md
+路径分组阈值（Ticket 90/85/90/90 等）；CI 门禁目标。
+3. 开关与结构（必须）
+
+IDC-Management-System/IDC-Management-System/frontend/src/config/FeatureFlags.ts
+运行时开关、持久化与监听；代码受控的前提。
+IDC-Management-System/IDC-Management-System/frontend/src/config/FlagPresets.ts
+环境预设（dev/stage 开、prod 关 USE_NEW_TICKET）；一键回滚集。
+IDC-Management-System/IDC-Management-System/docs/CLAUDE-REFACTORING.md
+单向依赖（View → Adapter → Domain → Service → API）、测试与风格约束。
+4. Ticket 核心代码（必须）
+
+IDC-Management-System/IDC-Management-System/frontend/src/adapters/TicketAdapter.ts
+新旧路径切换适配；统一视图调用面；优先阅读。
+IDC-Management-System/IDC-Management-System/frontend/src/domain/ticket/TicketDomain.ts
+P0 委托 Service；后续承载业务规则。
+IDC-Management-System/IDC-Management-System/frontend/src/services/ticket.service.ts
+薄封装 API；与旧 src/api/business/ticket.js 对齐。
+IDC-Management-System/IDC-Management-System/frontend/src/api/business/ticket.js
+旧 API 面；核对参数/别名/错误返回。
+视图（按 P1→P4 顺序）
+frontend/src/views/business/ticket/index.vue（P1 列表）
+frontend/src/views/business/ticket/template.vue（P2 模板）
+frontend/src/views/business/ticket/detail.vue（P3 详情）
+frontend/src/views/business/ticket/report.vue（P4 报表，导出兜底/趋势健壮）
+5. 测试与门禁（必须）
+
+IDC-Management-System/IDC-Management-System/frontend/vitest.ticket.config.ts
+ticket-only 单线程配置；降压防 OOM。
+IDC-Management-System/IDC-Management-System/frontend/scripts/coverage-check.mjs
+覆盖率聚合校验脚本（先宽松，逐步按“覆盖率标准.md”上调）。
+IDC-Management-System/IDC-Management-System/frontend/vitest.config.ts
+测试基础配置；别名 @ 指向 src；包含 setup.ts。
+IDC-Management-System/IDC-Management-System/frontend/src/__tests__
+现有用例分布；对照 P1–P4 新增/补齐用例。
+6. 运行与对接（建议）
+
+IDC-Management-System/IDC-Management-System/frontend/src/main.js
+接入 applyPreset(env)（待补小改动）；按 import.meta.env.MODE 加载预设。
+IDC-Management-System/IDC-Management-System/frontend/package.json
+建议补充脚本（待补）：test:ticket、test:ci、coverage:check、分组脚本。
+执行顺序建议
+ticket-only：npx vitest run -c vitest.ticket.config.ts --coverage
+覆盖率校验：node scripts/coverage-check.mjs
+建议内存：$env:NODE_OPTIONS="--max-old-space-size=4096"
+7. 历史规范参考（重要参考）
+
+IDC-Management-System/IDC-Management-System/docs/CLAUDE-IDC.md
+IDC 业务到 RuoYi 的映射与扩展；报表/导入/别名策略。
+IDC-Management-System/IDC-Management-System/docs/CLAUDE.md
+前端规范与结构、图表/下钻、消息中心、TS 迁移策略。
+IDC-Management-System/IDC-Management-System/docs/CODE-QUALITY.md
+质量基线（可读/维护/测试/性能/安全）。
+IDC-Management-System/IDC-Management-System/docs/DC系统-业务与逻辑规范 V2.0.md
+业务蓝图、KPI、查询/错误处理规范。
+重构补充（便于不破坏原文档编码，新增的补充说明）
+docs/CLAUDE-IDC-REFACTORING.md、docs/agent-REFACTORING.md
+注：部分历史文档可能非 UTF-8 编码；若需合并内容，请先统一编码，再改写。
+
+8. 风险与目录规范（必须）
+
+目录规范
+仅使用双层目录：根 IDC-Management-System/IDC-Management-System
+前端 frontend/、文档 docs/；后端若补齐在 backend/
+不得在三层嵌套目录再新建任何 IDC-Management-System 子目录
+二次确认范围
+大量文件删除/迁移/重命名；目录归并或拆分；编码批量转换；覆盖率阈值上调触发 CI 失败
+回滚策略
+开关 USE_NEW_TICKET 关闭即回退旧路径；问题优先关开关→修复→再开启
+对接要点（下次会话准备）
+
+确认是否由我补齐：
+frontend/src/main.js 接入 applyPreset
+frontend/package.json 增加 test:ticket、test:ci、coverage:check 与分组脚本
+确认 P1 列表页改造的边界与优先项
+动作列统一、查询别名/回退、路由监听收敛、排序与空态/错误兜底
+
+执行原则
+
+覆盖率驱动设计：先定“要达到的覆盖率+需要验证的行为”，再拆代码结构（提纯函数/解耦副作用）以便可测。
+路径门槛优先：对照《覆盖率标准.md》按路径分组执行门禁；关键文件（如 utils/auth.ts）用单文件阈值。
+渐进提升：P0 阶段用宽松阈值跑通，P1–P4 在分组达标（Ticket 90/85/90/90）的节奏上逐步上调。
+单一根路径：仅双层目录参与测试与门禁；禁止再在三级目录创建/扫描任何文件。
+每次改动“Definition of Done”
+
+代码结构
+View 仅依赖 Adapter；业务编排在 Domain；IO 在 Service；引入/加强 FeatureFlags 守护。
+将分支判断、数据整形、路由/查询参数处理等抽为纯函数或最小可测单元。
+测试要求
+新增或修改的功能必须有对应用例；覆盖“正常/异常/空/取消/边界”等分支。
+测试类型组合：单元（纯函数/Domain/Service）+ 视图行为（关键交互）。
+覆盖率达当前路径门槛（见《覆盖率标准.md》）；Ticket 视图按阶段目标推进到 90/85/90/90。
+门禁与运行
+ticket-only：vitest -c vitest.ticket.config.ts --coverage 通过（单线程，降 OOM）。
+覆盖率校验：node scripts/coverage-check.mjs 通过（聚合/关键文件阈值）。
+不引入三级目录路径字面量（若接入 preflight，必须通过）。
+分阶段落地（示例）
+
+P1 列表 index.vue
+重构点：动作列统一、列渲染一致、查询别名/fallback、路由监听收敛、排序边界、错误/空态兜底。
+用例清单：list.basic/actions.more/autoClick.buttons/modeFromRoute/route.watch/sort.delete.cancel/submit.validateFalse。
+目标覆盖率：函数≥85%、语句≥90（阶段目标），逐步抬升至聚合 90/85/90/90。
+P2 模板 template.vue
+状态机三分支（validate false/add/update）、提交成功/失败/取消链路、表格 handlers。
+用例：template.submit/submit.validateFalse/status.toggle.sequence/table.handlers.exec。
+P3 详情 detail.vue
+start/close 异常/取消、loadLogs 动态加载 fallback、非法 id 回退。
+用例：detail.actions/validateFalse/logs.fallback/misc/util.branches。
+P4 报表 report.vue
+exportReport try/catch 兜底、趋势图 xAxis/series 对空/错数据健壮、SLA 点击联动。
+用例：report.basic/fallback/drilldown/trend.points/more.branches。
+覆盖率达标策略
+
+代码改造
+将复杂分支拆为可测纯函数；将外部依赖注入到 Domain/Service 以便 mock；视图事件处理薄化为调用 Adapter。
+对频繁使用的工具（格式化/映射/筛选）做独立单测，快速提升 functions/branches。
+测试编排
+优先覆盖“最影响分支计数”的路径（条件判断、早返回、try/catch、路由/参数分支）。
+对 UI 组件，聚焦“交互→回调”与“数据→渲染结果”两条链路；避免深度快照，采用命中断言。
+阈值管理
+coverage-check.mjs 先按 P0 阶段阈值运行；每完成一个阶段，将该分组阈值上调至《覆盖率标准.md》目标值。
+关键文件可在脚本中保持单文件阈值（如 src/utils/auth.ts）。
+提交与评审（建议模板）
+
+变更说明：本次改动的功能点+抽象点（Adapter/Domain/Service/纯函数列表）。
+测试说明：新增/修改用例清单、命中的分支类型、已覆盖的异常与空态。
+覆盖率报告：ticket-only 的覆盖率摘要（lines/branches/functions/statements）与 coverage-check.mjs 通过截图/日志。
+风险与回滚：涉及的开关、回退路径；是否触达目录/编码/批量操作（如有需二次确认）。
+注意事项
+
+大规模迁移/删除/重命名前先列清单并二次确认；不再在三级目录新建 IDC；确保双层目录的 frontend/docs 路径稳定。
+若某些历史文档非 UTF-8，合并补充前先统一编码，避免乱码影响评审。
+若出现 OOM，分批（list/template/detail/report）执行 ticket-only，并设置 NODE_OPTIONS=--max-old-space-size=4096
+
+交付范围
+
+阶段：P1（Ticket 列表页 index.vue）
+目标：以覆盖率为硬门槛完成列表页重构，并沉淀测试用例与度量
+根路径：仅在双层目录操作（IDC-Management-System/IDC-Management-System）。不在三级目录新建/修改任何内容
+二次确认：涉及大量删除/迁移/重命名前，先给出清单再执行
+目标与门槛
+
+阶段门槛（P1）
+index.vue：functions ≥ 85%，statements ≥ 90%，branches ≥ 80%，lines ≥ 85%
+聚合到 Ticket 视图（到 P4 收尾）：lines 90 / branches 85 / functions 90 / statements 90
+票据路径选择
+默认走 TicketAdapter.list（由 USE_NEW_TICKET 控制，旧路径保留等价行为）
+收敛方向
+统一动作列与列渲染风格
+查询参数别名/fallback 与错误容错
+路由 query 与本地查询状态收敛（监听去抖）
+排序映射与边界处理
+错误/空态兜底提示
+函数提纯清单（建议落点：frontend/src/views/business/ticket/index.util.ts）
+
+buildListQuery(queryParams, dateRange)
+用途：整合表单状态与日期区间，生成请求参数
+I/O：{ticketNo,title,status,priority,pageNum,pageSize,…}+dateRange → ApiQuery
+覆盖：list.basic、list.modeFromRoute、list.submit.validateFalse
+normalizeQueryFromRoute(routeQuery)
+用途：将路由 query（含别名/不合法值）合并到本地状态（含 fallback）
+I/O：RouteQuery → {queryParams, dateRange}
+覆盖：list.modeFromRoute、list.route.watch
+mapSortChange({prop, order})
+用途：ElTable 自定义排序映射（如 createTime/lastStatusTime + asc/desc）
+I/O：{prop, order} → {sortBy, sortDir|null}
+覆盖：list.sort.delete.cancel、list.basic
+computeActionDisabled(row, selection)
+用途：统一动作按钮禁用态（批量删除、批量指派、重开按钮显示状态）
+I/O：row/selection → {canEdit, canDelete, canAssign, canReopen}
+覆盖：list.actions.more、list.autoClick.buttons
+formatPriorityLabel(priority)
+用途：优先级标签映射（UI 使用 el-tag 的 type 也在这里约定）
+I/O：'high'|'medium'|'low' → {label,type}
+覆盖：list.basic
+ensureSafeRequest(reqFn, onError)
+用途：对请求进行 try/catch 包裹，统一错误提示与 UI 状态复位
+I/O：() => Promise → Promise，错误时调用 onError
+覆盖：list.basic、list.submit.validateFalse、list.actions.more
+mergeSearchState(state, patch, debounceMs=150)
+用途：本地查询状态合并（可加简单去抖）、触发拉取
+I/O：state+patch → new state（schedule fetch）
+覆盖：list.route.watch、list.basic
+说明：
+
+上述函数均为“少副作用、可单测”的纯函数或近似纯函数，尽量不直接操作组件实例/DOM
+视图中仅承接 UI 生命周期与事件，把分支/映射/校验移入 util
+视图改造点（frontend/src/views/business/ticket/index.vue）
+
+事件处理
+handleQuery → 调用 buildListQuery + Adapter.list + ensureSafeRequest
+handleSortChange → 调用 mapSortChange，合并状态并 fetch
+handleSelectionChange → 更新 selection，调用 computeActionDisabled
+handleAdd/Update/Delete/Assign/Reopen → 统一经 ensureSafeRequest 包裹
+状态同步
+路由 → 本地：onMounted 初始 normalizeQueryFromRoute；watch route.query → mergeSearchState（去抖）
+本地 → 路由：手动查询后，同步关键字段到路由（保持可分享/回退）
+渲染统一
+列模板统一使用 dict-tag/tooltip；优先级用 formatPriorityLabel 产出的 label/type
+空态/错误弹窗：统一使用 $modal 或 message 组件，错误不留“加载态卡死”
+用例矩阵（frontend/src/__tests__/ticket.list.*.test.ts）
+
+ticket.list.basic.test.ts
+目的：基本渲染、查询、错误兜底
+步骤：mount → set form → handleQuery → mock Adapter.list success/fail
+断言：表数据渲染/loading 切换/错误提示出现
+ticket.list.actions.more.test.ts
+目的：动作列逻辑统一，禁用态/授权等（可简化权限为假设 true）
+步骤：选择行 → 点击各动作 → 校验调用顺序与禁用态
+断言：ensureSafeRequest 入口被命中；禁用态随 selection 变化
+ticket.list.autoClick.buttons.test.ts
+目的：自动触发查询/按钮行为去抖
+步骤：快速多次触发查询按钮/路由变化
+断言：实际请求次数去抖（≤ 预期）
+ticket.list.modeFromRoute.test.ts
+目的：路由带入模式（如 ?mode=overdue）别名映射与 fallback
+步骤：挂载时注入特定 route.query → normalize 行为
+断言：queryParams 与 dateRange 初始化正确
+ticket.list.route.watch.test.ts
+目的：watch route.query 合并状态（不丢失已有状态）
+步骤：依次改动 route.query 多字段
+断言：状态仅按变化字段更新（其余保留）
+ticket.list.sort.delete.cancel.test.ts
+目的：排序映射、删除后分页/索引/空态
+步骤：触发 sort-change、执行删除、校验翻页
+断言：mapSortChange 输出正确；删除后列表刷新与空态处理
+ticket.list.submit.validateFalse.test.ts
+目的：校验失败流程（如必填字段缺失）与 UI 复位
+步骤：模拟缺失字段提交
+断言：错误提示；loading 复位；未发请求
+ticket.list.functions.callAll.test.ts（可选）
+目的：util 纯函数单测覆盖最大分支
+步骤：针对每个 util 函数提供若干输入覆盖
+断言：满足边界与错误输入 fallback
+Mock/stub 指南
+
+复用全局 setup：frontend/src/__tests__/setup.ts
+Router：采用 vi.mock('@/router', …) 最小化 API；或直接使用内置 createRouter（jsdom）
+Adapter：vi.spyOn(TicketAdapter, 'list') 覆盖成功/失败/边界
+权限指令/字典/图标：最小化 stub（返回 true 或固定内容即可）
+节流/去抖：使用 vi.useFakeTimers() 精确断言
+覆盖率目标表（P1 阶段）
+
+src/views/business/ticket/index.vue
+functions ≥ 85%，statements ≥ 90%，branches ≥ 80%，lines ≥ 85%
+src/views/business/ticket/index.util.ts
+functions ≥ 95%，branches ≥ 85%，statements ≥ 95%，lines ≥ 95%（纯函数）
+src/adapters/TicketAdapter.ts（list 路径）
+functions ≥ 90%，branches ≥ 85%（双路径切换）
+聚合（ticket-only 临时阈值）
+lines ≥ 80%，functions ≥ 80%，statements ≥ 80%，branches ≥ 70%（P0 的脚本默认值）
+在 P1 收尾提交前，提升 ticket 路径阈值至 lines ≥ 85 / functions ≥ 85 / statements ≥ 90 / branches ≥ 80
+执行顺序与命令
+
+开发顺序
+新增 index.util.ts 并写 util 单测（快速拉高 functions/branches）
+改造 index.vue 事件/渲染/同步逻辑，接入 util 函数
+增补列表用例（见矩阵），先易后难（basic → route → sort → actions）
+提升脚本阈值到 P1 收尾值，确保门禁通过
+运行
+cd IDC-Management-System/IDC-Management-System/frontend
+npx vitest run -c vitest.ticket.config.ts --coverage
+node scripts/coverage-check.mjs
+如内存紧张：$env:NODE_OPTIONS="--max-old-space-size=4096"
+二次确认提示
+
+本阶段不涉及大量文件删除/迁移/重命名；如需拆分 index.vue 为多个子组件或移动视图目录，请先二次确认
+不在三级目录新建/引用任何文件；所有路径以双层目录为准
+
+ 列表页工作，按“覆盖率优先”的策略先落地纯函数工具与测试，便于快速提升 functions/branches 并稳定逻辑。
+
+本次新增
+
+工具文件
+frontend/src/views/business/ticket/index.util.ts
+buildListQuery(queryParams, dateRange)
+normalizeQueryFromRoute(routeQuery)
+mapSortChange({prop, order})
+computeActionDisabled(row, selection)
+formatPriorityLabel(priority)
+ensureSafeRequest(fn, onError)
+mergeSearchState(state, patch, debounceMs)
+测试用例
+frontend/src/tests/ticket.list.functions.callAll.test.ts
+覆盖上述所有函数的正常/异常/边界分支
+下一步（如你同意我继续推进）
+
+将 index.vue 的事件处理与状态收敛改造成调用这些 util（最小侵入改造）
+增补场景用例：list.basic、list.modeFromRoute、list.route.watch、list.sort.delete.cancel、list.actions.more、list.submit.validateFalse
+在 P1 收尾时，提升 ticket-only 脚本阈值至阶段目标，并在 refactoring-progress.md 记录达成情况
+说明
+
+双层目录是唯一根；没有在三级目录创建或改动任何文件
+涉及大量迁移/删除/重命名前，我会先列出清单供你二次确认

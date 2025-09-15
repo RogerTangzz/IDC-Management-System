@@ -50,6 +50,31 @@ import DictTag from '@/components/DictTag'
 // ★ 新增：引入并全局挂载 $auth
 import auth from '@/plugins/auth'
 
+// ★ 新增：按环境应用 Feature Flag 预设
+import { applyPreset } from '@/config/FlagPresets'
+import { setTelemetryProvider, ConsoleTelemetry, setTelemetryContext } from '@/infra/telemetry'
+import { createSentryProvider } from '@/infra/telemetry.providers'
+const __mode = import.meta.env.MODE
+const __env = __mode === 'production' ? 'prod' : (__mode === 'staging' ? 'stage' : 'dev')
+applyPreset(__env)
+
+// Telemetry provider: enable console in dev/stage or when explicitly requested
+try {
+  const enableConsole = import.meta.env?.DEV || (import.meta.env?.MODE === 'staging') || (import.meta.env?.VITE_TELEMETRY_CONSOLE === '1')
+  const sentryDsn = import.meta.env?.VITE_SENTRY_DSN
+  // 优先使用平台 Provider（例如 Sentry）
+  if (sentryDsn && (globalThis && (globalThis).Sentry)) {
+    setTelemetryProvider(createSentryProvider(sentryDsn))
+  } else if (enableConsole) {
+    setTelemetryProvider(ConsoleTelemetry)
+  }
+} catch {}
+
+// baseline telemetry context
+try {
+  setTelemetryContext({ env: __env })
+} catch {}
+
 // // ★★ 添加Mock支持
 // if (import.meta.env.DEV) {
 //   import('./mock/index.js').then(() => {

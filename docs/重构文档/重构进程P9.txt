@@ -1,0 +1,1015 @@
+## Phase 9: 安全加固（2天）
+
+### 📅 时间安排
+- **Day 1**: Milestone 9.1 身份认证与授权增强
+- **Day 2**: Milestone 9.2 数据安全与审计
+
+---
+
+## Milestone 9.1: 身份认证与授权增强（1天）
+
+### Day 1: 认证授权实现（8小时）
+
+#### 1. JWT认证服务
+```typescript
+// src/security/auth/JwtAuthService.ts
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { Redis } from 'ioredis';
+
+@Injectable()
+export class JwtAuthService {
+  private readonly accessTokenSecret: string;
+  private readonly refreshTokenSecret: string;
+  private readonly accessTokenExpiry = '15m';
+  private readonly refreshTokenExpiry = '7d';
+  private redis: Redis;
+  
+  constructor(
+    @Inject('ConfigService') private config: ConfigService,
+    @Inject('Logger') private logger: Logger,
+    @Inject('Redis') redis: Redis
+  ) {
+    this.accessTokenSecret = this.config.get('auth.jwt.accessSecret');
+    this.refreshTokenSecret = this.config.get('auth.jwt.refreshSecret');
+    this.redis = redis;
+  }
+  
+  async generateTokenPair(user: User): Promise<TokenPair> {
+    const tokenId = crypto.randomBytes(16).toString('hex');
+    
+    // 生成访问令牌
+    const accessToken = jwt.sign(
+      {
+        sub: user.id,
+        username: user.username,
+        roles: user.roles,
+        permissions: user.permissions,
+        jti: tokenId,
+        type: 'access'
+      },
+      this.accessTokenSecret,
+      {
+        expiresIn: this.accessTokenExpiry,
+        issuer: 'auth-service',
+        audience: 'api'
+      }
+    );
+    
+    // 生成刷新令牌
+    const refreshToken = jwt.sign(
+      {
+        sub: user.id,
+        jti: tokenId,
+        type: 'refresh'
+      },
+      this.refreshTokenSecret,
+      {
+        expiresIn: this.refreshTokenExpiry,
+        issuer: 'auth-service'
+      }
+    );
+    
+    // 存储刷新令牌到Redis
+    await this.redis.setex(
+      `refresh_token:${user.id}:${tokenId}`,
+      7 * 24 * 60 * 60, // 7天
+      JSON.stringify({
+        userId: user.id,
+        tokenId,
+        createdAt: new Date().toISOString(),
+        userAgent: this.getUserAgent(),
+        ip: this.getClientIp()
+      })
+    );
+    
+    // 记录登录审计日志
+    await this.auditLog('auth.login', {
+      userId: user.id,
+      tokenId,
+      method: 'jwt'
+    });
+    
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: 900, // 15分钟
+      tokenType: 'Bearer'
+    };
+  }
+  
+  async verifyAccessToken(token: string): Promise<TokenPayload> {
+    try {
+      const payload = jwt.verify(token, this.accessTokenSecret, {
+        issuer: 'auth-service',
+        audience: 'api'
+      }) as TokenPayload;
+      
+      // 检查是否在黑名单中
+      const isBlacklisted = await this.redis.exists(`blacklist:${payload.jti}`);
+      if (isBlacklisted) {
+        throw new UnauthorizedError('Token has been revoked');
+      }
+      
+      return payload;
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedError('Access token expired');
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedError('Invalid access token');
+      }
+      throw error;
+    }
+  }
+  
+  async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
+    try {
+      const payload = jwt.verify(refreshToken, this.refreshTokenSecret, {
+        issuer: 'auth-service'
+      }) as RefreshTokenPayload;
+      
+      // 验证刷新令牌是否存在于Redis
+      const storedToken = await this.redis.get(`refresh_token:${payload.sub}:${payload.jti}`);
+      if (!storedToken) {
+        throw new UnauthorizedError('Refresh token not found or expired');
+      }
+      
+      // 获取用户最新信息
+      const user = await this.userRepository.findById(payload.sub);
+      if (!user || !user.isActive) {
+        throw new UnauthorizedError('User not found or inactive');
+      }
+      
+      // 生成新的令牌对
+      const newTokens = await this.generateTokenPair(user);
+      
+      // 可选：实现刷新令牌轮换
+      if (this.config.get('auth.jwt.rotateRefreshToken')) {
+        // 删除旧的刷新令牌
+        await this.redis.del(`refresh_token:${payload.sub}:${payload.jti}`);
+      }
+      
+      return newTokens;
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedError('Refresh token expired');
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedError('Invalid refresh token');
+      }
+      throw error;
+    }
+  }
+  
+  async revokeToken(tokenId: string): Promise<void> {
+    // 将令牌加入黑名单
+    await this.redis.setex(
+      `blacklist:${tokenId}`,
+      900, // 与访问令牌过期时间一致
+      '1'
+    );
+    
+    // 删除对应的刷新令牌
+    const keys = await this.redis.keys(`refresh_token:*:${tokenId}`);
+    if (keys.length > 0) {
+      await this.redis.del(...keys);
+    }
+    
+    await this.auditLog('auth.logout', { tokenId });
+  }
+  
+  async revokeAllUserTokens(userId: string): Promise<void> {
+    // 获取用户所有刷新令牌
+    const keys = await this.redis.keys(`refresh_token:${userId}:*`);
+    
+    // 将所有令牌加入黑名单并删除刷新令牌
+    for (const key of keys) {
+      const tokenData = await this.redis.get(key);
+      if (tokenData) {
+        const { tokenId } = JSON.parse(tokenData);
+        await this.redis.setex(`blacklist:${tokenId}`, 900, '1');
+      }
+    }
+    
+    if (keys.length > 0) {
+      await this.redis.del(...keys);
+    }
+    
+    await this.auditLog('auth.revoke_all', { userId, count: keys.length });
+  }
+}
+```
+
+#### 2. RBAC权限系统
+```typescript
+// src/security/rbac/RbacService.ts
+@Injectable()
+export class RbacService {
+  private roleHierarchy = new Map<string, string[]>();
+  private permissionCache = new Map<string, Set<string>>();
+  
+  constructor(
+    @Inject('RoleRepository') private roleRepository: RoleRepository,
+    @Inject('Logger') private logger: Logger,
+    @Inject('CacheManager') private cache: CacheManager
+  ) {
+    this.initializeRoleHierarchy();
+  }
+  
+  private async initializeRoleHierarchy(): Promise<void> {
+    // 定义角色继承关系
+    this.roleHierarchy.set('super_admin', ['admin']);
+    this.roleHierarchy.set('admin', ['manager']);
+    this.roleHierarchy.set('manager', ['supervisor']);
+    this.roleHierarchy.set('supervisor', ['operator']);
+    this.roleHierarchy.set('operator', ['viewer']);
+    this.roleHierarchy.set('viewer', []);
+  }
+  
+  async checkPermission(
+    user: User,
+    resource: string,
+    action: string,
+    context?: any
+  ): Promise<boolean> {
+    // 超级管理员拥有所有权限
+    if (user.roles.includes('super_admin')) {
+      return true;
+    }
+    
+    // 获取用户的所有权限（包括继承的）
+    const permissions = await this.getUserPermissions(user);
+    
+    // 构建权限字符串
+    const requiredPermission = `${resource}:${action}`;
+    
+    // 检查直接权限
+    if (permissions.has(requiredPermission) || permissions.has(`${resource}:*`)) {
+      // 如果有上下文，进行额外的属性基础访问控制(ABAC)
+      if (context) {
+        return await this.checkAttributeBasedAccess(user, resource, action, context);
+      }
+      return true;
+    }
+    
+    // 检查通配符权限
+    if (permissions.has('*:*') || permissions.has(`*:${action}`)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  private async getUserPermissions(user: User): Promise<Set<string>> {
+    const cacheKey = `permissions:${user.id}`;
+    
+    // 从缓存获取
+    const cached = await this.cache.get<Set<string>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
+    const permissions = new Set<string>();
+    
+    // 收集所有角色（包括继承的）
+    const allRoles = this.getAllRoles(user.roles);
+    
+    // 获取每个角色的权限
+    for (const roleName of allRoles) {
+      const role = await this.roleRepository.findByName(roleName);
+      if (role) {
+        role.permissions.forEach(p => permissions.add(p));
+      }
+    }
+    
+    // 添加用户直接分配的权限
+    user.permissions?.forEach(p => permissions.add(p));
+    
+    // 缓存权限
+    await this.cache.set(cacheKey, permissions, 300); // 5分钟缓存
+    
+    return permissions;
+  }
+  
+  private getAllRoles(userRoles: string[]): Set<string> {
+    const allRoles = new Set<string>();
+    
+    const collectRoles = (roleName: string) => {
+      allRoles.add(roleName);
+      const inheritedRoles = this.roleHierarchy.get(roleName) || [];
+      inheritedRoles.forEach(r => collectRoles(r));
+    };
+    
+    userRoles.forEach(role => collectRoles(role));
+    
+    return allRoles;
+  }
+  
+  private async checkAttributeBasedAccess(
+    user: User,
+    resource: string,
+    action: string,
+    context: any
+  ): Promise<boolean> {
+    // 实现基于属性的访问控制
+    const policies = await this.getPolicies(resource, action);
+    
+    for (const policy of policies) {
+      if (!this.evaluatePolicy(policy, user, context)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  private evaluatePolicy(policy: Policy, user: User, context: any): boolean {
+    switch (policy.type) {
+      case 'owner':
+        // 只能访问自己的资源
+        return context.ownerId === user.id;
+      
+      case 'department':
+        // 只能访问同部门的资源
+        return context.departmentId === user.departmentId;
+      
+      case 'time_based':
+        // 基于时间的访问控制
+        const now = new Date();
+        const hour = now.getHours();
+        return hour >= policy.startHour && hour <= policy.endHour;
+      
+      case 'location':
+        // 基于位置的访问控制
+        return this.isIpInRange(context.clientIp, policy.allowedIpRanges);
+      
+      case 'data_classification':
+        // 基于数据分类的访问控制
+        return user.clearanceLevel >= context.dataClassification;
+      
+      default:
+        return true;
+    }
+  }
+  
+  async createRole(roleData: CreateRoleDto): Promise<Role> {
+    // 验证权限格式
+    this.validatePermissions(roleData.permissions);
+    
+    const role = await this.roleRepository.create(roleData);
+    
+    // 清除相关缓存
+    await this.clearPermissionCache();
+    
+    await this.auditLog('rbac.role_created', {
+      roleId: role.id,
+      roleName: role.name
+    });
+    
+    return role;
+  }
+  
+  async assignRole(userId: string, roleName: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+    
+    const role = await this.roleRepository.findByName(roleName);
+    if (!role) {
+      throw new NotFoundError('Role not found');
+    }
+    
+    // 检查角色冲突
+    if (this.hasRoleConflict(user.roles, roleName)) {
+      throw new ConflictError('Role conflict detected');
+    }
+    
+    user.roles.push(roleName);
+    await this.userRepository.update(user);
+    
+    // 清除用户权限缓存
+    await this.cache.del(`permissions:${userId}`);
+    
+    await this.auditLog('rbac.role_assigned', {
+      userId,
+      roleName
+    });
+  }
+  
+  private validatePermissions(permissions: string[]): void {
+    const pattern = /^[a-z_]+:[a-z_]+|\*$/;
+    
+    for (const permission of permissions) {
+      if (!pattern.test(permission)) {
+        throw new ValidationError(`Invalid permission format: ${permission}`);
+      }
+    }
+  }
+  
+  private hasRoleConflict(currentRoles: string[], newRole: string): boolean {
+    // 检查互斥角色
+    const mutuallyExclusive = {
+      'admin': ['viewer'],
+      'manager': ['operator'],
+    };
+    
+    const exclusions = mutuallyExclusive[newRole] || [];
+    return currentRoles.some(role => exclusions.includes(role));
+  }
+}
+```
+
+---
+
+## Milestone 9.2: 数据安全与审计（1天）
+
+### Day 2: 数据加密和审计实现（8小时）
+
+#### 1. 数据加密服务
+```typescript
+// src/security/crypto/CryptoService.ts
+import crypto from 'crypto';
+import { promisify } from 'util';
+
+@Injectable()
+export class CryptoService {
+  private readonly algorithm = 'aes-256-gcm';
+  private readonly keyDerivationIterations = 100000;
+  private masterKey: Buffer;
+  private dataKeys = new Map<string, Buffer>();
+  
+  constructor(
+    @Inject('ConfigService') private config: ConfigService,
+    @Inject('KeyManagementService') private kms: KeyManagementService
+  ) {
+    this.initializeMasterKey();
+  }
+  
+  private async initializeMasterKey(): Promise<void> {
+    // 从KMS或环境变量获取主密钥
+    const masterKeyBase64 = await this.kms.getMasterKey();
+    this.masterKey = Buffer.from(masterKeyBase64, 'base64');
+  }
+  
+  // 字段级加密
+  async encryptField(data: string, context?: string): Promise<EncryptedData> {
+    // 生成数据加密密钥
+    const dataKey = await this.getOrCreateDataKey(context || 'default');
+    
+    // 生成随机IV
+    const iv = crypto.randomBytes(16);
+    
+    // 创建加密器
+    const cipher = crypto.createCipheriv(this.algorithm, dataKey, iv);
+    
+    // 加密数据
+    const encrypted = Buffer.concat([
+      cipher.update(data, 'utf8'),
+      cipher.final()
+    ]);
+    
+    // 获取认证标签
+    const authTag = cipher.getAuthTag();
+    
+    return {
+      encrypted: encrypted.toString('base64'),
+      iv: iv.toString('base64'),
+      authTag: authTag.toString('base64'),
+      algorithm: this.algorithm,
+      keyId: context || 'default'
+    };
+  }
+  
+  // 字段级解密
+  async decryptField(encryptedData: EncryptedData): Promise<string> {
+    // 获取数据密钥
+    const dataKey = await this.getOrCreateDataKey(encryptedData.keyId);
+    
+    // 解析加密数据
+    const encrypted = Buffer.from(encryptedData.encrypted, 'base64');
+    const iv = Buffer.from(encryptedData.iv, 'base64');
+    const authTag = Buffer.from(encryptedData.authTag, 'base64');
+    
+    // 创建解密器
+    const decipher = crypto.createDecipheriv(this.algorithm, dataKey, iv);
+    decipher.setAuthTag(authTag);
+    
+    // 解密数据
+    const decrypted = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final()
+    ]);
+    
+    return decrypted.toString('utf8');
+  }
+  
+  // 批量加密
+  async encryptBatch(items: any[], fields: string[]): Promise<any[]> {
+    const encrypted = [];
+    
+    for (const item of items) {
+      const encryptedItem = { ...item };
+      
+      for (const field of fields) {
+        if (item[field]) {
+          encryptedItem[field] = await this.encryptField(item[field], field);
+        }
+      }
+      
+      encrypted.push(encryptedItem);
+    }
+    
+    return encrypted;
+  }
+  
+  // 透明加密装饰器
+  EncryptedField(fieldName?: string) {
+    return (target: any, propertyKey: string) => {
+      const field = fieldName || propertyKey;
+      
+      // 保存原始的getter和setter
+      const getter = target.__lookupGetter__(propertyKey);
+      const setter = target.__lookupSetter__(propertyKey);
+      
+      // 定义新的getter和setter
+      Object.defineProperty(target, propertyKey, {
+        get: async function() {
+          const encrypted = this[`_encrypted_${field}`];
+          if (encrypted) {
+            return await this.cryptoService.decryptField(encrypted);
+          }
+          return getter?.call(this);
+        },
+        set: async function(value: string) {
+          if (value) {
+            this[`_encrypted_${field}`] = await this.cryptoService.encryptField(value, field);
+          }
+          setter?.call(this, value);
+        }
+      });
+    };
+  }
+  
+  // 文件加密
+  async encryptFile(filePath: string, outputPath: string): Promise<void> {
+    const algorithm = 'aes-256-cbc';
+    const key = crypto.randomBytes(32);
+    const iv = crypto.randomBytes(16);
+    
+    // 使用主密钥加密文件密钥
+    const encryptedKey = await this.encryptWithMasterKey(key);
+    
+    const input = fs.createReadStream(filePath);
+    const output = fs.createWriteStream(outputPath);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    
+    // 写入加密元数据
+    const metadata = {
+      algorithm,
+      encryptedKey: encryptedKey.toString('base64'),
+      iv: iv.toString('base64')
+    };
+    
+    output.write(JSON.stringify(metadata) + '\n');
+    
+    // 加密文件内容
+    input.pipe(cipher).pipe(output);
+    
+    return new Promise((resolve, reject) => {
+      output.on('finish', resolve);
+      output.on('error', reject);
+    });
+  }
+  
+  // 数据脱敏
+  maskSensitiveData(data: any, rules: MaskingRule[]): any {
+    const masked = { ...data };
+    
+    for (const rule of rules) {
+      if (masked[rule.field]) {
+        masked[rule.field] = this.applyMasking(masked[rule.field], rule);
+      }
+    }
+    
+    return masked;
+  }
+  
+  private applyMasking(value: string, rule: MaskingRule): string {
+    switch (rule.type) {
+      case 'email':
+        // 邮箱脱敏：保留前3位和@后的域名
+        return value.replace(/^(.{3}).*(@.*)$/, '$1****$2');
+      
+      case 'phone':
+        // 手机号脱敏：保留前3位和后4位
+        return value.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2');
+      
+      case 'idcard':
+        // 身份证脱敏：保留前6位和后4位
+        return value.replace(/^(.{6}).*(.{4})$/, '$1********$2');
+      
+      case 'name':
+        // 姓名脱敏：保留姓氏
+        return value[0] + '*'.repeat(value.length - 1);
+      
+      case 'custom':
+        // 自定义脱敏规则
+        return value.replace(rule.pattern!, rule.replacement!);
+      
+      default:
+        return '***';
+    }
+  }
+  
+  private async getOrCreateDataKey(keyId: string): Promise<Buffer> {
+    if (this.dataKeys.has(keyId)) {
+      return this.dataKeys.get(keyId)!;
+    }
+    
+    // 使用主密钥派生数据密钥
+    const salt = crypto.createHash('sha256').update(keyId).digest();
+    const dataKey = await promisify(crypto.pbkdf2)(
+      this.masterKey,
+      salt,
+      this.keyDerivationIterations,
+      32,
+      'sha256'
+    );
+    
+    this.dataKeys.set(keyId, dataKey);
+    return dataKey;
+  }
+  
+  private async encryptWithMasterKey(data: Buffer): Promise<Buffer> {
+    const cipher = crypto.createCipheriv(
+      'aes-256-gcm',
+      this.masterKey,
+      crypto.randomBytes(16)
+    );
+    
+    return Buffer.concat([
+      cipher.update(data),
+      cipher.final(),
+      cipher.getAuthTag()
+    ]);
+  }
+}
+```
+
+#### 2. 审计日志服务
+```typescript
+// src/security/audit/AuditService.ts
+@Injectable()
+export class AuditService {
+  private auditQueue: Queue;
+  
+  constructor(
+    @Inject('AuditRepository') private repository: AuditRepository,
+    @Inject('CryptoService') private crypto: CryptoService,
+    @Inject('Logger') private logger: Logger,
+    @Inject('EventBus') private eventBus: EventBus
+  ) {
+    this.auditQueue = new Queue('audit-logs');
+    this.setupQueueProcessor();
+  }
+  
+  async log(entry: AuditLogEntry): Promise<void> {
+    // 添加上下文信息
+    const enrichedEntry: AuditLog = {
+      ...entry,
+      id: generateId(),
+      timestamp: new Date(),
+      requestId: this.getRequestId(),
+      sessionId: this.getSessionId(),
+      clientIp: this.getClientIp(),
+      userAgent: this.getUserAgent(),
+      serverHostname: os.hostname()
+    };
+    
+    // 计算日志哈希（用于防篡改）
+    enrichedEntry.hash = this.calculateHash(enrichedEntry);
+    
+    // 如果包含敏感数据，进行加密
+    if (entry.sensitive) {
+      enrichedEntry.details = await this.crypto.encryptField(
+        JSON.stringify(entry.details),
+        'audit'
+      );
+    }
+    
+    // 添加到队列异步处理
+    await this.auditQueue.add(enrichedEntry, {
+      priority: this.getPriority(entry.severity),
+      removeOnComplete: true
+    });
+    
+    // 如果是高危操作，立即通知
+    if (entry.severity === 'critical') {
+      this.eventBus.emit('audit.critical', enrichedEntry);
+    }
+  }
+  
+  private setupQueueProcessor(): void {
+    this.auditQueue.process(async (job) => {
+      const auditLog = job.data;
+      
+      try {
+        // 存储到数据库
+        await this.repository.save(auditLog);
+        
+        // 发送到SIEM系统
+        if (this.config.get('audit.siem.enabled')) {
+          await this.sendToSiem(auditLog);
+        }
+        
+        // 实时分析异常行为
+        await this.analyzeForAnomalies(auditLog);
+      } catch (error) {
+        this.logger.error('Failed to process audit log', error);
+        throw error; // 重试
+      }
+    });
+  }
+  
+  async query(filters: AuditQueryFilters): Promise<AuditLog[]> {
+    // 权限检查
+    const user = this.getCurrentUser();
+    if (!user.hasPermission('audit:read')) {
+      throw new ForbiddenError('Insufficient permissions to read audit logs');
+    }
+    
+    // 构建查询
+    const query = this.buildQuery(filters);
+    
+    // 执行查询
+    const logs = await this.repository.find(query);
+    
+    // 解密敏感数据（如果有权限）
+    if (user.hasPermission('audit:read:sensitive')) {
+      for (const log of logs) {
+        if (log.sensitive && log.details) {
+          log.details = JSON.parse(
+            await this.crypto.decryptField(log.details)
+          );
+        }
+      }
+    }
+    
+    // 记录审计日志查询操作
+    await this.log({
+      action: 'audit.query',
+      resource: 'audit_logs',
+      userId: user.id,
+      details: { filters },
+      severity: 'info'
+    });
+    
+    return logs;
+  }
+  
+  private async analyzeForAnomalies(log: AuditLog): Promise<void> {
+    // 检测异常模式
+    const anomalies = [];
+    
+    // 1. 非工作时间的敏感操作
+    if (this.isOutsideBusinessHours(log.timestamp) && 
+        this.isSensitiveAction(log.action)) {
+      anomalies.push({
+        type: 'unusual_time',
+        severity: 'medium'
+      });
+    }
+    
+    // 2. 异常地理位置
+    const userLocation = await this.getUserUsualLocation(log.userId);
+    if (userLocation && !this.isNearLocation(log.clientIp, userLocation)) {
+      anomalies.push({
+        type: 'unusual_location',
+        severity: 'high'
+      });
+    }
+    
+    // 3. 批量操作检测
+    const recentActions = await this.getRecentActions(log.userId, 60); // 最近60秒
+    if (recentActions.length > 100) {
+      anomalies.push({
+        type: 'bulk_operation',
+        severity: 'medium'
+      });
+    }
+    
+    // 4. 权限提升检测
+    if (this.isPrivilegeEscalation(log.action)) {
+      anomalies.push({
+        type: 'privilege_escalation',
+        severity: 'critical'
+      });
+    }
+    
+    // 5. 数据外泄检测
+    if (this.isPotentialDataExfiltration(log)) {
+      anomalies.push({
+        type: 'data_exfiltration',
+        severity: 'critical'
+      });
+    }
+    
+    // 如果检测到异常，发送告警
+    if (anomalies.length > 0) {
+      await this.handleAnomalies(log, anomalies);
+    }
+  }
+  
+  private async handleAnomalies(log: AuditLog, anomalies: any[]): Promise<void> {
+    // 记录安全事件
+    const securityEvent = {
+      id: generateId(),
+      timestamp: new Date(),
+      auditLogId: log.id,
+      userId: log.userId,
+      anomalies,
+      status: 'pending'
+    };
+    
+    await this.repository.saveSecurityEvent(securityEvent);
+    
+    // 根据严重程度采取行动
+    const maxSeverity = Math.max(...anomalies.map(a => 
+      a.severity === 'critical' ? 3 : a.severity === 'high' ? 2 : 1
+    ));
+    
+    if (maxSeverity === 3) {
+      // 立即锁定账户
+      await this.userService.lockAccount(log.userId, 'Security anomaly detected');
+      
+      // 发送紧急告警
+      await this.alerting.sendUrgentAlert({
+        title: 'Critical Security Event',
+        message: `User ${log.userId} account locked due to suspicious activity`,
+        details: securityEvent
+      });
+    } else if (maxSeverity === 2) {
+      // 要求重新认证
+      await this.authService.requireReauthentication(log.userId);
+      
+      // 发送告警
+      await this.alerting.sendAlert({
+        severity: 'high',
+        title: 'Security Anomaly Detected',
+        details: securityEvent
+      });
+    }
+  }
+  
+  private calculateHash(entry: any): string {
+    const content = JSON.stringify({
+      action: entry.action,
+      resource: entry.resource,
+      userId: entry.userId,
+      timestamp: entry.timestamp,
+      details: entry.details
+    });
+    
+    return crypto
+      .createHash('sha256')
+      .update(content)
+      .digest('hex');
+  }
+  
+  private isSensitiveAction(action: string): boolean {
+    const sensitiveActions = [
+      'user.delete',
+      'role.assign',
+      'permission.grant',
+      'data.export',
+      'config.modify'
+    ];
+    
+    return sensitiveActions.includes(action);
+  }
+  
+  private isPrivilegeEscalation(action: string): boolean {
+    return action.includes('role.assign') || 
+           action.includes('permission.grant');
+  }
+  
+  private isPotentialDataExfiltration(log: AuditLog): boolean {
+    // 检查是否是大量数据导出
+    if (log.action.includes('export') && log.details?.recordCount > 10000) {
+      return true;
+    }
+    
+    // 检查是否是敏感数据访问
+    if (log.resource?.includes('sensitive') && log.action === 'read') {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // 生成合规报告
+  async generateComplianceReport(
+    startDate: Date,
+    endDate: Date,
+    compliance: 'GDPR' | 'HIPAA' | 'SOC2'
+  ): Promise<ComplianceReport> {
+    const logs = await this.repository.findByDateRange(startDate, endDate);
+    
+    const report: ComplianceReport = {
+      period: { start: startDate, end: endDate },
+      compliance,
+      summary: {
+        totalEvents: logs.length,
+        userAccess: 0,
+        dataModifications: 0,
+        securityIncidents: 0,
+        systemChanges: 0
+      },
+      details: [],
+      recommendations: []
+    };
+    
+    // 分析日志
+    for (const log of logs) {
+      if (log.action.includes('login') || log.action.includes('logout')) {
+        report.summary.userAccess++;
+      }
+      if (log.action.includes('create') || log.action.includes('update') || log.action.includes('delete')) {
+        report.summary.dataModifications++;
+      }
+      if (log.severity === 'critical') {
+        report.summary.securityIncidents++;
+      }
+      if (log.resource === 'system' || log.resource === 'config') {
+        report.summary.systemChanges++;
+      }
+    }
+    
+    // 生成建议
+    if (report.summary.securityIncidents > 0) {
+      report.recommendations.push('Review and address security incidents');
+    }
+    
+    return report;
+  }
+}
+```
+
+## 📊 Phase 9 完成标准检查清单
+
+### 技术指标
+- [ ] JWT令牌签名验证通过
+- [ ] 权限检查响应时间 < 10ms
+- [ ] 加密/解密性能 < 50ms
+- [ ] 审计日志完整性 100%
+- [ ] 安全漏洞扫描通过
+
+### 功能验证
+- [ ] 多因素认证工作正常
+- [ ] 角色权限控制准确
+- [ ] 敏感数据加密存储
+- [ ] 审计日志不可篡改
+- [ ] 异常行为检测及时
+
+### 安全指标
+- [ ] OWASP Top 10 防护
+- [ ] 密码强度策略执行
+- [ ] 会话管理安全
+- [ ] API限流正常
+- [ ] 安全头配置完整
+
+## 🚀 Phase 9 交付物
+
+1. **认证授权**
+   - JWT认证服务
+   - OAuth2集成（可选）
+   - RBAC权限系统
+   - ABAC策略引擎
+
+2. **数据安全**
+   - 字段级加密
+   - 文件加密
+   - 数据脱敏
+   - 密钥管理
+
+3. **审计系统**
+   - 审计日志服务
+   - 异常检测
+   - 合规报告
+   - 安全事件处理
+
+4. **安全配置**
+   - 安全中间件
+   - CORS配置
+   - CSP策略
+   - Rate Limiting
+
+5. **文档**
+   - SECURITY-GUIDE.md
+   - RBAC-DESIGN.md
+   - AUDIT-POLICY.md
+   - INCIDENT-RESPONSE.md
+
+这就是Phase 9的完整实施方案，涵盖了身份认证、授权管理、数据加密和审计日志等关键安全环节，确保系统的安全性和合规性。

@@ -1,0 +1,1212 @@
+## Phase 7: 优化与监控（3天）
+
+### 📅 时间安排
+- **Day 1**: Milestone 7.1 性能优化
+- **Day 2**: Milestone 7.2 监控体系搭建
+- **Day 3**: Milestone 7.3 日志和追踪系统
+
+---
+
+## Milestone 7.1: 性能优化（1天）
+
+### Day 1: 性能优化实施（8小时）
+
+#### 1. 查询优化和缓存策略
+```typescript
+// src/infrastructure/cache/CacheManager.ts
+@Injectable()
+export class CacheManager {
+  private caches = new Map<string, Cache>()
+  private strategies = new Map<string, CacheStrategy>()
+  
+  constructor(
+    @Inject('Logger') private logger: Logger,
+    @Inject('MetricsCollector') private metrics: MetricsCollector
+  ) {
+    this.initializeCaches()
+  }
+  
+  private initializeCaches(): void {
+    // L1缓存：内存缓存
+    this.registerCache('memory', new MemoryCache({
+      maxSize: 1000,
+      ttl: 60000, // 1分钟
+      evictionPolicy: 'LRU'
+    }))
+    
+    // L2缓存：Redis缓存
+    this.registerCache('redis', new RedisCache({
+      host: 'localhost',
+      port: 6379,
+      ttl: 3600000, // 1小时
+      keyPrefix: 'app:'
+    }))
+    
+    // 注册缓存策略
+    this.registerStrategy('ticket', new MultiLayerStrategy(['memory', 'redis']))
+    this.registerStrategy('inspection', new WriteThoughStrategy('redis'))
+    this.registerStrategy('maintenance', new WriteBehindStrategy('redis', 5000))
+  }
+  
+  async get<T>(key: string, namespace: string = 'default'): Promise<T | null> {
+    const startTime = Date.now()
+    const strategy = this.strategies.get(namespace) || new DefaultStrategy()
+    
+    try {
+      const result = await strategy.get(key, this.caches)
+      
+      // 记录指标
+      this.metrics.recordCacheHit(namespace, result !== null)
+      this.metrics.recordCacheLatency(namespace, Date.now() - startTime)
+      
+      return result
+    } catch (error) {
+      this.logger.error('Cache get error', { key, namespace, error })
+      return null
+    }
+  }
+  
+  async set(key: string, value: any, namespace: string = 'default'): Promise<void> {
+    const strategy = this.strategies.get(namespace) || new DefaultStrategy()
+    
+    try {
+      await strategy.set(key, value, this.caches)
+    } catch (error) {
+      this.logger.error('Cache set error', { key, namespace, error })
+    }
+  }
+  
+  async invalidate(pattern: string, namespace: string = 'default'): Promise<void> {
+    const strategy = this.strategies.get(namespace) || new DefaultStrategy()
+    await strategy.invalidate(pattern, this.caches)
+    
+    this.logger.info('Cache invalidated', { pattern, namespace })
+  }
+  
+  private registerCache(name: string, cache: Cache): void {
+    this.caches.set(name, cache)
+  }
+  
+  private registerStrategy(namespace: string, strategy: CacheStrategy): void {
+    this.strategies.set(namespace, strategy)
+  }
+}
+
+// 多层缓存策略
+class MultiLayerStrategy implements CacheStrategy {
+  constructor(private layers: string[]) {}
+  
+  async get(key: string, caches: Map<string, Cache>): Promise<any> {
+    for (let i = 0; i < this.layers.length; i++) {
+      const cache = caches.get(this.layers[i])
+      if (!cache) continue
+      
+      const value = await cache.get(key)
+      if (value !== null) {
+        // 回填上层缓存
+        for (let j = 0; j < i; j++) {
+          const upperCache = caches.get(this.layers[j])
+          if (upperCache) {
+            await upperCache.set(key, value)
+          }
+        }
+        return value
+      }
+    }
+    return null
+  }
+  
+  async set(key: string, value: any, caches: Map<string, Cache>): Promise<void> {
+    // 写入所有层
+    await Promise.all(
+      this.layers.map(layer => {
+        const cache = caches.get(layer)
+        return cache?.set(key, value)
+      })
+    )
+  }
+  
+  async invalidate(pattern: string, caches: Map<string, Cache>): Promise<void> {
+    await Promise.all(
+      this.layers.map(layer => {
+        const cache = caches.get(layer)
+        return cache?.invalidate(pattern)
+      })
+    )
+  }
+}
+```
+
+#### 2. 数据库查询优化
+```typescript
+// src/infrastructure/database/QueryOptimizer.ts
+@Injectable()
+export class QueryOptimizer {
+  private queryCache = new Map<string, PreparedQuery>()
+  private statistics = new Map<string, QueryStatistics>()
+  
+  constructor(
+    @Inject('DatabaseConnection') private db: DatabaseConnection,
+    @Inject('Logger') private logger: Logger
+  ) {}
+  
+  async executeOptimized<T>(
+    query: Query,
+    options?: QueryOptions
+  ): Promise<T[]> {
+    const queryKey = this.getQueryKey(query)
+    const stats = this.getStatistics(queryKey)
+    
+    // 分析查询计划
+    const plan = await this.analyzeQueryPlan(query)
+    
+    // 优化查询
+    const optimizedQuery = this.optimizeQuery(query, plan, stats)
+    
+    // 执行查询
+    const startTime = Date.now()
+    const result = await this.executeQuery(optimizedQuery, options)
+    const duration = Date.now() - startTime
+    
+    // 更新统计信息
+    this.updateStatistics(queryKey, duration, result.length)
+    
+    // 如果查询慢，记录并分析
+    if (duration > 1000) {
+      this.handleSlowQuery(query, duration, plan)
+    }
+    
+    return result
+  }
+  
+  private async analyzeQueryPlan(query: Query): Promise<QueryPlan> {
+    const explainResult = await this.db.execute(`EXPLAIN ${query.sql}`)
+    
+    return {
+      type: explainResult[0].type,
+      possibleKeys: explainResult[0].possible_keys,
+      key: explainResult[0].key,
+      rows: explainResult[0].rows,
+      extra: explainResult[0].extra
+    }
+  }
+  
+  private optimizeQuery(
+    query: Query,
+    plan: QueryPlan,
+    stats: QueryStatistics
+  ): Query {
+    let optimized = { ...query }
+    
+    // 1. 添加索引提示
+    if (plan.possibleKeys && !plan.key) {
+      optimized = this.addIndexHint(optimized, plan.possibleKeys[0])
+    }
+    
+    // 2. 优化JOIN顺序
+    if (query.joins && query.joins.length > 1) {
+      optimized.joins = this.optimizeJoinOrder(query.joins, stats)
+    }
+    
+    // 3. 添加查询缓存
+    if (stats.avgDuration < 100 && stats.hitCount > 100) {
+      optimized.cache = true
+      optimized.cacheTTL = 60000
+    }
+    
+    // 4. 分页优化
+    if (query.limit && query.offset > 1000) {
+      optimized = this.optimizePagination(optimized)
+    }
+    
+    return optimized
+  }
+  
+  private optimizeJoinOrder(joins: Join[], stats: QueryStatistics): Join[] {
+    // 基于统计信息重排JOIN顺序
+    return joins.sort((a, b) => {
+      const aSelectivity = this.estimateSelectivity(a, stats)
+      const bSelectivity = this.estimateSelectivity(b, stats)
+      return aSelectivity - bSelectivity
+    })
+  }
+  
+  private optimizePagination(query: Query): Query {
+    // 使用游标分页替代OFFSET
+    if (query.lastId) {
+      return {
+        ...query,
+        where: [
+          ...query.where,
+          { field: 'id', operator: '>', value: query.lastId }
+        ],
+        offset: 0
+      }
+    }
+    
+    return query
+  }
+  
+  private async handleSlowQuery(
+    query: Query,
+    duration: number,
+    plan: QueryPlan
+  ): Promise<void> {
+    this.logger.warn('Slow query detected', {
+      query: query.sql,
+      duration,
+      plan
+    })
+    
+    // 生成优化建议
+    const suggestions = this.generateOptimizationSuggestions(query, plan)
+    
+    // 记录到慢查询日志
+    await this.db.logSlowQuery({
+      query: query.sql,
+      duration,
+      plan,
+      suggestions,
+      timestamp: new Date()
+    })
+  }
+  
+  private generateOptimizationSuggestions(
+    query: Query,
+    plan: QueryPlan
+  ): string[] {
+    const suggestions: string[] = []
+    
+    if (!plan.key && plan.possibleKeys) {
+      suggestions.push(`Consider adding index on: ${plan.possibleKeys.join(', ')}`)
+    }
+    
+    if (plan.type === 'ALL') {
+      suggestions.push('Full table scan detected, add WHERE clause or index')
+    }
+    
+    if (plan.extra?.includes('Using filesort')) {
+      suggestions.push('Consider adding index for ORDER BY clause')
+    }
+    
+    if (plan.extra?.includes('Using temporary')) {
+      suggestions.push('Temporary table used, optimize GROUP BY or DISTINCT')
+    }
+    
+    return suggestions
+  }
+  
+  private estimateSelectivity(join: Join, stats: QueryStatistics): number {
+    // 估算选择性（返回行数/总行数）
+    const tableStats = stats.tableStatistics?.[join.table]
+    if (!tableStats) return 1
+    
+    return tableStats.avgRowsReturned / tableStats.totalRows
+  }
+  
+  private getStatistics(queryKey: string): QueryStatistics {
+    if (!this.statistics.has(queryKey)) {
+      this.statistics.set(queryKey, {
+        hitCount: 0,
+        totalDuration: 0,
+        avgDuration: 0,
+        maxDuration: 0,
+        minDuration: Infinity
+      })
+    }
+    
+    return this.statistics.get(queryKey)!
+  }
+  
+  private updateStatistics(
+    queryKey: string,
+    duration: number,
+    rowCount: number
+  ): void {
+    const stats = this.getStatistics(queryKey)
+    
+    stats.hitCount++
+    stats.totalDuration += duration
+    stats.avgDuration = stats.totalDuration / stats.hitCount
+    stats.maxDuration = Math.max(stats.maxDuration, duration)
+    stats.minDuration = Math.min(stats.minDuration, duration)
+    stats.lastRowCount = rowCount
+  }
+}
+```
+
+---
+
+## Milestone 7.2: 监控体系搭建（1天）
+
+### Day 2: 监控系统实现（8小时）
+
+#### 1. 指标收集器
+```typescript
+// src/monitoring/MetricsCollector.ts
+@Injectable()
+export class MetricsCollector {
+  private metrics = new Map<string, Metric>()
+  private timers = new Map<string, Timer>()
+  
+  constructor(
+    @Inject('MetricsExporter') private exporter: MetricsExporter,
+    @Inject('ConfigService') private config: ConfigService
+  ) {
+    this.setupDefaultMetrics()
+    this.startExportInterval()
+  }
+  
+  private setupDefaultMetrics(): void {
+    // 系统指标
+    this.registerMetric('system.cpu.usage', MetricType.GAUGE)
+    this.registerMetric('system.memory.usage', MetricType.GAUGE)
+    this.registerMetric('system.disk.usage', MetricType.GAUGE)
+    
+    // 应用指标
+    this.registerMetric('app.requests.total', MetricType.COUNTER)
+    this.registerMetric('app.requests.duration', MetricType.HISTOGRAM)
+    this.registerMetric('app.errors.total', MetricType.COUNTER)
+    
+    // 业务指标
+    this.registerMetric('business.tickets.created', MetricType.COUNTER)
+    this.registerMetric('business.tickets.completed', MetricType.COUNTER)
+    this.registerMetric('business.tickets.sla.breached', MetricType.COUNTER)
+    this.registerMetric('business.inspections.completed', MetricType.COUNTER)
+    this.registerMetric('business.anomalies.detected', MetricType.COUNTER)
+    
+    // 性能指标
+    this.registerMetric('performance.database.queries', MetricType.COUNTER)
+    this.registerMetric('performance.database.latency', MetricType.HISTOGRAM)
+    this.registerMetric('performance.cache.hits', MetricType.COUNTER)
+    this.registerMetric('performance.cache.misses', MetricType.COUNTER)
+  }
+  
+  registerMetric(
+    name: string,
+    type: MetricType,
+    labels?: string[]
+  ): void {
+    this.metrics.set(name, {
+      name,
+      type,
+      labels: labels || [],
+      value: type === MetricType.COUNTER ? 0 : null,
+      values: type === MetricType.HISTOGRAM ? [] : null
+    })
+  }
+  
+  // 计数器操作
+  increment(name: string, value: number = 1, labels?: Record<string, string>): void {
+    const metric = this.metrics.get(name)
+    if (!metric || metric.type !== MetricType.COUNTER) {
+      return
+    }
+    
+    metric.value = (metric.value || 0) + value
+    
+    // 发布指标事件
+    this.publishMetricEvent(name, value, labels)
+  }
+  
+  // 仪表操作
+  gauge(name: string, value: number, labels?: Record<string, string>): void {
+    const metric = this.metrics.get(name)
+    if (!metric || metric.type !== MetricType.GAUGE) {
+      return
+    }
+    
+    metric.value = value
+    this.publishMetricEvent(name, value, labels)
+  }
+  
+  // 直方图操作
+  histogram(name: string, value: number, labels?: Record<string, string>): void {
+    const metric = this.metrics.get(name)
+    if (!metric || metric.type !== MetricType.HISTOGRAM) {
+      return
+    }
+    
+    metric.values = metric.values || []
+    metric.values.push(value)
+    
+    // 保留最近1000个值
+    if (metric.values.length > 1000) {
+      metric.values.shift()
+    }
+    
+    this.publishMetricEvent(name, value, labels)
+  }
+  
+  // 计时器
+  startTimer(name: string): () => void {
+    const startTime = Date.now()
+    const timerId = generateId()
+    
+    this.timers.set(timerId, {
+      name,
+      startTime
+    })
+    
+    return () => {
+      const timer = this.timers.get(timerId)
+      if (timer) {
+        const duration = Date.now() - timer.startTime
+        this.histogram(name, duration)
+        this.timers.delete(timerId)
+      }
+    }
+  }
+  
+  // 导出指标
+  private async exportMetrics(): Promise<void> {
+    const snapshot = this.getSnapshot()
+    
+    try {
+      await this.exporter.export(snapshot)
+    } catch (error) {
+      console.error('Failed to export metrics', error)
+    }
+  }
+  
+  private getSnapshot(): MetricsSnapshot {
+    const snapshot: MetricsSnapshot = {
+      timestamp: new Date(),
+      metrics: []
+    }
+    
+    this.metrics.forEach(metric => {
+      if (metric.type === MetricType.HISTOGRAM && metric.values) {
+        snapshot.metrics.push({
+          name: metric.name,
+          type: metric.type,
+          value: this.calculateHistogramStats(metric.values)
+        })
+      } else {
+        snapshot.metrics.push({
+          name: metric.name,
+          type: metric.type,
+          value: metric.value
+        })
+      }
+    })
+    
+    return snapshot
+  }
+  
+  private calculateHistogramStats(values: number[]): HistogramStats {
+    if (values.length === 0) {
+      return { count: 0, sum: 0, avg: 0, min: 0, max: 0, p50: 0, p95: 0, p99: 0 }
+    }
+    
+    const sorted = [...values].sort((a, b) => a - b)
+    const sum = values.reduce((acc, val) => acc + val, 0)
+    
+    return {
+      count: values.length,
+      sum,
+      avg: sum / values.length,
+      min: sorted[0],
+      max: sorted[sorted.length - 1],
+      p50: sorted[Math.floor(sorted.length * 0.5)],
+      p95: sorted[Math.floor(sorted.length * 0.95)],
+      p99: sorted[Math.floor(sorted.length * 0.99)]
+    }
+  }
+  
+  private startExportInterval(): void {
+    const interval = this.config.get('monitoring.exportInterval', 60000)
+    
+    setInterval(() => {
+      this.exportMetrics()
+    }, interval)
+  }
+  
+  private publishMetricEvent(
+    name: string,
+    value: number,
+    labels?: Record<string, string>
+  ): void {
+    // 可以发布到事件总线供实时监控使用
+    process.nextTick(() => {
+      this.eventBus?.emit('metric.recorded', {
+        name,
+        value,
+        labels,
+        timestamp: Date.now()
+      })
+    })
+  }
+}
+```
+
+#### 2. 健康检查服务
+```typescript
+// src/monitoring/HealthCheckService.ts
+@Injectable()
+export class HealthCheckService {
+  private checks = new Map<string, HealthCheck>()
+  private status: HealthStatus = HealthStatus.UNKNOWN
+  
+  constructor(
+    @Inject('Logger') private logger: Logger,
+    @Inject('AlertingService') private alerting: AlertingService
+  ) {
+    this.registerDefaultChecks()
+    this.startHealthChecks()
+  }
+  
+  private registerDefaultChecks(): void {
+    // 数据库健康检查
+    this.register({
+      name: 'database',
+      check: async () => {
+        const db = container.get('DatabaseConnection')
+        await db.execute('SELECT 1')
+        return { healthy: true }
+      },
+      critical: true,
+      interval: 30000
+    })
+    
+    // Redis健康检查
+    this.register({
+      name: 'redis',
+      check: async () => {
+        const redis = container.get('RedisClient')
+        await redis.ping()
+        return { healthy: true }
+      },
+      critical: false,
+      interval: 30000
+    })
+    
+    // 外部API健康检查
+    this.register({
+      name: 'external-api',
+      check: async () => {
+        const adapter = container.get('LegacyTicketSystemAdapter')
+        const healthy = await adapter.healthCheck()
+        return { healthy }
+      },
+      critical: false,
+      interval: 60000
+    })
+    
+    // 磁盘空间检查
+    this.register({
+      name: 'disk-space',
+      check: async () => {
+        const stats = await this.checkDiskSpace()
+        const healthy = stats.available > 1024 * 1024 * 1024 // 1GB
+        return {
+          healthy,
+          details: {
+            available: stats.available,
+            used: stats.used,
+            percentage: stats.percentage
+          }
+        }
+      },
+      critical: true,
+      interval: 300000
+    })
+    
+    // 内存使用检查
+    this.register({
+      name: 'memory',
+      check: async () => {
+        const usage = process.memoryUsage()
+        const healthy = usage.heapUsed < 1024 * 1024 * 1024 // 1GB
+        return {
+          healthy,
+          details: {
+            heapUsed: usage.heapUsed,
+            heapTotal: usage.heapTotal,
+            rss: usage.rss
+          }
+        }
+      },
+      critical: false,
+      interval: 60000
+    })
+  }
+  
+  register(check: HealthCheck): void {
+    this.checks.set(check.name, check)
+  }
+  
+  private async startHealthChecks(): Promise<void> {
+    for (const [name, check] of this.checks) {
+      this.scheduleCheck(name, check)
+    }
+  }
+  
+  private scheduleCheck(name: string, check: HealthCheck): void {
+    const execute = async () => {
+      try {
+        const result = await check.check()
+        
+        if (!result.healthy) {
+          this.handleUnhealthy(name, check, result)
+        } else {
+          this.handleHealthy(name)
+        }
+        
+        // 更新整体状态
+        this.updateOverallStatus()
+      } catch (error) {
+        this.handleCheckError(name, check, error)
+      }
+    }
+    
+    // 立即执行一次
+    execute()
+    
+    // 定期执行
+    setInterval(execute, check.interval)
+  }
+  
+  private handleUnhealthy(
+    name: string,
+    check: HealthCheck,
+    result: HealthCheckResult
+  ): void {
+    this.logger.warn(`Health check failed: ${name}`, result.details)
+    
+    if (check.critical) {
+      this.status = HealthStatus.UNHEALTHY
+      
+      // 发送告警
+      this.alerting.sendAlert({
+        severity: 'critical',
+        title: `Critical service unhealthy: ${name}`,
+        message: `Health check ${name} failed`,
+        details: result.details
+      })
+    }
+  }
+  
+  private handleHealthy(name: string): void {
+    this.logger.debug(`Health check passed: ${name}`)
+  }
+  
+  private handleCheckError(name: string, check: HealthCheck, error: Error): void {
+    this.logger.error(`Health check error: ${name}`, error)
+    
+    if (check.critical) {
+      this.status = HealthStatus.UNHEALTHY
+    }
+  }
+  
+  private updateOverallStatus(): void {
+    let hasUnhealthy = false
+    let hasCriticalUnhealthy = false
+    
+    for (const [name, check] of this.checks) {
+      const lastResult = this.getLastResult(name)
+      if (!lastResult?.healthy) {
+        hasUnhealthy = true
+        if (check.critical) {
+          hasCriticalUnhealthy = true
+        }
+      }
+    }
+    
+    if (hasCriticalUnhealthy) {
+      this.status = HealthStatus.UNHEALTHY
+    } else if (hasUnhealthy) {
+      this.status = HealthStatus.DEGRADED
+    } else {
+      this.status = HealthStatus.HEALTHY
+    }
+  }
+  
+  getStatus(): HealthStatusReport {
+    const checks: Record<string, HealthCheckResult> = {}
+    
+    for (const [name, check] of this.checks) {
+      checks[name] = this.getLastResult(name) || { healthy: false }
+    }
+    
+    return {
+      status: this.status,
+      timestamp: new Date(),
+      checks
+    }
+  }
+  
+  private getLastResult(name: string): HealthCheckResult | null {
+    // 实际应该存储最后的检查结果
+    return null
+  }
+  
+  private async checkDiskSpace(): Promise<DiskStats> {
+    // 实际实现检查磁盘空间
+    return {
+      available: 10 * 1024 * 1024 * 1024,
+      used: 50 * 1024 * 1024 * 1024,
+      percentage: 83
+    }
+  }
+}
+```
+
+---
+
+## Milestone 7.3: 日志和追踪系统（1天）
+
+### Day 3: 分布式追踪实现（8小时）
+
+#### 1. 追踪系统
+```typescript
+// src/monitoring/TracingService.ts
+@Injectable()
+export class TracingService {
+  private tracer: Tracer
+  private activeSpans = new Map<string, Span>()
+  
+  constructor(
+    @Inject('ConfigService') private config: ConfigService,
+    @Inject('Logger') private logger: Logger
+  ) {
+    this.initializeTracer()
+  }
+  
+  private initializeTracer(): void {
+    this.tracer = new Tracer({
+      serviceName: this.config.get('app.name'),
+      sampler: {
+        type: 'probabilistic',
+        param: this.config.get('tracing.samplingRate', 0.1)
+      },
+      reporter: {
+        endpoint: this.config.get('tracing.endpoint'),
+        interval: 60000
+      }
+    })
+  }
+  
+  startSpan(
+    name: string,
+    options?: SpanOptions
+  ): Span {
+    const parentSpan = options?.parent || this.getCurrentSpan()
+    
+    const span = this.tracer.startSpan(name, {
+      childOf: parentSpan,
+      tags: {
+        ...options?.tags,
+        'span.kind': options?.kind || 'internal'
+      }
+    })
+    
+    // 存储活动span
+    const spanId = span.context().toSpanId()
+    this.activeSpans.set(spanId, span)
+    
+    return span
+  }
+  
+  finishSpan(span: Span, error?: Error): void {
+    if (error) {
+      span.setTag('error', true)
+      span.log({
+        event: 'error',
+        message: error.message,
+        stack: error.stack
+      })
+    }
+    
+    span.finish()
+    
+    // 清理活动span
+    const spanId = span.context().toSpanId()
+    this.activeSpans.delete(spanId)
+  }
+  
+  // 装饰器：自动追踪方法
+  trace(name?: string) {
+    return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+      const originalMethod = descriptor.value
+      
+      descriptor.value = async function(...args: any[]) {
+        const spanName = name || `${target.constructor.name}.${propertyKey}`
+        const span = this.tracingService.startSpan(spanName, {
+          tags: {
+            'component': target.constructor.name,
+            'method': propertyKey
+          }
+        })
+        
+        try {
+          const result = await originalMethod.apply(this, args)
+          this.tracingService.finishSpan(span)
+          return result
+        } catch (error) {
+          this.tracingService.finishSpan(span, error)
+          throw error
+        }
+      }
+      
+      return descriptor
+    }
+  }
+  
+  // 追踪HTTP请求
+  traceHttpRequest(req: Request, res: Response, next: NextFunction): void {
+    const span = this.startSpan('http_request', {
+      kind: 'server',
+      tags: {
+        'http.method': req.method,
+        'http.url': req.url,
+        'http.remote_addr': req.ip,
+        'user.id': req.user?.id
+      }
+    })
+    
+    // 注入span到请求上下文
+    req.span = span
+    
+    // 监听响应完成
+    res.on('finish', () => {
+      span.setTag('http.status_code', res.statusCode)
+      
+      if (res.statusCode >= 400) {
+        span.setTag('error', true)
+      }
+      
+      this.finishSpan(span)
+    })
+    
+    next()
+  }
+  
+  // 追踪数据库查询
+  traceDatabaseQuery(query: string, params?: any[]): Span {
+    return this.startSpan('db_query', {
+      kind: 'client',
+      tags: {
+        'db.type': 'mysql',
+        'db.statement': query.substring(0, 100),
+        'db.params_count': params?.length || 0
+      }
+    })
+  }
+  
+  // 追踪外部API调用
+  traceExternalCall(url: string, method: string): Span {
+    return this.startSpan('external_call', {
+      kind: 'client',
+      tags: {
+        'http.url': url,
+        'http.method': method,
+        'peer.service': new URL(url).hostname
+      }
+    })
+  }
+  
+  private getCurrentSpan(): Span | undefined {
+    // 从异步上下文获取当前span
+    // 实际实现需要使用AsyncLocalStorage
+    return undefined
+  }
+}
+```
+
+#### 2. 结构化日志
+```typescript
+// src/monitoring/StructuredLogger.ts
+@Injectable()
+export class StructuredLogger {
+  private transports: LogTransport[] = []
+  private context: Map<string, any> = new Map()
+  
+  constructor(
+    @Inject('ConfigService') private config: ConfigService
+  ) {
+    this.initializeTransports()
+  }
+  
+  private initializeTransports(): void {
+    // 控制台输出
+    if (this.config.get('logging.console.enabled', true)) {
+      this.transports.push(new ConsoleTransport({
+        level: this.config.get('logging.console.level', 'info'),
+        format: this.config.get('logging.console.format', 'json')
+      }))
+    }
+    
+    // 文件输出
+    if (this.config.get('logging.file.enabled', true)) {
+      this.transports.push(new FileTransport({
+        level: this.config.get('logging.file.level', 'info'),
+        filename: this.config.get('logging.file.path', 'logs/app.log'),
+        maxSize: this.config.get('logging.file.maxSize', '100m'),
+        maxFiles: this.config.get('logging.file.maxFiles', 30)
+      }))
+    }
+    
+    // Elasticsearch输出
+    if (this.config.get('logging.elasticsearch.enabled', false)) {
+      this.transports.push(new ElasticsearchTransport({
+        node: this.config.get('logging.elasticsearch.node'),
+        index: this.config.get('logging.elasticsearch.index', 'logs')
+      }))
+    }
+  }
+  
+  log(level: LogLevel, message: string, meta?: any): void {
+    const logEntry: LogEntry = {
+      timestamp: new Date(),
+      level,
+      message,
+      ...this.enrichWithContext(meta)
+    }
+    
+    // 添加追踪信息
+    const span = this.getCurrentSpan()
+    if (span) {
+      logEntry.traceId = span.context().toTraceId()
+      logEntry.spanId = span.context().toSpanId()
+    }
+    
+    // 发送到所有传输
+    this.transports.forEach(transport => {
+      if (this.shouldLog(level, transport.level)) {
+        transport.log(logEntry)
+      }
+    })
+  }
+  
+  info(message: string, meta?: any): void {
+    this.log(LogLevel.INFO, message, meta)
+  }
+  
+  warn(message: string, meta?: any): void {
+    this.log(LogLevel.WARN, message, meta)
+  }
+  
+  error(message: string, error?: Error, meta?: any): void {
+    this.log(LogLevel.ERROR, message, {
+      ...meta,
+      error: {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      }
+    })
+  }
+  
+  debug(message: string, meta?: any): void {
+    this.log(LogLevel.DEBUG, message, meta)
+  }
+  
+  // 审计日志
+  audit(action: string, meta: any): void {
+    this.log(LogLevel.INFO, `AUDIT: ${action}`, {
+      ...meta,
+      audit: true,
+      action
+    })
+  }
+  
+  // 性能日志
+  performance(operation: string, duration: number, meta?: any): void {
+    this.log(LogLevel.INFO, `PERFORMANCE: ${operation}`, {
+      ...meta,
+      performance: true,
+      operation,
+      duration
+    })
+  }
+  
+  // 安全日志
+  security(event: string, meta: any): void {
+    this.log(LogLevel.WARN, `SECURITY: ${event}`, {
+      ...meta,
+      security: true,
+      event
+    })
+  }
+  
+  // 设置上下文
+  setContext(key: string, value: any): void {
+    this.context.set(key, value)
+  }
+  
+  clearContext(): void {
+    this.context.clear()
+  }
+  
+  private enrichWithContext(meta: any): any {
+    const enriched = { ...meta }
+    
+    // 添加全局上下文
+    this.context.forEach((value, key) => {
+      enriched[key] = value
+    })
+    
+    // 添加请求ID
+    enriched.requestId = this.getRequestId()
+    
+    // 添加用户信息
+    enriched.userId = this.getCurrentUserId()
+    
+    // 添加环境信息
+    enriched.environment = this.config.get('app.env')
+    enriched.hostname = os.hostname()
+    enriched.pid = process.pid
+    
+    return enriched
+  }
+  
+  private shouldLog(level: LogLevel, transportLevel: LogLevel): boolean {
+    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR]
+    return levels.indexOf(level) >= levels.indexOf(transportLevel)
+  }
+  
+  private getCurrentSpan(): Span | undefined {
+    // 从追踪服务获取当前span
+    return container.get('TracingService').getCurrentSpan()
+  }
+  
+  private getRequestId(): string | undefined {
+    // 从异步上下文获取请求ID
+    return undefined
+  }
+  
+  private getCurrentUserId(): string | undefined {
+    // 从异步上下文获取用户ID
+    return undefined
+  }
+}
+```
+
+## 📊 Phase 7 完成标准检查清单
+
+### 技术指标
+- [ ] 缓存命中率 > 80%
+- [ ] P95响应时间 < 200ms
+- [ ] 慢查询占比 < 1%
+- [ ] 指标收集覆盖率 > 90%
+- [ ] 日志结构化率 100%
+
+### 功能验证
+- [ ] 多层缓存正常工作
+- [ ] 查询自动优化生效
+- [ ] 健康检查准确
+- [ ] 告警及时发送
+- [ ] 追踪链路完整
+
+### 运维指标
+- [ ] 监控大盘完整
+- [ ] 日志可检索
+- [ ] 追踪可视化
+- [ ] 告警规则合理
+
+---
+
+## 🚀 Phase 7 交付物
+
+1. **性能优化**
+   - CacheManager多层缓存
+   - QueryOptimizer查询优化
+   - 慢查询分析工具
+
+2. **监控系统**
+   - MetricsCollector指标收集
+   - HealthCheckService健康检查
+   - AlertingService告警服务
+
+3. **日志追踪**
+   - TracingService分布式追踪
+   - StructuredLogger结构化日志
+   - 日志聚合配置
+
+4. **文档**
+   - PERFORMANCE-TUNING.md
+   - MONITORING-GUIDE.md
+   - LOGGING-STANDARDS.md
+
+---
+
+## 📋 后续阶段规划
+
+### Phase 8: 部署与运维（3天）
+**目标**: 实现自动化部署和运维能力
+
+**主要任务**:
+- CI/CD流水线搭建
+- 容器化部署(Docker/K8s)
+- 蓝绿部署/金丝雀发布
+- 自动化运维脚本
+- 备份恢复机制
+
+### Phase 9: 安全加固（2天）
+**目标**: 提升系统安全性
+
+**主要任务**:
+- 身份认证增强(OAuth2/JWT)
+- 权限细粒度控制(RBAC/ABAC)
+- 数据加密(传输/存储)
+- 安全审计日志
+- 漏洞扫描和修复
+
+### Phase 10: 文档与培训（2天）
+**目标**: 完善文档和知识传承
+
+**主要任务**:
+- 架构文档完善
+- API文档生成
+- 运维手册编写
+- 开发规范制定
+- 团队培训计划
+
+### Phase 11: 性能压测与优化（2天）
+**目标**: 验证系统性能并优化
+
+**主要任务**:
+- 压力测试方案设计
+- 性能基准测试
+- 瓶颈分析与优化
+- 容量规划
+- 性能监控预警
+
+### Phase 12: 灾备与高可用（3天）
+**目标**: 提升系统可靠性
+
+**主要任务**:
+- 主从复制配置
+- 故障自动切换
+- 数据备份策略
+- 灾难恢复演练
+- SLA指标制定
+
+## 🎯 长期优化方向
+
+### 技术债务清理
+- 遗留代码逐步替换
+- 依赖包升级管理
+- 代码质量持续改进
+- 技术栈统一
+
+### 架构演进
+- 微服务化评估
+- Serverless探索
+- 事件溯源实施
+- CQRS模式应用
+
+### 智能化提升
+- 智能告警(异常检测)
+- 自动化运维(AIOps)
+- 智能工单分配
+- 预测性维护
+
+### 用户体验优化
+- 前端性能优化
+- 移动端适配
+- 实时协作功能
+- 个性化推荐
+
+这样整个重构计划就完整了，从基础设施到核心业务，再到运维监控，形成了完整的技术改造闭环。每个阶段都有明确的目标、任务和交付物，便于项目管理和进度跟踪。

@@ -1,0 +1,1100 @@
+## Phase 8: 部署与运维（3天）
+
+### 📅 时间安排
+- **Day 1**: Milestone 8.1 CI/CD流水线搭建
+- **Day 2**: Milestone 8.2 容器化与编排
+- **Day 3**: Milestone 8.3 自动化运维
+
+---
+
+## Milestone 8.1: CI/CD流水线搭建（1天）
+
+### Day 1: 流水线实现（8小时）
+
+#### 1. GitLab CI/CD配置
+```yaml
+# .gitlab-ci.yml
+stages:
+  - build
+  - test
+  - quality
+  - deploy
+  - rollback
+
+variables:
+  DOCKER_REGISTRY: registry.gitlab.com
+  IMAGE_NAME: $CI_PROJECT_PATH
+  NODE_VERSION: "18"
+  CACHE_VERSION: "v1"
+
+# 缓存配置
+.cache_template: &cache_config
+  cache:
+    key: "$CACHE_VERSION-$CI_COMMIT_REF_SLUG"
+    paths:
+      - node_modules/
+      - .npm/
+      - dist/
+
+# 构建阶段
+build:
+  stage: build
+  image: node:${NODE_VERSION}
+  <<: *cache_config
+  before_script:
+    - npm config set registry https://registry.npmmirror.com
+    - npm ci --cache .npm --prefer-offline
+  script:
+    - echo "Building version $CI_COMMIT_SHORT_SHA"
+    - npm run build:${CI_COMMIT_REF_NAME}
+    - echo "$CI_COMMIT_SHORT_SHA" > dist/version.txt
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  only:
+    - develop
+    - staging
+    - main
+    - /^release\/.*$/
+
+# 单元测试
+test:unit:
+  stage: test
+  image: node:${NODE_VERSION}
+  <<: *cache_config
+  coverage: '/Lines\s*:\s*(\d+\.\d+)%/'
+  script:
+    - npm run test:unit -- --coverage
+    - npm run test:integration
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+      junit: junit.xml
+    paths:
+      - coverage/
+    expire_in: 30 days
+  only:
+    - merge_requests
+    - develop
+    - main
+
+# 代码质量检查
+quality:lint:
+  stage: quality
+  image: node:${NODE_VERSION}
+  <<: *cache_config
+  script:
+    - npm run lint -- --format json --output-file eslint-report.json
+    - npm run type-check
+  artifacts:
+    reports:
+      codequality: eslint-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+# 安全扫描
+quality:security:
+  stage: quality
+  image: node:${NODE_VERSION}
+  script:
+    - npm audit --json > npm-audit.json || true
+    - npx snyk test --json > snyk-report.json || true
+  artifacts:
+    paths:
+      - npm-audit.json
+      - snyk-report.json
+    expire_in: 30 days
+  allow_failure: true
+
+# SonarQube扫描
+quality:sonar:
+  stage: quality
+  image: sonarsource/sonar-scanner-cli:latest
+  script:
+    - sonar-scanner
+      -Dsonar.projectKey=$CI_PROJECT_NAME
+      -Dsonar.sources=src
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.login=$SONAR_TOKEN
+      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+  dependencies:
+    - test:unit
+  only:
+    - develop
+    - main
+
+# Docker镜像构建
+.docker_build_template: &docker_build
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build 
+      --cache-from $DOCKER_REGISTRY/$IMAGE_NAME:$CI_COMMIT_REF_NAME
+      --tag $DOCKER_REGISTRY/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+      --tag $DOCKER_REGISTRY/$IMAGE_NAME:$CI_COMMIT_REF_NAME
+      --build-arg BUILD_VERSION=$CI_COMMIT_SHORT_SHA
+      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      .
+    - docker push $DOCKER_REGISTRY/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKER_REGISTRY/$IMAGE_NAME:$CI_COMMIT_REF_NAME
+
+docker:build:develop:
+  <<: *docker_build
+  only:
+    - develop
+
+docker:build:staging:
+  <<: *docker_build
+  only:
+    - staging
+
+docker:build:production:
+  <<: *docker_build
+  only:
+    - main
+    - tags
+
+# 部署到开发环境
+deploy:dev:
+  stage: deploy
+  image: alpine/helm:latest
+  environment:
+    name: development
+    url: https://dev.example.com
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - |
+      helm upgrade --install $CI_PROJECT_NAME ./helm
+        --namespace=dev
+        --set image.tag=$CI_COMMIT_SHORT_SHA
+        --set image.repository=$DOCKER_REGISTRY/$IMAGE_NAME
+        --set ingress.host=dev.example.com
+        --values ./helm/values.dev.yaml
+        --wait
+        --timeout 5m
+  only:
+    - develop
+
+# 部署到预发布环境
+deploy:staging:
+  stage: deploy
+  environment:
+    name: staging
+    url: https://staging.example.com
+    on_stop: deploy:staging:stop
+  script:
+    - ./scripts/deploy.sh staging $CI_COMMIT_SHORT_SHA
+  when: manual
+  only:
+    - staging
+
+# 部署到生产环境
+deploy:production:
+  stage: deploy
+  environment:
+    name: production
+    url: https://example.com
+  script:
+    - ./scripts/deploy.sh production $CI_COMMIT_SHORT_SHA
+  when: manual
+  only:
+    - main
+    - tags
+  before_script:
+    - echo "Production deployment approval required"
+
+# 回滚机制
+rollback:production:
+  stage: rollback
+  environment:
+    name: production
+  script:
+    - ./scripts/rollback.sh production
+  when: manual
+  only:
+    - main
+```
+
+#### 2. 部署脚本
+```bash
+#!/bin/bash
+# scripts/deploy.sh
+
+set -e
+
+ENVIRONMENT=$1
+VERSION=$2
+
+# 配置
+source ./config/${ENVIRONMENT}.env
+
+echo "Deploying version ${VERSION} to ${ENVIRONMENT}"
+
+# 健康检查函数
+health_check() {
+    local url=$1
+    local max_attempts=30
+    local attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        if curl -f -s "${url}/health" > /dev/null; then
+            echo "Health check passed"
+            return 0
+        fi
+        
+        attempt=$((attempt + 1))
+        echo "Health check attempt ${attempt}/${max_attempts}"
+        sleep 10
+    done
+    
+    echo "Health check failed"
+    return 1
+}
+
+# 蓝绿部署
+blue_green_deploy() {
+    # 部署到绿环境
+    echo "Deploying to green environment..."
+    kubectl set image deployment/${APP_NAME}-green \
+        ${APP_NAME}=${DOCKER_REGISTRY}/${IMAGE_NAME}:${VERSION} \
+        -n ${NAMESPACE}
+    
+    # 等待绿环境就绪
+    kubectl rollout status deployment/${APP_NAME}-green -n ${NAMESPACE}
+    
+    # 健康检查
+    if ! health_check "http://${GREEN_URL}"; then
+        echo "Green environment health check failed"
+        exit 1
+    fi
+    
+    # 切换流量
+    echo "Switching traffic to green..."
+    kubectl patch service ${APP_NAME} \
+        -p '{"spec":{"selector":{"version":"green"}}}' \
+        -n ${NAMESPACE}
+    
+    # 验证切换
+    sleep 5
+    if ! health_check "http://${PROD_URL}"; then
+        echo "Production health check failed after switch"
+        # 回滚
+        kubectl patch service ${APP_NAME} \
+            -p '{"spec":{"selector":{"version":"blue"}}}' \
+            -n ${NAMESPACE}
+        exit 1
+    fi
+    
+    # 更新蓝环境（用于下次部署）
+    echo "Updating blue environment for next deployment..."
+    kubectl set image deployment/${APP_NAME}-blue \
+        ${APP_NAME}=${DOCKER_REGISTRY}/${IMAGE_NAME}:${VERSION} \
+        -n ${NAMESPACE}
+}
+
+# 金丝雀部署
+canary_deploy() {
+    local canary_weight=10
+    
+    echo "Starting canary deployment..."
+    
+    # 部署金丝雀版本
+    kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}-canary
+  namespace: ${NAMESPACE}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${APP_NAME}
+      version: canary
+  template:
+    metadata:
+      labels:
+        app: ${APP_NAME}
+        version: canary
+    spec:
+      containers:
+      - name: ${APP_NAME}
+        image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${VERSION}
+        ports:
+        - containerPort: 3000
+EOF
+    
+    # 配置流量分配
+    kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ${APP_NAME}
+  namespace: ${NAMESPACE}
+spec:
+  hosts:
+  - ${APP_NAME}
+  http:
+  - match:
+    - headers:
+        canary:
+          exact: "true"
+    route:
+    - destination:
+        host: ${APP_NAME}
+        subset: canary
+  - route:
+    - destination:
+        host: ${APP_NAME}
+        subset: stable
+      weight: $((100 - canary_weight))
+    - destination:
+        host: ${APP_NAME}
+        subset: canary
+      weight: ${canary_weight}
+EOF
+    
+    echo "Canary deployment started with ${canary_weight}% traffic"
+}
+
+# 主流程
+case ${ENVIRONMENT} in
+    development)
+        kubectl set image deployment/${APP_NAME} \
+            ${APP_NAME}=${DOCKER_REGISTRY}/${IMAGE_NAME}:${VERSION} \
+            -n dev
+        kubectl rollout status deployment/${APP_NAME} -n dev
+        ;;
+    
+    staging)
+        blue_green_deploy
+        ;;
+    
+    production)
+        if [ "${DEPLOY_STRATEGY}" = "canary" ]; then
+            canary_deploy
+        else
+            blue_green_deploy
+        fi
+        
+        # 发送部署通知
+        curl -X POST ${SLACK_WEBHOOK_URL} \
+            -H 'Content-Type: application/json' \
+            -d "{
+                \"text\": \"🚀 Deployed version ${VERSION} to ${ENVIRONMENT}\",
+                \"attachments\": [{
+                    \"color\": \"good\",
+                    \"fields\": [
+                        {\"title\": \"Environment\", \"value\": \"${ENVIRONMENT}\"},
+                        {\"title\": \"Version\", \"value\": \"${VERSION}\"},
+                        {\"title\": \"Deployed by\", \"value\": \"${GITLAB_USER_NAME}\"}
+                    ]
+                }]
+            }"
+        ;;
+    
+    *)
+        echo "Unknown environment: ${ENVIRONMENT}"
+        exit 1
+        ;;
+esac
+
+echo "Deployment completed successfully"
+```
+
+---
+
+## Milestone 8.2: 容器化与编排（1天）
+
+### Day 2: Docker和Kubernetes配置（8小时）
+
+#### 1. Dockerfile优化
+```dockerfile
+# Dockerfile
+# 多阶段构建
+FROM node:18-alpine AS builder
+
+# 安装构建依赖
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# 缓存依赖层
+COPY package*.json ./
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# 构建应用
+COPY . .
+RUN npm run build
+
+# 生产镜像
+FROM node:18-alpine AS production
+
+# 安全加固
+RUN apk add --no-cache tini && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# 从构建阶段复制
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --chown=nodejs:nodejs package*.json ./
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node healthcheck.js || exit 1
+
+# 运行时配置
+ENV NODE_ENV=production
+ENV PORT=3000
+
+EXPOSE 3000
+
+USER nodejs
+
+# 使用tini作为init进程
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "dist/server.js"]
+```
+
+#### 2. Kubernetes配置
+```yaml
+# k8s/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  namespace: production
+  labels:
+    app: myapp
+    version: v1
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      # 反亲和性，分散到不同节点
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - myapp
+              topologyKey: kubernetes.io/hostname
+      
+      # 安全上下文
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      
+      containers:
+      - name: app
+        image: registry.example.com/myapp:latest
+        imagePullPolicy: Always
+        
+        # 资源限制
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # 环境变量
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: host
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        
+        # 配置挂载
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: cache
+          mountPath: /app/cache
+        
+        # 健康检查
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # 生命周期钩子
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15"]
+      
+      volumes:
+      - name: config
+        configMap:
+          name: app-config
+      - name: cache
+        emptyDir:
+          sizeLimit: 1Gi
+      
+      # 镜像拉取凭证
+      imagePullSecrets:
+      - name: registry-secret
+
+---
+# k8s/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+  namespace: production
+  labels:
+    app: myapp
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: myapp
+
+---
+# k8s/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-hpa
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+```
+
+---
+
+## Milestone 8.3: 自动化运维（1天）
+
+### Day 3: 运维脚本和工具（8小时）
+
+#### 1. 自动化运维脚本
+```python
+#!/usr/bin/env python3
+# scripts/ops_automation.py
+
+import os
+import sys
+import json
+import time
+import logging
+import subprocess
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import requests
+import yaml
+from kubernetes import client, config
+from prometheus_client.parser import text_string_to_metric_families
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class OpsAutomation:
+    def __init__(self, config_file: str):
+        with open(config_file, 'r') as f:
+            self.config = yaml.safe_load(f)
+        
+        # 初始化Kubernetes客户端
+        if os.getenv('KUBERNETES_SERVICE_HOST'):
+            config.load_incluster_config()
+        else:
+            config.load_kube_config()
+        
+        self.k8s_apps = client.AppsV1Api()
+        self.k8s_core = client.CoreV1Api()
+    
+    def health_check(self) -> Dict[str, bool]:
+        """系统健康检查"""
+        results = {}
+        
+        # 检查部署状态
+        deployments = self.k8s_apps.list_namespaced_deployment(
+            namespace=self.config['namespace']
+        )
+        
+        for deployment in deployments.items:
+            name = deployment.metadata.name
+            ready = deployment.status.ready_replicas or 0
+            desired = deployment.spec.replicas
+            results[f"deployment_{name}"] = ready == desired
+        
+        # 检查服务端点
+        for service in self.config['services']:
+            try:
+                response = requests.get(
+                    f"http://{service['host']}/health",
+                    timeout=5
+                )
+                results[f"service_{service['name']}"] = response.status_code == 200
+            except:
+                results[f"service_{service['name']}"] = False
+        
+        # 检查数据库连接
+        results['database'] = self._check_database()
+        
+        # 检查Redis
+        results['redis'] = self._check_redis()
+        
+        return results
+    
+    def auto_scale(self) -> None:
+        """基于负载自动扩缩容"""
+        metrics = self._get_metrics()
+        
+        for deployment_name in self.config['auto_scale']['deployments']:
+            current_replicas = self._get_current_replicas(deployment_name)
+            
+            # 计算目标副本数
+            target_replicas = self._calculate_target_replicas(
+                deployment_name,
+                metrics,
+                current_replicas
+            )
+            
+            if target_replicas != current_replicas:
+                logger.info(
+                    f"Scaling {deployment_name} from {current_replicas} to {target_replicas}"
+                )
+                self._scale_deployment(deployment_name, target_replicas)
+    
+    def auto_restart_unhealthy(self) -> None:
+        """自动重启不健康的Pod"""
+        pods = self.k8s_core.list_namespaced_pod(
+            namespace=self.config['namespace']
+        )
+        
+        for pod in pods.items:
+            if self._is_pod_unhealthy(pod):
+                logger.warning(f"Restarting unhealthy pod: {pod.metadata.name}")
+                self.k8s_core.delete_namespaced_pod(
+                    name=pod.metadata.name,
+                    namespace=self.config['namespace']
+                )
+    
+    def cleanup_resources(self) -> None:
+        """清理无用资源"""
+        # 清理已完成的Job
+        jobs = client.BatchV1Api().list_namespaced_job(
+            namespace=self.config['namespace']
+        )
+        
+        for job in jobs.items:
+            if job.status.succeeded:
+                age = datetime.now() - job.metadata.creation_timestamp.replace(tzinfo=None)
+                if age > timedelta(days=7):
+                    logger.info(f"Deleting old job: {job.metadata.name}")
+                    client.BatchV1Api().delete_namespaced_job(
+                        name=job.metadata.name,
+                        namespace=self.config['namespace']
+                    )
+        
+        # 清理旧的ReplicaSet
+        replicasets = self.k8s_apps.list_namespaced_replica_set(
+            namespace=self.config['namespace']
+        )
+        
+        for rs in replicasets.items:
+            if rs.spec.replicas == 0 and rs.status.replicas == 0:
+                age = datetime.now() - rs.metadata.creation_timestamp.replace(tzinfo=None)
+                if age > timedelta(days=30):
+                    logger.info(f"Deleting old replicaset: {rs.metadata.name}")
+                    self.k8s_apps.delete_namespaced_replica_set(
+                        name=rs.metadata.name,
+                        namespace=self.config['namespace']
+                    )
+    
+    def backup_configs(self) -> None:
+        """备份配置"""
+        backup_dir = f"/backup/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # 备份ConfigMap
+        configmaps = self.k8s_core.list_namespaced_config_map(
+            namespace=self.config['namespace']
+        )
+        
+        for cm in configmaps.items:
+            with open(f"{backup_dir}/configmap_{cm.metadata.name}.yaml", 'w') as f:
+                yaml.dump(cm.to_dict(), f)
+        
+        # 备份Secret
+        secrets = self.k8s_core.list_namespaced_secret(
+            namespace=self.config['namespace']
+        )
+        
+        for secret in secrets.items:
+            if secret.type != 'kubernetes.io/service-account-token':
+                with open(f"{backup_dir}/secret_{secret.metadata.name}.yaml", 'w') as f:
+                    # 不包含实际数据，只保存结构
+                    secret_dict = secret.to_dict()
+                    secret_dict['data'] = {k: '***' for k in secret_dict.get('data', {})}
+                    yaml.dump(secret_dict, f)
+        
+        logger.info(f"Configurations backed up to {backup_dir}")
+    
+    def log_analysis(self) -> Dict[str, int]:
+        """日志分析"""
+        error_patterns = self.config['log_analysis']['error_patterns']
+        results = {pattern: 0 for pattern in error_patterns}
+        
+        pods = self.k8s_core.list_namespaced_pod(
+            namespace=self.config['namespace']
+        )
+        
+        for pod in pods.items:
+            logs = self.k8s_core.read_namespaced_pod_log(
+                name=pod.metadata.name,
+                namespace=self.config['namespace'],
+                tail_lines=1000
+            )
+            
+            for pattern in error_patterns:
+                results[pattern] += logs.count(pattern)
+        
+        return results
+    
+    def performance_report(self) -> Dict:
+        """性能报告"""
+        report = {
+            'timestamp': datetime.now().isoformat(),
+            'metrics': {}
+        }
+        
+        # 获取Prometheus指标
+        metrics_url = f"http://{self.config['prometheus']['host']}/api/v1/query"
+        
+        queries = {
+            'cpu_usage': 'avg(rate(container_cpu_usage_seconds_total[5m]))',
+            'memory_usage': 'avg(container_memory_usage_bytes)',
+            'request_rate': 'sum(rate(http_requests_total[5m]))',
+            'error_rate': 'sum(rate(http_requests_total{status=~"5.."}[5m]))',
+            'p95_latency': 'histogram_quantile(0.95, http_request_duration_seconds_bucket)'
+        }
+        
+        for name, query in queries.items():
+            response = requests.get(metrics_url, params={'query': query})
+            if response.status_code == 200:
+                data = response.json()
+                if data['data']['result']:
+                    report['metrics'][name] = float(
+                        data['data']['result'][0]['value'][1]
+                    )
+        
+        return report
+    
+    def disaster_recovery_test(self) -> bool:
+        """灾难恢复测试"""
+        logger.info("Starting disaster recovery test...")
+        
+        # 1. 备份当前状态
+        self.backup_configs()
+        
+        # 2. 模拟故障
+        test_deployment = self.config['dr_test']['test_deployment']
+        original_replicas = self._get_current_replicas(test_deployment)
+        
+        # 缩容到0
+        self._scale_deployment(test_deployment, 0)
+        time.sleep(10)
+        
+        # 3. 恢复
+        self._scale_deployment(test_deployment, original_replicas)
+        time.sleep(30)
+        
+        # 4. 验证恢复
+        health = self.health_check()
+        
+        if all(health.values()):
+            logger.info("Disaster recovery test passed")
+            return True
+        else:
+            logger.error("Disaster recovery test failed")
+            return False
+    
+    def _check_database(self) -> bool:
+        """检查数据库连接"""
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host=self.config['database']['host'],
+                user=self.config['database']['user'],
+                password=os.getenv('DB_PASSWORD'),
+                database=self.config['database']['name']
+            )
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            conn.close()
+            return True
+        except:
+            return False
+    
+    def _check_redis(self) -> bool:
+        """检查Redis连接"""
+        try:
+            import redis
+            r = redis.Redis(
+                host=self.config['redis']['host'],
+                port=self.config['redis']['port'],
+                password=os.getenv('REDIS_PASSWORD')
+            )
+            r.ping()
+            return True
+        except:
+            return False
+    
+    def _get_metrics(self) -> Dict:
+        """获取系统指标"""
+        # 简化实现，实际应该从Prometheus获取
+        return {
+            'cpu_usage': 0.7,
+            'memory_usage': 0.6,
+            'request_rate': 100
+        }
+    
+    def _get_current_replicas(self, deployment_name: str) -> int:
+        """获取当前副本数"""
+        deployment = self.k8s_apps.read_namespaced_deployment(
+            name=deployment_name,
+            namespace=self.config['namespace']
+        )
+        return deployment.spec.replicas
+    
+    def _calculate_target_replicas(
+        self,
+        deployment_name: str,
+        metrics: Dict,
+        current: int
+    ) -> int:
+        """计算目标副本数"""
+        config = self.config['auto_scale']
+        min_replicas = config['min_replicas']
+        max_replicas = config['max_replicas']
+        
+        # 基于CPU使用率
+        if metrics['cpu_usage'] > 0.8:
+            target = min(current + 2, max_replicas)
+        elif metrics['cpu_usage'] < 0.3:
+            target = max(current - 1, min_replicas)
+        else:
+            target = current
+        
+        return target
+    
+    def _scale_deployment(self, name: str, replicas: int) -> None:
+        """扩缩容部署"""
+        body = {'spec': {'replicas': replicas}}
+        self.k8s_apps.patch_namespaced_deployment_scale(
+            name=name,
+            namespace=self.config['namespace'],
+            body=body
+        )
+    
+    def _is_pod_unhealthy(self, pod) -> bool:
+        """判断Pod是否不健康"""
+        if pod.status.phase != 'Running':
+            return False
+        
+        # 检查重启次数
+        for container in pod.status.container_statuses or []:
+            if container.restart_count > 5:
+                return True
+        
+        return False
+
+
+def main():
+    ops = OpsAutomation('config/ops.yaml')
+    
+    # 定期执行的任务
+    while True:
+        try:
+            # 健康检查
+            health = ops.health_check()
+            logger.info(f"Health check: {health}")
+            
+            # 自动扩缩容
+            ops.auto_scale()
+            
+            # 清理不健康的Pod
+            ops.auto_restart_unhealthy()
+            
+            # 每小时执行一次的任务
+            if datetime.now().minute == 0:
+                ops.cleanup_resources()
+                ops.performance_report()
+            
+            # 每天执行一次的任务
+            if datetime.now().hour == 2 and datetime.now().minute == 0:
+                ops.backup_configs()
+                ops.log_analysis()
+            
+            # 每周执行一次灾难恢复测试
+            if datetime.now().weekday() == 0 and datetime.now().hour == 3:
+                ops.disaster_recovery_test()
+            
+        except Exception as e:
+            logger.error(f"Error in ops automation: {e}")
+        
+        time.sleep(60)  # 每分钟执行一次
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📊 Phase 8 完成标准检查清单
+
+### 技术指标
+- [ ] CI/CD流水线覆盖所有环境
+- [ ] 自动化测试通过率 > 95%
+- [ ] 部署成功率 > 99%
+- [ ] 回滚时间 < 5分钟
+- [ ] 容器启动时间 < 30秒
+
+### 功能验证
+- [ ] 代码提交自动触发构建
+- [ ] 测试失败自动阻止部署
+- [ ] 蓝绿部署正常切换
+- [ ] 金丝雀发布流量控制准确
+- [ ] 自动扩缩容响应及时
+
+### 运维指标
+- [ ] 部署文档完整
+- [ ] 回滚流程清晰
+- [ ] 监控告警配置完善
+- [ ] 日志收集正常
+
+## 🚀 Phase 8 交付物
+
+1. **CI/CD配置**
+   - GitLab CI完整配置
+   - Jenkins Pipeline（备选）
+   - GitHub Actions（备选）
+
+2. **容器化**
+   - 优化的Dockerfile
+   - docker-compose.yml
+   - 镜像安全扫描配置
+
+3. **Kubernetes配置**
+   - Deployment配置
+   - Service/Ingress配置
+   - HPA自动扩缩容
+   - ConfigMap/Secret管理
+
+4. **部署脚本**
+   - 蓝绿部署脚本
+   - 金丝雀发布脚本
+   - 回滚脚本
+   - 健康检查脚本
+
+5. **运维工具**
+   - 自动化运维脚本
+   - 日志分析工具
+   - 性能报告生成
+   - 灾难恢复测试
+
+6. **文档**
+   - CI/CD-GUIDE.md
+   - DEPLOYMENT-MANUAL.md
+   - KUBERNETES-OPERATIONS.md
+   - DISASTER-RECOVERY.md
+
+这就是Phase 8的完整实施方案，涵盖了从代码提交到生产部署的完整自动化流程，包括CI/CD、容器化、Kubernetes编排和自动化运维等关键环节。

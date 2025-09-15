@@ -1,0 +1,1314 @@
+## Phase 6: 边界上下文整合（4天）
+
+### 📅 时间安排
+- **Day 1-2**: Milestone 6.1 模块间通信重构
+- **Day 3**: Milestone 6.2 创建防腐层
+- **Day 4**: Milestone 6.3 数据同步机制
+
+---
+
+## Milestone 6.1: 模块间通信重构（2天）
+
+### Day 1: 事件驱动架构完善（8小时）
+
+#### 1. 领域事件总线增强
+```typescript
+// src/core/events/DomainEventBus.ts
+export interface DomainEvent {
+  aggregateId: string
+  eventType: string
+  eventVersion: number
+  occurredAt: Date
+  metadata?: EventMetadata
+  payload: any
+}
+
+export interface EventMetadata {
+  userId?: string
+  correlationId?: string
+  causationId?: string
+  traceId?: string
+}
+
+@Injectable()
+export class DomainEventBus {
+  private handlers = new Map<string, EventHandler[]>()
+  private middleware: EventMiddleware[] = []
+  private eventStore: EventStore
+  private deadLetterQueue: DeadLetterQueue
+  
+  constructor(
+    @Inject('EventStore') eventStore: EventStore,
+    @Inject('DeadLetterQueue') deadLetterQueue: DeadLetterQueue,
+    @Inject('Logger') private logger: Logger
+  ) {
+    this.eventStore = eventStore
+    this.deadLetterQueue = deadLetterQueue
+  }
+  
+  // 注册事件处理器
+  subscribe<T extends DomainEvent>(
+    eventType: string,
+    handler: EventHandler<T>,
+    options?: SubscriptionOptions
+  ): Unsubscribe {
+    const wrappedHandler = this.wrapHandler(handler, options)
+    
+    if (!this.handlers.has(eventType)) {
+      this.handlers.set(eventType, [])
+    }
+    
+    this.handlers.get(eventType)!.push(wrappedHandler)
+    
+    // 返回取消订阅函数
+    return () => {
+      const handlers = this.handlers.get(eventType)
+      if (handlers) {
+        const index = handlers.indexOf(wrappedHandler)
+        if (index > -1) {
+          handlers.splice(index, 1)
+        }
+      }
+    }
+  }
+  
+  // 发布事件
+  async publish<T extends DomainEvent>(event: T): Promise<void> {
+    // 应用中间件
+    const processedEvent = await this.applyMiddleware(event)
+    
+    // 持久化事件
+    await this.eventStore.append(processedEvent)
+    
+    // 获取处理器
+    const handlers = this.handlers.get(event.eventType) || []
+    const wildcardHandlers = this.handlers.get('*') || []
+    const allHandlers = [...handlers, ...wildcardHandlers]
+    
+    // 并行处理
+    const results = await Promise.allSettled(
+      allHandlers.map(handler => this.invokeHandler(handler, processedEvent))
+    )
+    
+    // 处理失败的处理器
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        this.handleFailure(processedEvent, allHandlers[index], result.reason)
+      }
+    })
+    
+    // 记录事件
+    this.logger.info('Domain event published', {
+      eventType: event.eventType,
+      aggregateId: event.aggregateId,
+      handlers: allHandlers.length
+    })
+  }
+  
+  // 批量发布事件
+  async publishBatch(events: DomainEvent[]): Promise<void> {
+    // 使用事务确保原子性
+    await this.eventStore.transaction(async (trx) => {
+      for (const event of events) {
+        await this.publish(event)
+      }
+    })
+  }
+  
+  // 添加中间件
+  use(middleware: EventMiddleware): void {
+    this.middleware.push(middleware)
+  }
+  
+  private wrapHandler(
+    handler: EventHandler,
+    options?: SubscriptionOptions
+  ): EventHandler {
+    return async (event: DomainEvent) => {
+      // 重试逻辑
+      let attempts = 0
+      const maxAttempts = options?.maxRetries || 3
+      const retryDelay = options?.retryDelay || 1000
+      
+      while (attempts < maxAttempts) {
+        try {
+          await handler(event)
+          return
+        } catch (error) {
+          attempts++
+          
+          if (attempts >= maxAttempts) {
+            throw error
+          }
+          
+          // 指数退避
+          await new Promise(resolve => 
+            setTimeout(resolve, retryDelay * Math.pow(2, attempts - 1))
+          )
+        }
+      }
+    }
+  }
+  
+  private async applyMiddleware(event: DomainEvent): Promise<DomainEvent> {
+    let processedEvent = event
+    
+    for (const middleware of this.middleware) {
+      processedEvent = await middleware(processedEvent)
+    }
+    
+    return processedEvent
+  }
+  
+  private async invokeHandler(
+    handler: EventHandler,
+    event: DomainEvent
+  ): Promise<void> {
+    const startTime = Date.now()
+    
+    try {
+      await handler(event)
+      
+      // 记录性能指标
+      this.logger.debug('Event handler executed', {
+        eventType: event.eventType,
+        duration: Date.now() - startTime
+      })
+    } catch (error) {
+      // 记录错误但不中断其他处理器
+      this.logger.error('Event handler failed', {
+        eventType: event.eventType,
+        error
+      })
+      
+      throw error
+    }
+  }
+  
+  private async handleFailure(
+    event: DomainEvent,
+    handler: EventHandler,
+    error: Error
+  ): Promise<void> {
+    // 发送到死信队列
+    await this.deadLetterQueue.add({
+      event,
+      handler: handler.name,
+      error: error.message,
+      timestamp: new Date()
+    })
+    
+    // 发布处理失败事件
+    await this.publish({
+      aggregateId: event.aggregateId,
+      eventType: 'EventHandlingFailed',
+      eventVersion: 1,
+      occurredAt: new Date(),
+      payload: {
+        originalEvent: event,
+        error: error.message
+      }
+    })
+  }
+}
+```
+
+#### 2. 跨模块事件映射
+```typescript
+// src/core/events/EventMapper.ts
+@Injectable()
+export class EventMapper {
+  private mappings = new Map<string, EventMapping[]>()
+  
+  constructor(
+    @Inject('Logger') private logger: Logger
+  ) {
+    this.registerMappings()
+  }
+  
+  private registerMappings(): void {
+    // 巡检 -> 工单
+    this.addMapping({
+      source: 'inspection.anomaly.detected',
+      target: 'ticket.create.requested',
+      transform: (event) => ({
+        title: `[巡检异常] ${event.payload.floor} - ${event.payload.itemName}`,
+        description: event.payload.description,
+        priority: this.mapSeverityToPriority(event.payload.severity),
+        sourceType: 'inspection',
+        sourceId: event.aggregateId,
+        metadata: {
+          anomalyId: event.payload.anomalyId,
+          inspectorId: event.payload.inspectorId
+        }
+      })
+    })
+    
+    // 维保 -> 工单
+    this.addMapping({
+      source: 'maintenance.plan.overdue',
+      target: 'ticket.create.requested',
+      transform: (event) => ({
+        title: `[维保逾期] ${event.payload.planTitle}`,
+        description: `维保计划已逾期 ${event.payload.overdueDays} 天`,
+        priority: 'high',
+        sourceType: 'maintenance',
+        sourceId: event.aggregateId
+      })
+    })
+    
+    // 工单 -> 巡检
+    this.addMapping({
+      source: 'ticket.completed',
+      target: 'inspection.ticket.resolved',
+      condition: (event) => event.payload.sourceType === 'inspection',
+      transform: (event) => ({
+        inspectionId: event.payload.sourceId,
+        ticketId: event.aggregateId,
+        resolution: event.payload.resolution
+      })
+    })
+    
+    // 工单 -> 维保
+    this.addMapping({
+      source: 'ticket.completed',
+      target: 'maintenance.ticket.resolved',
+      condition: (event) => event.payload.sourceType === 'maintenance',
+      transform: (event) => ({
+        maintenanceId: event.payload.sourceId,
+        ticketId: event.aggregateId,
+        resolution: event.payload.resolution
+      })
+    })
+  }
+  
+  private addMapping(mapping: EventMapping): void {
+    if (!this.mappings.has(mapping.source)) {
+      this.mappings.set(mapping.source, [])
+    }
+    
+    this.mappings.get(mapping.source)!.push(mapping)
+  }
+  
+  async mapEvent(event: DomainEvent): Promise<DomainEvent[]> {
+    const mappings = this.mappings.get(event.eventType) || []
+    const mappedEvents: DomainEvent[] = []
+    
+    for (const mapping of mappings) {
+      // 检查条件
+      if (mapping.condition && !mapping.condition(event)) {
+        continue
+      }
+      
+      try {
+        // 转换事件
+        const payload = mapping.transform(event)
+        
+        const mappedEvent: DomainEvent = {
+          aggregateId: generateId(),
+          eventType: mapping.target,
+          eventVersion: 1,
+          occurredAt: new Date(),
+          metadata: {
+            ...event.metadata,
+            causationId: event.aggregateId,
+            mappedFrom: event.eventType
+          },
+          payload
+        }
+        
+        mappedEvents.push(mappedEvent)
+        
+        this.logger.debug('Event mapped', {
+          source: event.eventType,
+          target: mapping.target
+        })
+      } catch (error) {
+        this.logger.error('Event mapping failed', {
+          source: event.eventType,
+          target: mapping.target,
+          error
+        })
+      }
+    }
+    
+    return mappedEvents
+  }
+  
+  private mapSeverityToPriority(severity: string): string {
+    const map: Record<string, string> = {
+      'critical': 'urgent',
+      'high': 'high',
+      'medium': 'medium',
+      'low': 'low'
+    }
+    
+    return map[severity] || 'medium'
+  }
+}
+
+interface EventMapping {
+  source: string
+  target: string
+  condition?: (event: DomainEvent) => boolean
+  transform: (event: DomainEvent) => any
+}
+```
+
+### Day 2: 聚合协调器实现（8小时）
+
+#### 1. Saga编排器
+```typescript
+// src/core/saga/SagaOrchestrator.ts
+export abstract class Saga {
+  protected sagaId: string
+  protected status: SagaStatus
+  protected steps: SagaStep[]
+  protected currentStep: number
+  protected compensations: CompensationStep[]
+  protected context: any
+  
+  constructor() {
+    this.sagaId = generateId()
+    this.status = SagaStatus.PENDING
+    this.steps = []
+    this.currentStep = 0
+    this.compensations = []
+    this.context = {}
+  }
+  
+  abstract defineSteps(): void
+  
+  protected addStep(step: SagaStep): void {
+    this.steps.push(step)
+  }
+  
+  protected addCompensation(compensation: CompensationStep): void {
+    this.compensations.push(compensation)
+  }
+}
+
+@Injectable()
+export class SagaOrchestrator {
+  private activeSagas = new Map<string, Saga>()
+  
+  constructor(
+    @Inject('EventBus') private eventBus: DomainEventBus,
+    @Inject('Logger') private logger: Logger,
+    @Inject('SagaRepository') private repository: SagaRepository
+  ) {}
+  
+  async startSaga(saga: Saga, initialContext?: any): Promise<void> {
+    saga.context = { ...saga.context, ...initialContext }
+    saga.defineSteps()
+    saga.status = SagaStatus.RUNNING
+    
+    this.activeSagas.set(saga.sagaId, saga)
+    await this.repository.save(saga)
+    
+    this.logger.info('Saga started', {
+      sagaId: saga.sagaId,
+      type: saga.constructor.name
+    })
+    
+    // 开始执行
+    await this.executeNextStep(saga)
+  }
+  
+  private async executeNextStep(saga: Saga): Promise<void> {
+    if (saga.currentStep >= saga.steps.length) {
+      // Saga完成
+      await this.completeSaga(saga)
+      return
+    }
+    
+    const step = saga.steps[saga.currentStep]
+    
+    try {
+      this.logger.debug('Executing saga step', {
+        sagaId: saga.sagaId,
+        step: step.name
+      })
+      
+      // 执行步骤
+      const result = await step.execute(saga.context)
+      
+      // 更新上下文
+      saga.context = { ...saga.context, ...result }
+      
+      // 记录补偿信息
+      if (step.compensate) {
+        saga.compensations.unshift({
+          step: step.name,
+          compensate: step.compensate,
+          context: { ...saga.context }
+        })
+      }
+      
+      // 移到下一步
+      saga.currentStep++
+      await this.repository.update(saga)
+      
+      // 继续执行
+      await this.executeNextStep(saga)
+    } catch (error) {
+      this.logger.error('Saga step failed', {
+        sagaId: saga.sagaId,
+        step: step.name,
+        error
+      })
+      
+      // 开始补偿
+      await this.compensateSaga(saga, error)
+    }
+  }
+  
+  private async compensateSaga(saga: Saga, error: Error): Promise<void> {
+    saga.status = SagaStatus.COMPENSATING
+    
+    this.logger.info('Starting saga compensation', {
+      sagaId: saga.sagaId,
+      error: error.message
+    })
+    
+    for (const compensation of saga.compensations) {
+      try {
+        await compensation.compensate(compensation.context)
+        
+        this.logger.debug('Compensation executed', {
+          sagaId: saga.sagaId,
+          step: compensation.step
+        })
+      } catch (compensationError) {
+        this.logger.error('Compensation failed', {
+          sagaId: saga.sagaId,
+          step: compensation.step,
+          error: compensationError
+        })
+        
+        // 补偿失败，需要人工介入
+        saga.status = SagaStatus.FAILED
+        await this.repository.update(saga)
+        
+        // 发送告警
+        await this.eventBus.publish({
+          aggregateId: saga.sagaId,
+          eventType: 'saga.compensation.failed',
+          eventVersion: 1,
+          occurredAt: new Date(),
+          payload: {
+            sagaId: saga.sagaId,
+            step: compensation.step,
+            error: compensationError.message
+          }
+        })
+        
+        return
+      }
+    }
+    
+    saga.status = SagaStatus.COMPENSATED
+    await this.repository.update(saga)
+    
+    this.logger.info('Saga compensated successfully', {
+      sagaId: saga.sagaId
+    })
+  }
+  
+  private async completeSaga(saga: Saga): Promise<void> {
+    saga.status = SagaStatus.COMPLETED
+    
+    await this.repository.update(saga)
+    this.activeSagas.delete(saga.sagaId)
+    
+    this.logger.info('Saga completed', {
+      sagaId: saga.sagaId
+    })
+    
+    // 发布完成事件
+    await this.eventBus.publish({
+      aggregateId: saga.sagaId,
+      eventType: 'saga.completed',
+      eventVersion: 1,
+      occurredAt: new Date(),
+      payload: {
+        sagaId: saga.sagaId,
+        result: saga.context
+      }
+    })
+  }
+}
+```
+
+#### 2. 跨模块业务流程Saga
+```typescript
+// src/sagas/InspectionToTicketSaga.ts
+export class InspectionToTicketSaga extends Saga {
+  defineSteps(): void {
+    // 步骤1: 验证巡检异常
+    this.addStep({
+      name: 'validateAnomaly',
+      execute: async (context) => {
+        const inspectionService = container.get('InspectionDomain')
+        const inspection = await inspectionService.getInspection(context.inspectionId)
+        
+        if (!inspection) {
+          throw new Error('Inspection not found')
+        }
+        
+        const anomaly = inspection.getAnomaly(context.anomalyId)
+        if (!anomaly) {
+          throw new Error('Anomaly not found')
+        }
+        
+        return { inspection, anomaly }
+      }
+    })
+    
+    // 步骤2: 检查重复工单
+    this.addStep({
+      name: 'checkDuplicateTicket',
+      execute: async (context) => {
+        const ticketService = container.get('TicketDomain')
+        const existingTicket = await ticketService.findBySourceId(
+          'inspection',
+          context.anomaly.id
+        )
+        
+        if (existingTicket) {
+          throw new Error(`Duplicate ticket exists: ${existingTicket.id}`)
+        }
+        
+        return { duplicateCheck: 'passed' }
+      }
+    })
+    
+    // 步骤3: 创建工单
+    this.addStep({
+      name: 'createTicket',
+      execute: async (context) => {
+        const ticketService = container.get('TicketDomain')
+        
+        const ticket = await ticketService.createTicket({
+          title: `[巡检异常] ${context.inspection.floor} - ${context.anomaly.itemName}`,
+          description: context.anomaly.description,
+          priority: context.anomaly.severity === 'critical' ? 'urgent' : 'high',
+          sourceType: 'inspection',
+          sourceId: context.anomaly.id,
+          reporterId: context.inspection.inspectorId
+        })
+        
+        return { ticketId: ticket.id }
+      },
+      compensate: async (context) => {
+        // 补偿：删除创建的工单
+        if (context.ticketId) {
+          const ticketService = container.get('TicketDomain')
+          await ticketService.deleteTicket(context.ticketId)
+        }
+      }
+    })
+    
+    // 步骤4: 更新巡检记录
+    this.addStep({
+      name: 'updateInspection',
+      execute: async (context) => {
+        const inspectionService = container.get('InspectionDomain')
+        
+        await inspectionService.markAnomalyHandled(
+          context.inspectionId,
+          context.anomalyId,
+          context.ticketId
+        )
+        
+        return { updated: true }
+      },
+      compensate: async (context) => {
+        // 补偿：撤销异常处理标记
+        const inspectionService = container.get('InspectionDomain')
+        await inspectionService.unmarkAnomalyHandled(
+          context.inspectionId,
+          context.anomalyId
+        )
+      }
+    })
+    
+    // 步骤5: 发送通知
+    this.addStep({
+      name: 'sendNotification',
+      execute: async (context) => {
+        const notificationService = container.get('NotificationService')
+        
+        await notificationService.send({
+          recipientId: context.inspection.inspectorId,
+          type: 'anomaly_ticket_created',
+          title: '异常工单已创建',
+          message: `您报告的异常已生成工单 #${context.ticketId}`,
+          data: {
+            ticketId: context.ticketId,
+            anomalyId: context.anomalyId
+          }
+        })
+        
+        return { notified: true }
+      }
+      // 通知失败不需要补偿，不影响主流程
+    })
+  }
+}
+```
+
+---
+
+## Milestone 6.2: 创建防腐层（1天）
+
+### Day 3: 防腐层实现（8小时）
+
+#### 1. 外部系统适配器
+```typescript
+// src/infrastructure/adapters/ExternalSystemAdapter.ts
+export interface ExternalSystemAdapter {
+  name: string
+  connect(): Promise<void>
+  disconnect(): Promise<void>
+  healthCheck(): Promise<boolean>
+}
+
+// 工单系统适配器
+@Injectable()
+export class LegacyTicketSystemAdapter implements ExternalSystemAdapter {
+  name = 'LegacyTicketSystem'
+  private client: any
+  
+  constructor(
+    @Inject('ConfigService') private config: ConfigService,
+    @Inject('Logger') private logger: Logger
+  ) {}
+  
+  async connect(): Promise<void> {
+    const config = this.config.get('external.legacyTicket')
+    this.client = new LegacyClient(config)
+    await this.client.connect()
+  }
+  
+  async disconnect(): Promise<void> {
+    await this.client?.disconnect()
+  }
+  
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.client.ping()
+      return true
+    } catch {
+      return false
+    }
+  }
+  
+  // 转换方法：领域模型 -> 外部系统格式
+  async createTicket(domainTicket: Ticket): Promise<string> {
+    const legacyTicket = this.transformToLegacy(domainTicket)
+    
+    try {
+      const result = await this.client.createTicket(legacyTicket)
+      return result.ticketId
+    } catch (error) {
+      this.logger.error('Failed to create ticket in legacy system', {
+        error,
+        ticket: domainTicket.id
+      })
+      throw new ExternalSystemError('Legacy system unavailable')
+    }
+  }
+  
+  // 转换方法：外部系统格式 -> 领域模型
+  async getTicket(legacyId: string): Promise<Ticket | null> {
+    try {
+      const legacyTicket = await this.client.getTicket(legacyId)
+      return this.transformToDomain(legacyTicket)
+    } catch (error) {
+      this.logger.error('Failed to get ticket from legacy system', {
+        error,
+        legacyId
+      })
+      return null
+    }
+  }
+  
+  private transformToLegacy(ticket: Ticket): any {
+    // 映射到旧系统格式
+    return {
+      ticket_no: ticket.ticketNo,
+      title: ticket.title,
+      content: ticket.description,
+      level: this.mapPriority(ticket.priority),
+      status: this.mapStatus(ticket.status),
+      create_time: ticket.createdAt.toISOString(),
+      create_user: ticket.reporterId
+    }
+  }
+  
+  private transformToDomain(legacyTicket: any): Ticket {
+    // 从旧系统格式映射回来
+    return new Ticket({
+      ticketNo: legacyTicket.ticket_no,
+      title: legacyTicket.title,
+      description: legacyTicket.content,
+      priority: this.unmapPriority(legacyTicket.level),
+      status: this.unmapStatus(legacyTicket.status),
+      reporterId: legacyTicket.create_user,
+      createdAt: new Date(legacyTicket.create_time)
+    })
+  }
+  
+  private mapPriority(priority: TicketPriority): number {
+    const map: Record<TicketPriority, number> = {
+      [TicketPriority.LOW]: 1,
+      [TicketPriority.MEDIUM]: 2,
+      [TicketPriority.HIGH]: 3,
+      [TicketPriority.URGENT]: 4
+    }
+    return map[priority]
+  }
+  
+  private unmapPriority(level: number): TicketPriority {
+    const map: Record<number, TicketPriority> = {
+      1: TicketPriority.LOW,
+      2: TicketPriority.MEDIUM,
+      3: TicketPriority.HIGH,
+      4: TicketPriority.URGENT
+    }
+    return map[level] || TicketPriority.MEDIUM
+  }
+  
+  private mapStatus(status: TicketStatus): string {
+    const map: Record<TicketStatus, string> = {
+      [TicketStatus.PENDING]: '1',
+      [TicketStatus.ASSIGNED]: '2',
+      [TicketStatus.PROCESSING]: '3',
+      [TicketStatus.COMPLETED]: '4',
+      [TicketStatus.CLOSED]: '5'
+    }
+    return map[status]
+  }
+  
+  private unmapStatus(status: string): TicketStatus {
+    const map: Record<string, TicketStatus> = {
+      '1': TicketStatus.PENDING,
+      '2': TicketStatus.ASSIGNED,
+      '3': TicketStatus.PROCESSING,
+      '4': TicketStatus.COMPLETED,
+      '5': TicketStatus.CLOSED
+    }
+    return map[status] || TicketStatus.PENDING
+  }
+}
+```
+
+#### 2. 防腐层服务
+```typescript
+// src/infrastructure/anticorruption/AntiCorruptionLayer.ts
+@Injectable()
+export class AntiCorruptionLayer {
+  private adapters = new Map<string, ExternalSystemAdapter>()
+  private cache = new Map<string, CacheEntry>()
+  
+  constructor(
+    @Inject('EventBus') private eventBus: DomainEventBus,
+    @Inject('Logger') private logger: Logger
+  ) {
+    this.registerAdapters()
+  }
+  
+  private registerAdapters(): void {
+    // 注册所有外部系统适配器
+    this.registerAdapter(new LegacyTicketSystemAdapter())
+    this.registerAdapter(new NotificationSystemAdapter())
+    this.registerAdapter(new BIMSystemAdapter())
+  }
+  
+  private registerAdapter(adapter: ExternalSystemAdapter): void {
+    this.adapters.set(adapter.name, adapter)
+    adapter.connect().catch(error => {
+      this.logger.error(`Failed to connect to ${adapter.name}`, error)
+    })
+  }
+  
+  // 统一的外部调用接口
+  async callExternalSystem<T>(
+    systemName: string,
+    operation: string,
+    params: any,
+    options?: CallOptions
+  ): Promise<T> {
+    const adapter = this.adapters.get(systemName)
+    if (!adapter) {
+      throw new Error(`External system ${systemName} not registered`)
+    }
+    
+    // 检查缓存
+    const cacheKey = this.getCacheKey(systemName, operation, params)
+    if (options?.useCache) {
+      const cached = this.getFromCache(cacheKey)
+      if (cached) {
+        return cached as T
+      }
+    }
+    
+    // 检查健康状态
+    const isHealthy = await adapter.healthCheck()
+    if (!isHealthy && options?.fallback) {
+      return options.fallback()
+    }
+    
+    try {
+      // 执行调用
+      const result = await this.executeCall(adapter, operation, params)
+      
+      // 缓存结果
+      if (options?.useCache) {
+        this.setCache(cacheKey, result, options.cacheTTL)
+      }
+      
+      // 发布成功事件
+      this.eventBus.publish({
+        aggregateId: generateId(),
+        eventType: 'external.call.success',
+        eventVersion: 1,
+        occurredAt: new Date(),
+        payload: {
+          system: systemName,
+          operation,
+          duration: Date.now()
+        }
+      })
+      
+      return result as T
+    } catch (error) {
+      // 发布失败事件
+      this.eventBus.publish({
+        aggregateId: generateId(),
+        eventType: 'external.call.failed',
+        eventVersion: 1,
+        occurredAt: new Date(),
+        payload: {
+          system: systemName,
+          operation,
+          error: error.message
+        }
+      })
+      
+      throw error
+    }
+  }
+  
+  private async executeCall(
+    adapter: any,
+    operation: string,
+    params: any
+  ): Promise<any> {
+    const method = adapter[operation]
+    if (!method) {
+      throw new Error(`Operation ${operation} not found`)
+    }
+    
+    return await method.call(adapter, ...params)
+  }
+  
+  private getCacheKey(system: string, operation: string, params: any): string {
+    return `${system}:${operation}:${JSON.stringify(params)}`
+  }
+  
+  private getFromCache(key: string): any | null {
+    const entry = this.cache.get(key)
+    if (!entry) return null
+    
+    if (entry.expiresAt < Date.now()) {
+      this.cache.delete(key)
+      return null
+    }
+    
+    return entry.value
+  }
+  
+  private setCache(key: string, value: any, ttl: number = 60000): void {
+    this.cache.set(key, {
+      value,
+      expiresAt: Date.now() + ttl
+    })
+  }
+}
+
+interface CallOptions {
+  useCache?: boolean
+  cacheTTL?: number
+  fallback?: () => any
+  timeout?: number
+  retries?: number
+}
+
+interface CacheEntry {
+  value: any
+  expiresAt: number
+}
+```
+
+---
+
+## Milestone 6.3: 数据同步机制（1天）
+
+### Day 4: 最终一致性实现（8小时）
+
+#### 1. 数据同步服务
+```typescript
+// src/infrastructure/sync/DataSyncService.ts
+@Injectable()
+export class DataSyncService {
+  private syncJobs = new Map<string, SyncJob>()
+  private syncQueue: Queue
+  
+  constructor(
+    @Inject('EventBus') private eventBus: DomainEventBus,
+    @Inject('Logger') private logger: Logger,
+    @Inject('SyncRepository') private repository: SyncRepository
+  ) {
+    this.syncQueue = new Queue('data-sync')
+    this.setupSyncJobs()
+    this.setupEventHandlers()
+  }
+  
+  private setupSyncJobs(): void {
+    // 工单同步任务
+    this.registerSyncJob({
+      id: 'ticket-sync',
+      source: 'ticket',
+      target: 'legacy-ticket',
+      schedule: '*/5 * * * *', // 每5分钟
+      batchSize: 100,
+      syncStrategy: SyncStrategy.INCREMENTAL
+    })
+    
+    // 巡检同步任务
+    this.registerSyncJob({
+      id: 'inspection-sync',
+      source: 'inspection',
+      target: 'bim-system',
+      schedule: '0 * * * *', // 每小时
+      batchSize: 50,
+      syncStrategy: SyncStrategy.FULL
+    })
+  }
+  
+  private registerSyncJob(config: SyncJobConfig): void {
+    const job = new SyncJob(config)
+    this.syncJobs.set(config.id, job)
+    
+    // 调度任务
+    cron.schedule(config.schedule, () => {
+      this.executeSyncJob(job)
+    })
+  }
+  
+  private async executeSyncJob(job: SyncJob): Promise<void> {
+    this.logger.info(`Starting sync job: ${job.id}`)
+    
+    try {
+      // 获取需要同步的数据
+      const dataToSync = await this.getDataToSync(job)
+      
+      if (dataToSync.length === 0) {
+        this.logger.info(`No data to sync for job: ${job.id}`)
+        return
+      }
+      
+      // 批量处理
+      const batches = this.createBatches(dataToSync, job.batchSize)
+      
+      for (const batch of batches) {
+        await this.syncQueue.add({
+          jobId: job.id,
+          data: batch,
+          timestamp: new Date()
+        })
+      }
+      
+      // 更新同步状态
+      job.lastSyncTime = new Date()
+      await this.repository.updateSyncJob(job)
+      
+      this.logger.info(`Sync job completed: ${job.id}`, {
+        syncedCount: dataToSync.length
+      })
+    } catch (error) {
+      this.logger.error(`Sync job failed: ${job.id}`, error)
+      
+      // 发布同步失败事件
+      this.eventBus.publish({
+        aggregateId: job.id,
+        eventType: 'sync.job.failed',
+        eventVersion: 1,
+        occurredAt: new Date(),
+        payload: {
+          jobId: job.id,
+          error: error.message
+        }
+      })
+    }
+  }
+  
+  private async getDataToSync(job: SyncJob): Promise<any[]> {
+    switch (job.syncStrategy) {
+      case SyncStrategy.INCREMENTAL:
+        return await this.getIncrementalData(job)
+      case SyncStrategy.FULL:
+        return await this.getFullData(job)
+      case SyncStrategy.DIFFERENTIAL:
+        return await this.getDifferentialData(job)
+      default:
+        return []
+    }
+  }
+  
+  private async getIncrementalData(job: SyncJob): Promise<any[]> {
+    // 获取自上次同步以来的变更数据
+    const lastSync = job.lastSyncTime || new Date(0)
+    
+    switch (job.source) {
+      case 'ticket':
+        const ticketRepo = container.get('TicketRepository')
+        return await ticketRepo.findModifiedSince(lastSync)
+      
+      case 'inspection':
+        const inspectionRepo = container.get('InspectionRepository')
+        return await inspectionRepo.findModifiedSince(lastSync)
+      
+      default:
+        return []
+    }
+  }
+  
+  private createBatches<T>(data: T[], batchSize: number): T[][] {
+    const batches: T[][] = []
+    
+    for (let i = 0; i < data.length; i += batchSize) {
+      batches.push(data.slice(i, i + batchSize))
+    }
+    
+    return batches
+  }
+  
+  // 处理实时事件
+  private setupEventHandlers(): void {
+    // 监听需要即时同步的事件
+    this.eventBus.subscribe('ticket.created', async (event) => {
+      await this.syncEntity('ticket', event.aggregateId)
+    })
+    
+    this.eventBus.subscribe('ticket.updated', async (event) => {
+      await this.syncEntity('ticket', event.aggregateId)
+    })
+  }
+  
+  private async syncEntity(entityType: string, entityId: string): Promise<void> {
+    // 即时同步单个实体
+    await this.syncQueue.add({
+      entityType,
+      entityId,
+      priority: 'high',
+      timestamp: new Date()
+    })
+  }
+}
+```
+
+#### 2. 冲突解决策略
+```typescript
+// src/infrastructure/sync/ConflictResolver.ts
+@Injectable()
+export class ConflictResolver {
+  constructor(
+    @Inject('Logger') private logger: Logger
+  ) {}
+  
+  async resolve<T>(
+    local: T,
+    remote: T,
+    strategy: ConflictResolutionStrategy
+  ): Promise<T> {
+    switch (strategy) {
+      case ConflictResolutionStrategy.LOCAL_WINS:
+        return local
+        
+      case ConflictResolutionStrategy.REMOTE_WINS:
+        return remote
+        
+      case ConflictResolutionStrategy.LATEST_WINS:
+        return this.resolveByTimestamp(local, remote)
+        
+      case ConflictResolutionStrategy.MERGE:
+        return this.merge(local, remote)
+        
+      case ConflictResolutionStrategy.MANUAL:
+        await this.requestManualResolution(local, remote)
+        throw new ConflictResolutionPending()
+        
+      default:
+        throw new Error(`Unknown conflict resolution strategy: ${strategy}`)
+    }
+  }
+  
+  private resolveByTimestamp<T>(local: T, remote: T): T {
+    const localTime = (local as any).updatedAt || (local as any).modifiedAt
+    const remoteTime = (remote as any).updatedAt || (remote as any).modifiedAt
+    
+    if (!localTime || !remoteTime) {
+      throw new Error('Cannot resolve by timestamp: missing timestamp fields')
+    }
+    
+    return new Date(localTime) > new Date(remoteTime) ? local : remote
+  }
+  
+  private merge<T>(local: T, remote: T): T {
+    // 三路合并算法
+    const base = this.findCommonAncestor(local, remote)
+    const merged = { ...base as any }
+    
+    // 应用本地更改
+    for (const key in local) {
+      if (local[key] !== base[key]) {
+        merged[key] = local[key]
+      }
+    }
+    
+    // 应用远程更改
+    for (const key in remote) {
+      if (remote[key] !== base[key]) {
+        // 如果本地也修改了同一字段，需要特殊处理
+        if (merged[key] !== base[key] && merged[key] !== remote[key]) {
+          merged[key] = this.mergeField(key, merged[key], remote[key])
+        } else {
+          merged[key] = remote[key]
+        }
+      }
+    }
+    
+    return merged as T
+  }
+  
+  private mergeField(key: string, localValue: any, remoteValue: any): any {
+    // 根据字段类型决定合并策略
+    if (Array.isArray(localValue) && Array.isArray(remoteValue)) {
+      // 数组合并：去重
+      return [...new Set([...localValue, ...remoteValue])]
+    }
+    
+    if (typeof localValue === 'number' && typeof remoteValue === 'number') {
+      // 数字：取较大值（例如版本号）
+      return Math.max(localValue, remoteValue)
+    }
+    
+    // 默认：本地优先
+    return localValue
+  }
+  
+  private findCommonAncestor<T>(local: T, remote: T): T {
+    // 简化实现：返回空对象
+    // 实际应该从版本历史中找到共同祖先
+    return {} as T
+  }
+  
+  private async requestManualResolution<T>(
+    local: T,
+    remote: T
+  ): Promise<void> {
+    // 创建冲突记录，等待人工处理
+    const conflictId = generateId()
+    
+    await this.repository.createConflict({
+      id: conflictId,
+      entityType: (local as any).constructor.name,
+      entityId: (local as any).id,
+      localVersion: local,
+      remoteVersion: remote,
+      status: 'pending',
+      createdAt: new Date()
+    })
+    
+    // 发送通知
+    await this.eventBus.publish({
+      aggregateId: conflictId,
+      eventType: 'sync.conflict.detected',
+      eventVersion: 1,
+      occurredAt: new Date(),
+      payload: {
+        conflictId,
+        entityType: (local as any).constructor.name,
+        entityId: (local as any).id
+      }
+    })
+  }
+}
+
+enum ConflictResolutionStrategy {
+  LOCAL_WINS = 'local_wins',
+  REMOTE_WINS = 'remote_wins',
+  LATEST_WINS = 'latest_wins',
+  MERGE = 'merge',
+  MANUAL = 'manual'
+}
+```
+
+## 📊 Phase 6 完成标准检查清单
+
+### 技术指标
+- [ ] 事件总线支持重试和死信队列
+- [ ] Saga编排器正常工作
+- [ ] 防腐层隔离外部系统
+- [ ] 数据同步机制稳定
+- [ ] 冲突解决策略完善
+
+### 功能验证
+- [ ] 跨模块通信正常
+- [ ] 外部系统调用稳定
+- [ ] 数据最终一致性保证
+- [ ] 补偿机制工作正常
+- [ ] 缓存策略生效
+
+### 性能指标
+- [ ] 事件处理延迟 < 100ms
+- [ ] Saga执行时间 < 2s
+- [ ] 数据同步延迟 < 5分钟
+- [ ] 缓存命中率 > 70%
+
+## 🚀 Phase 6 交付物
+
+1. **事件架构**
+   - DomainEventBus增强版
+   - EventMapper跨模块映射
+   - DeadLetterQueue死信队列
+   - EventStore事件存储
+
+2. **Saga编排**
+   - SagaOrchestrator编排器
+   - InspectionToTicketSaga示例
+   - 补偿机制实现
+   - Saga持久化
+
+3. **防腐层**
+   - ExternalSystemAdapter接口
+   - LegacyTicketSystemAdapter实现
+   - AntiCorruptionLayer服务
+   - 缓存和降级策略
+
+4. **数据同步**
+   - DataSyncService同步服务
+   - ConflictResolver冲突解决
+   - 增量/全量同步策略
+   - 同步队列管理
+
+5. **文档**
+   - EVENT-DRIVEN-ARCHITECTURE.md
+   - SAGA-PATTERN.md
+   - ANTI-CORRUPTION-LAYER.md
+   - DATA-SYNC-STRATEGY.md
+
+这就是Phase 6的完整实施方案，重点是建立完善的跨模块通信机制、实现防腐层隔离外部系统、确保数据最终一致性，为整个系统的边界整合提供坚实基础。

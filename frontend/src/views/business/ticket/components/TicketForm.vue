@@ -1,3 +1,6 @@
+<!-- DEPRECATION-CANDIDATE: Not referenced by current routes/views.
+     Keep for 1–2 weeks post-GA; remove if no usages emerge.
+     See docs/重构文档/dead-code-candidates.md -->
 <template>
   <el-dialog :title="dialogTitle" v-model="dialogVisible" width="800px" append-to-body :close-on-click-modal="false">
     <el-form ref="formRef" :model="form" :rules="rules" :disabled="mode === 'view'" label-width="100px">

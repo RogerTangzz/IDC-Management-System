@@ -14,7 +14,16 @@
     "type-check": "vue-tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run --reporter=default",
-    "scan:api-any": "node scripts/scan-any.js"
+    "test:ticket": "vitest run -c vitest.ticket.config.ts --coverage",
+    "test:ticket:p2": "vitest run -c vitest.ticket.p2.config.ts --coverage",
+    "test:ci:telemetry": "vitest run -c vitest.ticket.telemetry.config.ts",
+    "test:ci:health": "vitest run -c vitest.health.config.ts",
+    "test:ci:p3:domain": "vitest run -c vitest.p3.domain.config.ts",
+    "coverage:check": "node scripts/coverage-check.mjs",
+    "test:ci": "npm run test:ticket && npm run coverage:check",
+    "test:ci:p2": "npm run test:ticket:p2 && npm run coverage:check",
+    "scan:api-any": "node scripts/scan-any.js",
+    "demo:rollback": "node scripts/demo-rollback.mjs"
   },
   "repository": {
     "type": "git",

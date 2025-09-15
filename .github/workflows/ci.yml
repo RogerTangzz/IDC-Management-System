@@ -7,6 +7,129 @@ on:
     branches: [ main ]
 
 jobs:
+  ticket_only:
+    name: Ticket-only (P0 Gate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Run ticket-only tests + coverage gate
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run test:ci
+
+  ticket_template_only:
+    name: Ticket Template Only (P2 Gate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Run template-only tests + coverage gate (Stage 2)
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run test:ci:p2
+
+  template_telemetry_smoke:
+    name: Ticket Template Telemetry Smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Run telemetry smoke tests
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run test:ci:telemetry
+
+  template_health_smoke:
+    name: Ticket Template Health Smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Run flag snapshot + telemetry health
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run test:ci:health
+
+  ticket_p3_domain:
+    name: Ticket P3 Domain Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Run P3 domain unit tests
+        run: npm run test:ci:p3:domain
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
