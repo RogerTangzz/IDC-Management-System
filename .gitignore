@@ -1,0 +1,22 @@
+# Generic OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Node & frontend artifacts
+**/node_modules/
+**/dist/
+**/coverage/
+**/.vite/
+**/.vue-global-types/
+
+# Java/Maven artifacts
+**/target/
+
+# Logs
+*.log
+
+# Local env files (keep example templates tracked)
+.env.local
+**/.env.local
