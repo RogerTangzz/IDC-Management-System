@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 宸ュ崟鎺ュ彛
+ * 工单接口
  */
 @RestController
 @RequestMapping("/business/ticket")
@@ -37,12 +37,12 @@ public class BizTicketController extends BaseController {
     @Autowired(required = false)
     private SlaProperties slaProperties;
 
-    /** 鍒楄〃 */
+    /** 列表 */
     @PreAuthorize("@ss.hasPermi('business:ticket:list')")
     @GetMapping("/list")
     public TableDataInfo list(BizTicket query, @RequestParam(required = false) String mode, @RequestParam(required = false) Integer warnBeforeMinutes, @RequestParam(required = false) Integer warnBeforeHours) {
         startPage();
-        // 鏁版嵁鏉冮檺锛氶潪绠＄悊鍛樹粎鑳芥煡鐪嬩笌鑷繁鐩稿叧鐨勫伐鍗曪紙鎸囨淳/鎶ヤ慨/鍒涘缓锛?
+        // 数据权限:非管理员仅能查看与自己相关的工单(指派/报修/创建)
         try {
             Long uid = currentUserId(); String uname = currentUserName();
             if (uid != null && !com.ruoyi.common.utils.SecurityUtils.isAdmin(uid)){
@@ -68,12 +68,12 @@ public class BizTicketController extends BaseController {
                 }
             }
         }
-        // 鐜板湪 lastAction/lastStatusTime 宸叉寔涔呭寲锛岀洿鎺ユ煡璇?
+        // 现在 lastAction/lastStatusTime 已持久化,直接查询
         List<BizTicket> list = bizTicketService.selectBizTicketList(query);
         return getDataTable(list);
     }
 
-    /** 璇︽儏 */
+    /** 详情 */
     @PreAuthorize("@ss.hasPermi('business:ticket:query')")
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable Long id) {
@@ -81,7 +81,7 @@ public class BizTicketController extends BaseController {
         return AjaxResult.success(ticket);
     }
 
-    /** 鏂板 */
+    /** 新增 */
     @PreAuthorize("@ss.hasPermi('business:ticket:add')")
     @PostMapping
     public AjaxResult add(@RequestBody BizTicket ticket) {
@@ -97,31 +97,31 @@ public class BizTicketController extends BaseController {
     if (rows>0) {
         bizTicketLogService.log(ticket.getTicketId(), "create", null, ticket.getStatus(), null, currentUserId(), currentUserName());
     }
-        return rows > 0 ? AjaxResult.success(ticket) : AjaxResult.error("鏂板澶辫触");
+        return rows > 0 ? AjaxResult.success(ticket) : AjaxResult.error("新增失败");
     }
 
-    /** 淇敼 */
+    /** 修改 */
     @PreAuthorize("@ss.hasPermi('business:ticket:edit')")
     @PutMapping
     public AjaxResult edit(@RequestBody BizTicket ticket) {
         BizTicket old = bizTicketService.selectBizTicketByTicketId(ticket.getTicketId());
-        if (old == null) return AjaxResult.error("宸ュ崟涓嶅瓨鍦?);
-        // 鏁版嵁鏉冮檺锛氶潪绠＄悊鍛樹粎鍏佽淇敼涓庤嚜宸辩浉鍏筹紙鎸囨淳缁欒嚜宸?鑷繁鎶ヤ慨/鑷繁鍒涘缓锛夌殑宸ュ崟
+        if (old == null) return AjaxResult.error("工单不存在");
+        // 数据权限:非管理员仅允许修改与自己相关(指派给自己/自己报修/自己创建)的工单
         Long uid = currentUserId(); String uname = currentUserName();
         if (uid != null && !com.ruoyi.common.utils.SecurityUtils.isAdmin(uid)){
             boolean related = (old.getAssigneeId()!=null && uid.equals(old.getAssigneeId()))
                     || (old.getReporterId()!=null && uid.equals(old.getReporterId()))
                     || (uname!=null && uname.equals(old.getCreateBy()));
-            if (!related) return AjaxResult.error("鏃犳潈淇敼璇ュ伐鍗?);
+            if (!related) return AjaxResult.error("无权修改该工单");
         }
         String oldStatus = old==null?null:old.getStatus();
         if (old != null && ticket.getStatus()!=null && !old.getStatus().equals(ticket.getStatus())) {
-            // 鍚堟硶鐘舵€佹祦杞牎楠?
+            // 合法状态流转校验
             if (!isValidTransition(old.getStatus(), ticket.getStatus())) {
-                return AjaxResult.error("闈炴硶鐘舵€佹祦杞? "+old.getStatus()+" -> "+ticket.getStatus());
+                return AjaxResult.error("非法状态流转: "+old.getStatus()+" -> "+ticket.getStatus());
             }
         }
-        // 璁＄畻鍔ㄤ綔骞朵竴娆℃€ф洿鏂?
+        // 计算动作并一次性更新
         String action = (oldStatus==null || !oldStatus.equals(ticket.getStatus())) ? "update" : "edit";
         ticket.setLastAction(action);
         ticket.setLastStatusTime(new Date());
@@ -129,45 +129,45 @@ public class BizTicketController extends BaseController {
         if (rows>0) {
             bizTicketLogService.log(ticket.getTicketId(), action, oldStatus, ticket.getStatus(), null, currentUserId(), currentUserName());
         }
-        return rows > 0 ? AjaxResult.success(ticket) : AjaxResult.error("淇敼澶辫触");
+        return rows > 0 ? AjaxResult.success(ticket) : AjaxResult.error("修改失败");
     }
 
-    /** 鍒犻櫎 */
+    /** 删除 */
     @PreAuthorize("@ss.hasPermi('business:ticket:remove')")
     @DeleteMapping("/{id}")
     public AjaxResult remove(@PathVariable Long id) {
         int rows = bizTicketService.deleteBizTicketByTicketId(id);
-        return rows > 0 ? AjaxResult.success() : AjaxResult.error("鍒犻櫎澶辫触");
+        return rows > 0 ? AjaxResult.success() : AjaxResult.error("删除失败");
     }
 
-    /** 鍗?澶氬伐鍗曟寚娲?*/
+    /** 单/多工单指派 */
     @PreAuthorize("@ss.hasPermi('business:ticket:assign')")
     @PostMapping("/assign")
     public AjaxResult assign(@RequestBody AssignBody body){
         if (body == null || body.getTicketIds()==null || body.getTicketIds().length==0) {
-            return AjaxResult.error("ticketIds 涓嶈兘涓虹┖");
+            return AjaxResult.error("ticketIds 不能为空");
         }
         bizTicketService.assignTickets(body.getTicketIds(), body.getAssigneeId(), body.getAssigneeName(), currentUserId(), currentUserName());
         return AjaxResult.success();
     }
 
-    /** 鎵归噺鎸囨淳蹇嵎锛堝吋瀹规棫鍓嶇鏂规硶锛?*/
+    /** 批量指派快捷(兼容旧前端方法) */
     @PreAuthorize("@ss.hasPermi('business:ticket:assign')")
     @PostMapping("/batchAssign")
     public AjaxResult batchAssign(@RequestBody AssignBody body){
         return assign(body);
     }
 
-    /** 寮€濮嬪鐞?*/
+    /** 开始处理 */
     @PreAuthorize("@ss.hasPermi('business:ticket:start')")
     @PostMapping("/start/{id}")
     public AjaxResult start(@PathVariable Long id){
         try {
             BizTicket t0 = bizTicketService.selectBizTicketByTicketId(id);
-            if (t0 == null) return AjaxResult.error("宸ュ崟涓嶅瓨鍦?);
+            if (t0 == null) return AjaxResult.error("工单不存在");
             Long uid = currentUserId();
             if (uid != null && !com.ruoyi.common.utils.SecurityUtils.isAdmin(uid)){
-                if (t0.getAssigneeId()==null || !uid.equals(t0.getAssigneeId())) return AjaxResult.error("浠呮寚娲惧鐞嗕汉鍙紑濮嬪鐞?);
+                if (t0.getAssigneeId()==null || !uid.equals(t0.getAssigneeId())) return AjaxResult.error("仅指派处理人可开始处理");
             }
             bizTicketService.startTicket(id, uid, currentUserName());
             BizTicket t = bizTicketService.selectBizTicketByTicketId(id);
@@ -177,17 +177,17 @@ public class BizTicketController extends BaseController {
         }
     }
 
-    /** 瀹屾垚宸ュ崟 */
+    /** 完成工单 */
     @PreAuthorize("@ss.hasPermi('business:ticket:complete')")
     @PostMapping("/complete")
     public AjaxResult complete(@RequestBody CompleteBody body){
-        if (body == null || body.getTicketId()==null) return AjaxResult.error("缂哄皯 ticketId");
+        if (body == null || body.getTicketId()==null) return AjaxResult.error("缺少 ticketId");
         try {
             BizTicket t0 = bizTicketService.selectBizTicketByTicketId(body.getTicketId());
-            if (t0 == null) return AjaxResult.error("宸ュ崟涓嶅瓨鍦?);
+            if (t0 == null) return AjaxResult.error("工单不存在");
             Long uid = currentUserId();
             if (uid != null && !com.ruoyi.common.utils.SecurityUtils.isAdmin(uid)){
-                if (t0.getAssigneeId()==null || !uid.equals(t0.getAssigneeId())) return AjaxResult.error("浠呮寚娲惧鐞嗕汉鍙畬鎴愬伐鍗?);
+                if (t0.getAssigneeId()==null || !uid.equals(t0.getAssigneeId())) return AjaxResult.error("仅指派处理人可完成工单");
             }
             bizTicketService.completeTicket(body.getTicketId(), body.getSolution(), body.getResult(), uid, currentUserName());
             BizTicket t = bizTicketService.selectBizTicketByTicketId(body.getTicketId());
@@ -197,16 +197,16 @@ public class BizTicketController extends BaseController {
         }
     }
 
-    /** 鍏抽棴宸ュ崟 */
+    /** 关闭工单 */
     @PreAuthorize("@ss.hasPermi('business:ticket:close')")
     @PostMapping("/close/{id}")
     public AjaxResult close(@PathVariable Long id){
         try {
             BizTicket t0 = bizTicketService.selectBizTicketByTicketId(id);
-            if (t0 == null) return AjaxResult.error("宸ュ崟涓嶅瓨鍦?);
+            if (t0 == null) return AjaxResult.error("工单不存在");
             Long uid = currentUserId();
             if (uid != null && !com.ruoyi.common.utils.SecurityUtils.isAdmin(uid)){
-                if (t0.getAssigneeId()==null || !uid.equals(t0.getAssigneeId())) return AjaxResult.error("浠呮寚娲惧鐞嗕汉鎴栫鐞嗗憳鍙叧闂?);
+                if (t0.getAssigneeId()==null || !uid.equals(t0.getAssigneeId())) return AjaxResult.error("仅指派处理人或管理员可关闭");
             }
             bizTicketService.closeTicket(id, uid, currentUserName());
             BizTicket t = bizTicketService.selectBizTicketByTicketId(id);
@@ -216,19 +216,19 @@ public class BizTicketController extends BaseController {
         }
     }
 
-    /** reopen 宸ュ崟锛氫粎 closed 鍙?reopen锛屽洖鍒?processing锛堣嫢鏈夋寚娲撅級锛屽惁鍒?assigned */
+    /** reopen 工单:仅 closed 可 reopen,回到 processing(若有指派),否则 assigned */
     @PreAuthorize("@ss.hasPermi('business:ticket:reopen')")
     @PostMapping("/reopen/{id}")
     public AjaxResult reopen(@PathVariable Long id){
         try {
             BizTicket t0 = bizTicketService.selectBizTicketByTicketId(id);
-            if (t0 == null) return AjaxResult.error("宸ュ崟涓嶅瓨鍦?);
+            if (t0 == null) return AjaxResult.error("工单不存在");
             Long uid = currentUserId(); String uname = currentUserName();
             if (uid != null && !com.ruoyi.common.utils.SecurityUtils.isAdmin(uid)){
                 boolean related = (t0.getAssigneeId()!=null && uid.equals(t0.getAssigneeId()))
                         || (t0.getReporterId()!=null && uid.equals(t0.getReporterId()))
                         || (uname!=null && uname.equals(t0.getCreateBy()));
-                if (!related) return AjaxResult.error("鏃犳潈閲嶆柊鎵撳紑璇ュ伐鍗?);
+                if (!related) return AjaxResult.error("无权重新打开该工单");
             }
             bizTicketService.reopenTicket(id, uid, uname);
             BizTicket t = bizTicketService.selectBizTicketByTicketId(id);
@@ -238,7 +238,7 @@ public class BizTicketController extends BaseController {
         }
     }
 
-    /** 閫炬湡宸ュ崟鍒楄〃 */
+    /** 逾期工单列表 */
     @PreAuthorize("@ss.hasPermi('business:ticket:list')")
     @GetMapping("/overdue")
     public TableDataInfo overdue(BizTicket query){
@@ -257,7 +257,7 @@ public class BizTicketController extends BaseController {
         return getDataTable(list);
     }
 
-    /** 杩戝埌鏈熷伐鍗曞垪琛紙hours 榛樿鍙?SLA 閰嶇疆 warnBeforeHours锛?*/
+    /** 近到期工单列表(hours 默认取 SLA 配置 warnBeforeHours)*/
     @PreAuthorize("@ss.hasPermi('business:ticket:list')")
     @GetMapping("/nearDue")
     public TableDataInfo nearDue(
@@ -289,18 +289,18 @@ public class BizTicketController extends BaseController {
         return getDataTable(list);
     }
 
-    /** 鏌ヨ鎸囧畾宸ュ崟鏃ュ織 */
+    /** 查询指定工单日志 */
     @PreAuthorize("@ss.hasPermi('business:ticket:log:list')")
     @GetMapping("/{id}/logs")
     public TableDataInfo logs(@PathVariable Long id, BizTicketLog query){
-        // 鏀寔鍒嗛〉
+        // 支持分页
         startPage();
         query.setTicketId(id);
         List<BizTicketLog> logs = bizTicketLogService.listByTicket(id);
         return getDataTable(logs);
     }
 
-    /** 绠€鏄撶粺璁℃姤琛細鐘舵€?浼樺厛绾?浠婃棩鏂板/浠婃棩瀹屾垚 */
+    /** 简易统计报表:状态/优先级/今日新增/今日完成 */
     @PreAuthorize("@ss.hasPermi('business:ticket:report') or @ss.hasPermi('business:ticket:list')")
     @GetMapping("/report/summary")
     public AjaxResult summary(){
@@ -326,11 +326,11 @@ public class BizTicketController extends BaseController {
             if (nearDue!=null) result.put("nearDue", nearDue);
             return AjaxResult.success(result);
         } catch (Exception e){
-            return AjaxResult.error("缁熻澶辫触:"+e.getMessage());
+            return AjaxResult.error("统计失败:"+e.getMessage());
         }
     }
 
-    /** 楂樼骇鍒嗘瀽锛氬鐞嗘椂闀垮垎甯?& SLA */
+    /** 高级分析:处理时长分布 & SLA */
     @PreAuthorize("@ss.hasPermi('business:ticket:report') or @ss.hasPermi('business:ticket:list')")
     @GetMapping("/report/analytics")
     public AjaxResult analytics(@RequestParam(required = false) String beginTime,
@@ -350,11 +350,11 @@ public class BizTicketController extends BaseController {
             data.put("sla", sla);
             return AjaxResult.success(data);
         } catch (Exception e){
-            return AjaxResult.error("鍒嗘瀽澶辫触:"+e.getMessage());
+            return AjaxResult.error("分析失败:"+e.getMessage());
         }
     }
 
-    /** 瓒嬪娍锛氳繎7鏃ユ垨鎸囧畾鑼冨洿鐨?鏂板/瀹屾垚 */
+    /** 趋势:近7日或指定范围的 新增/完成 */
     @PreAuthorize("@ss.hasPermi('business:ticket:report') or @ss.hasPermi('business:ticket:list')")
     @GetMapping("/report/trend")
     public AjaxResult trend(@RequestParam(required = false) String beginTime,
@@ -377,11 +377,11 @@ public class BizTicketController extends BaseController {
             data.put("endTime", endTime);
             return AjaxResult.success(data);
         } catch (Exception e){
-            return AjaxResult.error("瓒嬪娍澶辫触:"+e.getMessage());
+            return AjaxResult.error("趋势失败:"+e.getMessage());
         }
     }
 
-    /** 鎶ヨ〃瀵煎嚭锛堝崰浣嶏級 */
+    /** 报表导出(占位) */
     @PreAuthorize("@ss.hasPermi('business:ticket:report')")
     @GetMapping("/report/export")
     public void exportReport(@RequestParam(required = false) String beginTime,
@@ -473,7 +473,7 @@ public class BizTicketController extends BaseController {
             wb.write(response.getOutputStream());
             response.getOutputStream().flush();
         } catch (Exception e){
-            // 蹇界暐瀵煎嚭寮傚父锛岄伩鍏嶆墦鏂姹?
+            // 忽略导出异常,避免打断请求
         }
     }
 
@@ -506,7 +506,7 @@ public class BizTicketController extends BaseController {
         try { return SecurityUtils.getUsername(); } catch (Exception e){ return null; }
     }
 
-    /** 鍒楄〃瀵煎嚭锛堜笌鍒楄〃鏌ヨ绛涢€?鎺掑簭/鏃堕棿鑼冨洿/鏁版嵁鏉冮檺淇濇寔涓€鑷达級 */
+    /** 列表导出(与列表查询筛选/排序/时间范围/数据权限保持一致) */
     @PreAuthorize("@ss.hasPermi('business:ticket:export')")
     @PostMapping("/export")
     public void exportList(
@@ -521,7 +521,7 @@ public class BizTicketController extends BaseController {
             @RequestParam(required = false) Integer warnBeforeMinutes,
             javax.servlet.http.HttpServletResponse response
     ){
-        // 鏁版嵁鏉冮檺锛氶潪绠＄悊鍛樹粎鏈汉锛涘吋瀹?mineOnly/selfOnly 鐏板害
+        // 数据权限:非管理员仅本人;兼容 mineOnly/selfOnly 灰度
         try {
             Long uid = currentUserId(); String uname = currentUserName();
             if (uid != null && !com.ruoyi.common.utils.SecurityUtils.isAdmin(uid)){
@@ -536,13 +536,14 @@ public class BizTicketController extends BaseController {
             }
         } catch (Exception ignore) {}
 
-        // 鏃堕棿鑼冨洿
+        // 时间范围
         if (beginTime != null && endTime != null) {
             if (query.getParams() == null) query.setParams(new java.util.HashMap<>());
             query.getParams().put("beginTime", beginTime);
             query.getParams().put("endTime", endTime);
         }
-        // 鎺掑簭锛堢櫧鍚嶅崟閬垮厤 SQL 娉ㄥ叆锛?        if (orderByColumn != null && !orderByColumn.isEmpty()) {
+        // 排序(白名单避免 SQL 注入)
+        if (orderByColumn != null && !orderByColumn.isEmpty()) {
             java.util.Set<String> whitelist = new java.util.HashSet<>(java.util.Arrays.asList(
                     "ticket_no","title","status","priority","reporter_name","assignee_name","last_status_time","create_time","completion_time"
             ));
@@ -552,7 +553,7 @@ public class BizTicketController extends BaseController {
                 query.getParams().put("orderBy", orderByColumn + " " + order);
             }
         }
-        // 涓嬮捇妯″紡锛堝彲閫夛級锛涜繎鍒版湡鏀寔鍒嗛挓/灏忔椂绮掑害绐楀彛锛堜紭鍏堝垎閽燂級锛岄粯璁?2 灏忔椂
+        // 下钻模式(可选);近到期支持分钟/小时粒度窗口(优先分钟),默认 2 小时
         if (mode != null && !mode.isEmpty()){
             if (query.getParams() == null) query.setParams(new java.util.HashMap<>());
             query.getParams().put("mode", mode);
@@ -568,9 +569,10 @@ public class BizTicketController extends BaseController {
             }
         }
 
-        // 鏌ヨ鏁版嵁锛堜笉鍒嗛〉锛?        java.util.List<BizTicket> list = bizTicketService.selectBizTicketList(query);
+        // 查询数据(不分页)
+        java.util.List<BizTicket> list = bizTicketService.selectBizTicketList(query);
 
-        // 瀵煎嚭 Excel
+        // 导出 Excel
         try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook()){
             org.apache.poi.ss.usermodel.Sheet sheet = wb.createSheet("Tickets");
             int r = 0;
@@ -598,24 +600,24 @@ public class BizTicketController extends BaseController {
         } catch (Exception ignore) {}
     }
 
-    /** 璇锋眰浣?*/
+    /** 请求体*/
     public static class AssignBody {
         private Long[] ticketIds; private Long assigneeId; private String assigneeName; public Long[] getTicketIds(){return ticketIds;} public void setTicketIds(Long[] a){this.ticketIds=a;} public Long getAssigneeId(){return assigneeId;} public void setAssigneeId(Long a){this.assigneeId=a;} public String getAssigneeName(){return assigneeName;} public void setAssigneeName(String n){this.assigneeName=n;}
     }
 
     public static class CompleteBody {
-        private Long ticketId; private String solution; private String result; // result 棰勭暀
+        private Long ticketId; private String solution; private String result; // result 预留
         public Long getTicketId(){return ticketId;} public void setTicketId(Long id){this.ticketId=id;}
         public String getSolution(){return solution;} public void setSolution(String s){this.solution=s;}
         public String getResult(){return result;} public void setResult(String r){this.result=r;}
     }
 
-    /** 绠€鍗?ticketNo 鐢熸垚锛歍K + yyyyMMddHHmmssSSS */
+    /** 简单 ticketNo 生成:TK + yyyyMMddHHmmssSSS */
     private String generateTicketNo() {
         return "TK" + DateUtils.dateTimeNow("yyyyMMddHHmmssSSS");
     }
 
-    // 鏃х殑 findLatestLog 宸蹭笉鍐嶉渶瑕侊紙last* 宸叉寔涔呭寲锛?
+    // 旧的 findLatestLog 已不再需要(last* 已持久化)
     private boolean isValidTransition(String from, String to){
         if (from==null) return true;
         if (from.equals(to)) return true;
@@ -623,8 +625,8 @@ public class BizTicketController extends BaseController {
             case "pending": return to.equals("assigned") || to.equals("closed");
             case "assigned": return to.equals("processing") || to.equals("closed");
             case "processing": return to.equals("completed") || to.equals("closed");
-            case "completed": return to.equals("closed") || to.equals("processing"); // 鍏佽鍥為€€(閲嶆柊澶勭悊)
-            case "closed": return to.equals("processing") || to.equals("assigned"); // reopen 鎯呭喌
+            case "completed": return to.equals("closed") || to.equals("processing"); // 允许回退(重新处理)
+            case "closed": return to.equals("processing") || to.equals("assigned"); // reopen 情况
             default: return false;
         }
     }

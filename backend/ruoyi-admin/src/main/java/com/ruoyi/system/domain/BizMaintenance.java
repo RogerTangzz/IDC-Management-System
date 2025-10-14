@@ -126,6 +126,20 @@ public class BizMaintenance extends BaseEntity
     /** 巡检结果 */
     @Excel(name = "巡检结果")
     private String inspectionResult;
+    /** Planned start date */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Excel(name = "Planned start date", width = 30, dateFormat = "yyyy-MM-dd")
+    private Date plannedStartDate;
+
+    /** Planned end date */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Excel(name = "Planned end date", width = 30, dateFormat = "yyyy-MM-dd")
+    private Date plannedEndDate;
+
+    /** Maintenance item count */
+    @Excel(name = "Maintenance item count")
+    private Integer itemCount;
+
 
     /** 提交时间 */
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -413,6 +427,36 @@ public class BizMaintenance extends BaseEntity
         return inspectionResult;
     }
 
+    public void setPlannedStartDate(Date plannedStartDate)
+    {
+        this.plannedStartDate = plannedStartDate;
+    }
+
+    public Date getPlannedStartDate()
+    {
+        return plannedStartDate;
+    }
+
+    public void setPlannedEndDate(Date plannedEndDate)
+    {
+        this.plannedEndDate = plannedEndDate;
+    }
+
+    public Date getPlannedEndDate()
+    {
+        return plannedEndDate;
+    }
+
+    public void setItemCount(Integer itemCount)
+    {
+        this.itemCount = itemCount;
+    }
+
+    public Integer getItemCount()
+    {
+        return itemCount;
+    }
+
     public void setSubmitTime(Date submitTime) 
     {
         this.submitTime = submitTime;
@@ -483,6 +527,9 @@ public class BizMaintenance extends BaseEntity
             .append("specialTools", getSpecialTools())
             .append("steps", getSteps())
             .append("inspectionResult", getInspectionResult())
+            .append("plannedStartDate", getPlannedStartDate())
+            .append("plannedEndDate", getPlannedEndDate())
+            .append("itemCount", getItemCount())
             .append("submitTime", getSubmitTime())
             .append("applicantId", getApplicantId())
             .append("applicantName", getApplicantName())

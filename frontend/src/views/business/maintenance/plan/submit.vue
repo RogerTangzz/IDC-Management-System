@@ -3,26 +3,26 @@
   <div class="maintenance-plan-submit">
     <el-card>
       <template #header>
-        提交维保计划审核
+        {{ $t('business.maintenance.dialog.submitApprovalTitle') }}
       </template>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-        <el-form-item label="计划名称">
+        <el-form-item :label="$t('business.maintenance.field.title')">
           {{ plan.title }}
         </el-form-item>
-        <el-form-item label="审核人" prop="approverId">
-          <el-select v-model="form.approverId" placeholder="请选择审核人">
+        <el-form-item :label="$t('business.maintenance.field.approverId')" prop="approverId">
+          <el-select v-model="form.approverId" :placeholder="$t('business.maintenance.placeholder.selectApprover')">
             <el-option v-for="user in approverList" :key="user.id" :label="user.name" :value="user.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="提交说明" prop="comment">
-          <el-input v-model="form.comment" type="textarea" :rows="4" placeholder="请输入提交说明" />
+        <el-form-item :label="$t('business.maintenance.field.comment')" prop="comment">
+          <el-input v-model="form.comment" type="textarea" :rows="4" :placeholder="$t('business.maintenance.placeholder.inputComment')" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSubmit" :loading="loading">
-            提交审核
+            {{ $t('business.maintenance.action.submit') }}
           </el-button>
-          <el-button @click="handleCancel">取消</el-button>
+          <el-button @click="handleCancel">{{ $t('business.maintenance.message.cancel') }}</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -32,7 +32,10 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+
+const { t } = useI18n()
 // Mock API 占位，真实接口集成后替换
 const maintenancePlanApi = {
   get: async (id) => ({ data: { planId: id, title: '示例维保计划' } }),
@@ -53,7 +56,7 @@ const form = reactive({
 
 const rules = {
   approverId: [
-    { required: true, message: '请选择审核人', trigger: 'change' }
+    { required: true, message: t('business.maintenance.validation.approverRequired'), trigger: 'change' }
   ]
 }
 
@@ -75,7 +78,7 @@ const handleSubmit = async () => {
 
   loading.value = true
   await maintenancePlanApi.submitApproval(route.params.id, form.approverId)
-  ElMessage.success('提交审核成功')
+  ElMessage.success(t('business.maintenance.message.submitSuccess'))
   router.push('/maintenance/plan')
   loading.value = false
 }

@@ -1,0 +1,36 @@
+{
+  "field": {
+    "type": "Type",
+    "title": "Title",
+    "content": "Content",
+    "createTime": "Time"
+  },
+  "readStatus": {
+    "unread": "Unread",
+    "all": "All",
+    "read": "Read"
+  },
+  "type": {
+    "slaWarn": "SLA Warning",
+    "slaOverdue": "Overdue",
+    "assign": "Assign",
+    "start": "Start",
+    "complete": "Complete",
+    "close": "Close",
+    "reopen": "Reopen"
+  },
+  "action": {
+    "refresh": "Refresh",
+    "markAllRead": "Mark All Read",
+    "markRead": "Mark Read",
+    "view": "View"
+  },
+  "placeholder": {
+    "type": "Type"
+  },
+  "message": {
+    "markedRead": "Marked as read",
+    "allMarkedRead": "All marked as read"
+  },
+  "title": "Message Center"
+}

@@ -1,0 +1,43 @@
+{
+  "rack": {
+    "field": {
+      "code": "机柜编号",
+      "roomId": "机房",
+      "uTotal": "总U",
+      "occupancyRate": "占用率",
+      "powerRated": "额定功率(W)",
+      "powerCurrent": "当前功率(W)",
+      "status": "状态",
+      "uIndex": "U位"
+    },
+    "status": {
+      "normal": "正常",
+      "reserved": "预留",
+      "fault": "故障",
+      "offline": "下线"
+    },
+    "uStatus": {
+      "occupied": "占用",
+      "free": "空闲"
+    },
+    "action": {
+      "query": "查询",
+      "reset": "重置",
+      "export": "导出",
+      "detail": "详情",
+      "refresh": "刷新",
+      "occupy": "占用所选",
+      "release": "释放所选"
+    },
+    "placeholder": {
+      "selectRoom": "请选择机房",
+      "selectStatus": "请选择状态"
+    },
+    "message": {
+      "exportNotImplemented": "导出功能待实现"
+    },
+    "detail": {
+      "title": "机柜 U 位图"
+    }
+  }
+}

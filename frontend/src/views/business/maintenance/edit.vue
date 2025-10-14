@@ -240,6 +240,7 @@
 <script setup name="MaintenanceEdit">
 import { getCurrentInstance, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 // NOTE: 真实接口集成后再按需恢复下列 API 引入
 // import { getMaintenance, updateMaintenance, submitApproval, getApproverList } from '@/api/business/maintenance'
 // import { listUser } from '@/api/system/user'
@@ -249,6 +250,7 @@ import draggable from 'vuedraggable'
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 
 const planId = route.params && route.params.id
 const formRef = ref(null)
@@ -289,11 +291,11 @@ const form = ref({
 
 // 验证规则
 const rules = {
-  title: [{ required: true, message: '请输入计划标题', trigger: 'blur' }],
-  floor: [{ required: true, message: '请选择楼层', trigger: 'change' }],
-  mopCategory: [{ required: true, message: '请选择MOP类别', trigger: 'change' }],
-  mopName: [{ required: true, message: '请输入MOP名称', trigger: 'blur' }],
-  approverId: [{ required: true, message: '请选择审核人', trigger: 'change' }]
+  title: [{ required: true, message: t('business.maintenance.validation.titleRequired'), trigger: 'blur' }],
+  floor: [{ required: true, message: t('business.maintenance.validation.floorRequired'), trigger: 'change' }],
+  mopCategory: [{ required: true, message: t('business.maintenance.validation.categoryRequired'), trigger: 'change' }],
+  mopName: [{ required: true, message: t('business.maintenance.validation.mopNameRequired'), trigger: 'blur' }],
+  approverId: [{ required: true, message: t('business.maintenance.validation.approverRequired'), trigger: 'change' }]
 }
 
 /** 获取计划详情 */
@@ -392,10 +394,10 @@ function getApprovalType(status) {
 /** 获取审批状态标签 */
 function getApprovalLabel(status) {
   const map = {
-    'draft': '草稿',
-    'pending': '待审核',
-    'approved': '已批准',
-    'rejected': '已拒绝'
+    'draft': t('business.maintenance.status.draft'),
+    'pending': t('business.maintenance.status.pending'),
+    'approved': t('business.maintenance.status.approved'),
+    'rejected': t('business.maintenance.status.rejected')
   }
   return map[status] || status
 }
@@ -414,10 +416,10 @@ function getExecutionType(status) {
 /** 获取执行状态标签 */
 function getExecutionLabel(status) {
   const map = {
-    'pending': '待执行',
-    'executing': '执行中',
-    'completed': '已完成',
-    'cancelled': '已取消'
+    'pending': t('business.maintenance.status.pending'),
+    'executing': t('business.maintenance.status.executing'),
+    'completed': t('business.maintenance.status.completed'),
+    'cancelled': t('business.maintenance.message.noData')
   }
   return map[status] || status
 }
@@ -425,11 +427,11 @@ function getExecutionLabel(status) {
 /** 获取操作标签 */
 function getActionLabel(action) {
   const map = {
-    'created': '创建了计划',
-    'submitted': '提交了审核',
-    'approved': '审核通过',
-    'rejected': '审核拒绝',
-    'revised': '修改重提'
+    'created': t('business.maintenance.action.add'),
+    'submitted': t('business.maintenance.action.submitApproval'),
+    'approved': t('business.maintenance.action.pass'),
+    'rejected': t('business.maintenance.action.reject'),
+    'revised': t('business.maintenance.action.retry')
   }
   return map[action] || action
 }
@@ -443,7 +445,7 @@ function handleSave() {
         `${index + 1}. ${step.content}`
       ).join('\n')
 
-      proxy.$modal.msgSuccess('保存成功')
+      proxy.$modal.msgSuccess(t('business.maintenance.message.updateSuccess'))
       router.push('/business/maintenance')
     }
   })
@@ -453,8 +455,8 @@ function handleSave() {
 function handleSubmitApproval() {
   proxy.$refs.formRef.validate(valid => {
     if (valid) {
-      proxy.$modal.confirm('确认提交审核？').then(() => {
-        proxy.$modal.msgSuccess('提交成功，等待审核')
+      proxy.$modal.confirm(t('business.maintenance.message.confirmCancel')).then(() => {
+        proxy.$modal.msgSuccess(t('business.maintenance.message.submitSuccess'))
         router.push('/business/maintenance')
       })
     }
@@ -464,7 +466,7 @@ function handleSubmitApproval() {
 /** 修改重提 */
 function handleRevise() {
   form.value.approvalStatus = 'draft'
-  proxy.$modal.msgSuccess('已恢复为草稿状态，请修改后重新提交')
+  proxy.$modal.msgSuccess(t('business.maintenance.status.draft'))
 }
 
 /** 取消 */

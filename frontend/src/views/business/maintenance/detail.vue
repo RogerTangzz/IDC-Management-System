@@ -3,10 +3,10 @@
     <el-card v-loading="loading">
       <template #header>
         <div class="card-header">
-          <span class="title">维保计划详情 - {{ form.planNo }}</span>
+          <span class="title">{{ $t('business.maintenance.message.detailTitle') }} - {{ form.planNo }}</span>
           <div class="header-buttons">
-            <el-button link type="primary" icon="Refresh" @click="getDetail">刷新</el-button>
-            <el-button link type="primary" icon="Close" @click="handleClose">关闭</el-button>
+            <el-button link type="primary" icon="Refresh" @click="getDetail">{{ $t('business.maintenance.action.reset') }}</el-button>
+            <el-button link type="primary" icon="Close" @click="handleClose">{{ $t('business.maintenance.action.close') }}</el-button>
           </div>
         </div>
       </template>
@@ -14,34 +14,34 @@
       <!-- 基础信息 -->
       <el-descriptions :column="3" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">基础信息</span>
+          <span class="descriptions-title">{{ $t('business.maintenance.message.planInfo') }}</span>
         </template>
-        <el-descriptions-item label="计划编号">
+        <el-descriptions-item :label="$t('business.maintenance.field.planNo')">
           <span class="text-primary">{{ form.planNo }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="计划标题" :span="2">
+        <el-descriptions-item :label="$t('business.maintenance.field.title')" :span="2">
           {{ form.title }}
         </el-descriptions-item>
-        <el-descriptions-item label="楼层">
+        <el-descriptions-item :label="$t('business.maintenance.field.floor')">
           {{ getFloorLabel(form.floor) }}
         </el-descriptions-item>
-        <el-descriptions-item label="版本号">
+        <el-descriptions-item :label="$t('business.maintenance.field.version')">
           {{ form.version }}
         </el-descriptions-item>
-        <el-descriptions-item label="MOP类别">
+        <el-descriptions-item :label="$t('business.maintenance.field.mopCategory')">
           <dict-tag :options="mop_category" :value="form.mopCategory" />
         </el-descriptions-item>
-        <el-descriptions-item label="审核状态">
+        <el-descriptions-item :label="$t('business.maintenance.field.approvalStatus')">
           <el-tag :type="getApprovalType(form.approvalStatus)">
             {{ getApprovalLabel(form.approvalStatus) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="执行状态">
+        <el-descriptions-item :label="$t('business.maintenance.field.executionStatus')">
           <el-tag :type="getExecutionType(form.executionStatus)">
             {{ getExecutionLabel(form.executionStatus) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">
+        <el-descriptions-item :label="$t('business.maintenance.field.createTime')">
           {{ parseTime(form.createTime) }}
         </el-descriptions-item>
       </el-descriptions>
@@ -49,18 +49,18 @@
       <!-- MOP信息 -->
       <el-descriptions :column="2" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">MOP信息</span>
+          <span class="descriptions-title">{{ $t('business.maintenance.message.mopInfo') }}</span>
         </template>
-        <el-descriptions-item label="MOP名称" :span="2">
+        <el-descriptions-item :label="$t('business.maintenance.field.mopName')" :span="2">
           {{ form.mopName }}
         </el-descriptions-item>
-        <el-descriptions-item label="MOP目的" :span="2">
+        <el-descriptions-item :label="$t('business.maintenance.field.mopPurpose')" :span="2">
           <div class="description-content">{{ form.mopPurpose }}</div>
         </el-descriptions-item>
-        <el-descriptions-item label="执行周期">
+        <el-descriptions-item :label="$t('business.maintenance.field.executionCycle')">
           {{ form.executionFrequency }} {{ getUnitLabel(form.executionUnit) }}
         </el-descriptions-item>
-        <el-descriptions-item label="下次执行时间">
+        <el-descriptions-item :label="$t('business.maintenance.field.nextExecutionTime')">
           {{ parseTime(form.nextExecutionTime) || '-' }}
         </el-descriptions-item>
       </el-descriptions>
@@ -68,21 +68,21 @@
       <!-- 人员信息 -->
       <el-descriptions :column="2" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">人员信息</span>
+          <span class="descriptions-title">{{ $t('business.maintenance.message.executionInfo') }}</span>
         </template>
-        <el-descriptions-item label="审核人">
+        <el-descriptions-item :label="$t('business.maintenance.field.approverName')">
           {{ form.approverName || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="执行审核人">
+        <el-descriptions-item :label="$t('business.maintenance.field.executorId')">
           {{ form.executorName || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="申请人">
+        <el-descriptions-item :label="$t('business.maintenance.field.applicant')">
           {{ form.applicantName || form.createBy }}
         </el-descriptions-item>
-        <el-descriptions-item label="提交时间">
+        <el-descriptions-item :label="$t('business.maintenance.field.submitTime')">
           {{ parseTime(form.submitTime) || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="通知人员" :span="2">
+        <el-descriptions-item :label="$t('business.maintenance.field.notifyUsers')" :span="2">
           <el-tag v-for="user in notifyUserList" :key="user" size="small" style="margin-right: 5px">
             {{ user }}
           </el-tag>
@@ -92,26 +92,26 @@
       <!-- 工具材料 -->
       <el-descriptions :column="1" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">工具材料</span>
+          <span class="descriptions-title">{{ $t('business.maintenance.field.tools') }}</span>
         </template>
-        <el-descriptions-item label="工具仪表">
-          <div class="description-content">{{ form.tools || '无' }}</div>
+        <el-descriptions-item :label="$t('business.maintenance.field.tools')">
+          <div class="description-content">{{ form.tools || $t('business.maintenance.message.noData') }}</div>
         </el-descriptions-item>
-        <el-descriptions-item label="材料">
-          <div class="description-content">{{ form.materials || '无' }}</div>
+        <el-descriptions-item :label="$t('business.maintenance.field.materials')">
+          <div class="description-content">{{ form.materials || $t('business.maintenance.message.noData') }}</div>
         </el-descriptions-item>
-        <el-descriptions-item label="安全(PPE)">
-          <div class="description-content">{{ form.safety || '无' }}</div>
+        <el-descriptions-item :label="$t('business.maintenance.field.safety')">
+          <div class="description-content">{{ form.safety || $t('business.maintenance.message.noData') }}</div>
         </el-descriptions-item>
-        <el-descriptions-item label="特殊工具">
-          <div class="description-content">{{ form.specialTools || '无' }}</div>
+        <el-descriptions-item :label="$t('business.maintenance.field.specialTools')">
+          <div class="description-content">{{ form.specialTools || $t('business.maintenance.message.noData') }}</div>
         </el-descriptions-item>
       </el-descriptions>
 
       <!-- 执行步骤 -->
       <el-descriptions :column="1" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">执行步骤</span>
+          <span class="descriptions-title">{{ $t('business.maintenance.field.steps') }}</span>
         </template>
         <el-descriptions-item>
           <div class="steps-content" v-html="formatSteps(form.steps)"></div>
@@ -121,17 +121,17 @@
       <!-- 审核信息 -->
       <el-descriptions :column="2" border class="margin-bottom" v-if="form.approvalStatus !== 'draft'">
         <template #title>
-          <span class="descriptions-title">审核信息</span>
+          <span class="descriptions-title">{{ $t('business.maintenance.message.approvalHistory') }}</span>
         </template>
-        <el-descriptions-item label="审核时间">
+        <el-descriptions-item :label="$t('business.maintenance.field.submitTime')">
           {{ parseTime(form.approvalTime) || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="审核状态">
+        <el-descriptions-item :label="$t('business.maintenance.field.approvalStatus')">
           <el-tag :type="getApprovalType(form.approvalStatus)">
             {{ getApprovalLabel(form.approvalStatus) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="审核意见" :span="2">
+        <el-descriptions-item :label="$t('business.maintenance.field.comment')" :span="2">
           <div class="description-content">{{ form.approvalComment || '-' }}</div>
         </el-descriptions-item>
       </el-descriptions>
@@ -139,28 +139,28 @@
       <!-- 执行记录 -->
       <el-descriptions :column="1" border class="margin-bottom" v-if="executionList.length > 0">
         <template #title>
-          <span class="descriptions-title">执行记录</span>
+          <span class="descriptions-title">{{ $t('business.maintenance.message.executionRecord') }}</span>
         </template>
         <el-descriptions-item>
           <el-table :data="executionList" border>
-            <el-table-column prop="executionNo" label="执行编号" width="150" />
-            <el-table-column prop="executorName" label="执行人" width="100" />
-            <el-table-column prop="actualExecutionTime" label="执行时间" width="180">
+            <el-table-column prop="executionNo" :label="$t('business.maintenance.field.planNo')" width="150" />
+            <el-table-column prop="executorName" :label="$t('business.maintenance.field.executorId')" width="100" />
+            <el-table-column prop="actualExecutionTime" :label="$t('business.maintenance.field.planTime')" width="180">
               <template #default="scope">
                 {{ parseTime(scope.row.actualExecutionTime) }}
               </template>
             </el-table-column>
-            <el-table-column prop="executionResult" label="执行结果" width="100">
+            <el-table-column prop="executionResult" :label="$t('business.maintenance.field.executionResult')" width="100">
               <template #default="scope">
                 <el-tag :type="scope.row.executionResult === 'normal' ? 'success' : 'danger'">
-                  {{ scope.row.executionResult === 'normal' ? '正常' : '异常' }}
+                  {{ scope.row.executionResult === 'normal' ? $t('business.maintenance.priority.normal') : $t('business.maintenance.priority.urgent') }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="executionRecord" label="执行记录" min-width="200" />
-            <el-table-column label="操作" width="100" fixed="right">
+            <el-table-column prop="executionRecord" :label="$t('business.maintenance.message.executionRecord')" min-width="200" />
+            <el-table-column :label="$t('business.maintenance.message.operation')" width="100" fixed="right">
               <template #default="scope">
-                <el-button link type="primary" @click="viewExecution(scope.row)">查看</el-button>
+                <el-button link type="primary" @click="viewExecution(scope.row)">{{ $t('business.maintenance.action.view') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -170,48 +170,48 @@
       <!-- 操作按钮 -->
       <div class="action-buttons">
         <el-button type="primary" icon="Edit" @click="handleEdit" v-hasPermi="['business:maintenance:edit']"
-          v-if="form.approvalStatus === 'draft'">编辑</el-button>
+          v-if="form.approvalStatus === 'draft'">{{ $t('business.maintenance.action.edit') }}</el-button>
 
         <el-button type="success" icon="Select" @click="handleSubmitApproval" v-hasPermi="['business:maintenance:edit']"
-          v-if="form.approvalStatus === 'draft'">提交审核</el-button>
+          v-if="form.approvalStatus === 'draft'">{{ $t('business.maintenance.action.submitApproval') }}</el-button>
 
         <el-button type="success" icon="CircleCheck" @click="handleApprove"
           v-hasPermi="['business:maintenance:approve']"
-          v-if="form.approvalStatus === 'pending' && canApprove">审核通过</el-button>
+          v-if="form.approvalStatus === 'pending' && canApprove">{{ $t('business.maintenance.action.pass') }}</el-button>
 
         <el-button type="danger" icon="CircleClose" @click="handleReject" v-hasPermi="['business:maintenance:approve']"
-          v-if="form.approvalStatus === 'pending' && canApprove">审核拒绝</el-button>
+          v-if="form.approvalStatus === 'pending' && canApprove">{{ $t('business.maintenance.action.reject') }}</el-button>
 
         <el-button type="warning" icon="VideoPlay" @click="handleExecute" v-hasPermi="['business:maintenance:execute']"
-          v-if="form.approvalStatus === 'approved' && form.executionStatus === 'pending'">开始执行</el-button>
+          v-if="form.approvalStatus === 'approved' && form.executionStatus === 'pending'">{{ $t('business.maintenance.action.startExecution') }}</el-button>
 
         <el-button type="primary" icon="Ticket" @click="handleGenerateTicket" v-hasPermi="['business:maintenance:edit']"
-          v-if="form.executionStatus === 'executing'">生成工单</el-button>
+          v-if="form.executionStatus === 'executing'">{{ $t('business.maintenance.action.generateTicket') }}</el-button>
 
-        <el-button type="info" icon="CopyDocument" @click="handleCopy">复制计划</el-button>
+        <el-button type="info" icon="CopyDocument" @click="handleCopy">{{ $t('business.maintenance.action.copy') }}</el-button>
 
-        <el-button type="info" icon="Printer" @click="handlePrint">打印</el-button>
+        <el-button type="info" icon="Printer" @click="handlePrint">{{ $t('business.maintenance.action.print') }}</el-button>
 
-        <el-button icon="Back" @click="handleClose">返回</el-button>
+        <el-button icon="Back" @click="handleClose">{{ $t('business.maintenance.action.back') }}</el-button>
       </div>
     </el-card>
 
     <!-- 提交审核对话框 -->
-    <el-dialog title="提交审核" v-model="submitOpen" width="500px" append-to-body>
+    <el-dialog :title="$t('business.maintenance.dialog.submitApprovalTitle')" v-model="submitOpen" width="500px" append-to-body>
       <el-form ref="submitRef" :model="submitForm" :rules="submitRules" label-width="80px">
-        <el-form-item label="审核人" prop="approverId">
-          <el-select v-model="submitForm.approverId" placeholder="请选择审核人">
+        <el-form-item :label="$t('business.maintenance.field.approverId')" prop="approverId">
+          <el-select v-model="submitForm.approverId" :placeholder="$t('business.maintenance.placeholder.selectApprover')">
             <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
-        <el-form-item label="说明" prop="remark">
-          <el-input v-model="submitForm.remark" type="textarea" :rows="3" placeholder="请输入说明" />
+        <el-form-item :label="$t('business.maintenance.field.remark')" prop="remark">
+          <el-input v-model="submitForm.remark" type="textarea" :rows="3" :placeholder="$t('business.maintenance.placeholder.inputRemark')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitApproval">确 定</el-button>
-          <el-button @click="submitOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitApproval">{{ $t('business.maintenance.message.confirm') }}</el-button>
+          <el-button @click="submitOpen = false">{{ $t('business.maintenance.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -219,14 +219,14 @@
     <!-- 审核对话框 -->
     <el-dialog :title="approvalTitle" v-model="approvalOpen" width="500px" append-to-body>
       <el-form ref="approvalRef" :model="approvalForm" :rules="approvalRules" label-width="80px">
-        <el-form-item label="审核意见" prop="comment">
-          <el-input v-model="approvalForm.comment" type="textarea" :rows="4" placeholder="请输入审核意见" />
+        <el-form-item :label="$t('business.maintenance.field.comment')" prop="comment">
+          <el-input v-model="approvalForm.comment" type="textarea" :rows="4" :placeholder="$t('business.maintenance.placeholder.inputComment')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitApprovalAction">确 定</el-button>
-          <el-button @click="approvalOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitApprovalAction">{{ $t('business.maintenance.message.confirm') }}</el-button>
+          <el-button @click="approvalOpen = false">{{ $t('business.maintenance.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -236,10 +236,12 @@
 <script setup name="MaintenanceDetail">
 import { getCurrentInstance, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 
 const planId = route.params && route.params.id
 const loading = ref(false)
@@ -265,10 +267,10 @@ const approvalForm = ref({
 
 // 验证规则
 const submitRules = {
-  approverId: [{ required: true, message: "请选择审核人", trigger: "change" }]
+  approverId: [{ required: true, message: t('business.maintenance.validation.approverRequired'), trigger: "change" }]
 }
 const approvalRules = {
-  comment: [{ required: true, message: "请输入审核意见", trigger: "blur" }]
+  comment: [{ required: true, message: t('business.maintenance.validation.commentRequired'), trigger: "blur" }]
 }
 
 // 计算属性
@@ -278,7 +280,7 @@ const canApprove = computed(() => {
 })
 
 const approvalTitle = computed(() => {
-  return approvalType.value === 'approve' ? '审核通过' : '审核拒绝'
+  return approvalType.value === 'approve' ? t('business.maintenance.message.passed') : t('business.maintenance.message.refused')
 })
 
 /** 获取详情 */
@@ -320,11 +322,11 @@ function getDetail() {
 /** 获取楼层标签 */
 function getFloorLabel(floor) {
   const floorMap = {
-    '1': '1楼',
-    '2': '2楼',
-    '3': '3楼',
-    '4': '4楼',
-    'all': '全部楼层'
+    '1': t('business.maintenance.floor.floor1'),
+    '2': t('business.maintenance.floor.floor2'),
+    '3': t('business.maintenance.floor.floor3'),
+    '4': t('business.maintenance.floor.floor4'),
+    'all': t('business.maintenance.floor.allFloors')
   }
   return floorMap[floor] || floor
 }
@@ -332,9 +334,9 @@ function getFloorLabel(floor) {
 /** 获取单位标签 */
 function getUnitLabel(unit) {
   const unitMap = {
-    'month': '次/月',
-    'quarter': '次/季',
-    'year': '次/年'
+    'month': t('business.maintenance.unit.monthly'),
+    'quarter': t('business.maintenance.unit.quarterly'),
+    'year': t('business.maintenance.unit.yearly')
   }
   return unitMap[unit] || unit
 }
@@ -353,10 +355,10 @@ function getApprovalType(status) {
 /** 获取审核状态标签 */
 function getApprovalLabel(status) {
   const labelMap = {
-    'draft': '草稿',
-    'pending': '待审核',
-    'approved': '已批准',
-    'rejected': '已拒绝'
+    'draft': t('business.maintenance.status.draft'),
+    'pending': t('business.maintenance.status.pending'),
+    'approved': t('business.maintenance.status.approved'),
+    'rejected': t('business.maintenance.status.rejected')
   }
   return labelMap[status] || status
 }
@@ -375,10 +377,10 @@ function getExecutionType(status) {
 /** 获取执行状态标签 */
 function getExecutionLabel(status) {
   const labelMap = {
-    'pending': '待执行',
-    'executing': '执行中',
-    'completed': '已完成',
-    'cancelled': '已取消'
+    'pending': t('business.maintenance.status.pending'),
+    'executing': t('business.maintenance.status.executing'),
+    'completed': t('business.maintenance.status.completed'),
+    'cancelled': t('business.maintenance.message.noData')
   }
   return labelMap[status] || status
 }
@@ -408,7 +410,7 @@ function handleSubmitApproval() {
 function submitApproval() {
   proxy.$refs["submitRef"].validate(valid => {
     if (valid) {
-      proxy.$modal.msgSuccess("提交成功")
+      proxy.$modal.msgSuccess(t('business.maintenance.message.submitSuccess'))
       submitOpen.value = false
       form.value.approvalStatus = 'pending'
       getDetail()
@@ -434,7 +436,7 @@ function handleReject() {
 function submitApprovalAction() {
   proxy.$refs["approvalRef"].validate(valid => {
     if (valid) {
-      const msg = approvalType.value === 'approve' ? '审核通过' : '审核拒绝'
+      const msg = approvalType.value === 'approve' ? t('business.maintenance.message.passed') : t('business.maintenance.message.refused')
       proxy.$modal.msgSuccess(msg)
       approvalOpen.value = false
       form.value.approvalStatus = approvalType.value === 'approve' ? 'approved' : 'rejected'
@@ -445,8 +447,8 @@ function submitApprovalAction() {
 
 /** 开始执行 */
 function handleExecute() {
-  proxy.$modal.confirm('确认开始执行该维保计划？').then(() => {
-    proxy.$modal.msgSuccess("已开始执行")
+  proxy.$modal.confirm(t('business.maintenance.message.confirmExecute')).then(() => {
+    proxy.$modal.msgSuccess(t('business.maintenance.message.executeSuccess'))
     form.value.executionStatus = 'executing'
     getDetail()
   })
@@ -454,22 +456,22 @@ function handleExecute() {
 
 /** 生成工单 */
 function handleGenerateTicket() {
-  proxy.$modal.confirm('确认生成维保工单？').then(() => {
-    proxy.$modal.msgSuccess("工单生成成功")
+  proxy.$modal.confirm(t('business.maintenance.message.confirmGenerateTicket')).then(() => {
+    proxy.$modal.msgSuccess(t('business.maintenance.message.generateTicketSuccess'))
   })
 }
 
 /** 复制计划 */
 function handleCopy() {
-  proxy.$modal.confirm('确认复制该维保计划？').then(() => {
-    proxy.$modal.msgSuccess("复制成功")
+  proxy.$modal.confirm(t('business.maintenance.message.confirmCopyPlan')).then(() => {
+    proxy.$modal.msgSuccess(t('business.maintenance.message.copySuccess'))
     router.push('/business/maintenance/create')
   })
 }
 
 /** 查看执行记录 */
 function viewExecution(row) {
-  proxy.$modal.msgInfo("查看执行记录：" + row.executionNo)
+  proxy.$modal.msgInfo(t('business.maintenance.action.view') + "：" + row.executionNo)
 }
 
 /** 打印 */

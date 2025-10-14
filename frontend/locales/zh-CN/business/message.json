@@ -1,0 +1,36 @@
+{
+  "field": {
+    "type": "类型",
+    "title": "标题",
+    "content": "内容",
+    "createTime": "时间"
+  },
+  "readStatus": {
+    "unread": "未读",
+    "all": "全部",
+    "read": "已读"
+  },
+  "type": {
+    "slaWarn": "SLA预警",
+    "slaOverdue": "已超时",
+    "assign": "指派",
+    "start": "开始处理",
+    "complete": "完成",
+    "close": "关闭",
+    "reopen": "重新打开"
+  },
+  "action": {
+    "refresh": "刷新",
+    "markAllRead": "全部标记已读",
+    "markRead": "标记已读",
+    "view": "查看"
+  },
+  "placeholder": {
+    "type": "类型"
+  },
+  "message": {
+    "markedRead": "已标记已读",
+    "allMarkedRead": "全部已读"
+  },
+  "title": "消息中心"
+}

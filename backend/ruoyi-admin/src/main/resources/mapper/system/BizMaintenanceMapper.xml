@@ -32,6 +32,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="specialTools"    column="special_tools"    />
         <result property="steps"    column="steps"    />
         <result property="inspectionResult"    column="inspection_result"    />
+        <result property="plannedStartDate"    column="planned_start_date"    />
+        <result property="plannedEndDate"    column="planned_end_date"    />
+        <result property="itemCount"    column="item_count"    />
         <result property="submitTime"    column="submit_time"    />
         <result property="applicantId"    column="applicant_id"    />
         <result property="applicantName"    column="applicant_name"    />
@@ -44,14 +47,53 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectBizMaintenanceVo">
-        select plan_id, plan_no, title, floor, version, mop_category, mop_name, mop_purpose, execution_cycle, execution_frequency, execution_unit, approver_id, approver_name, approval_status, approval_time, approval_comment, execution_status, next_execution_time, last_execution_time, notify_users, executor_id, tools, materials, safety, special_tools, steps, inspection_result, submit_time, applicant_id, applicant_name, del_flag, create_by, create_time, update_by, update_time, remark from biz_maintenance
+        select plan_id,
+               plan_no,
+               title,
+               floor,
+               version,
+               mop_category,
+               mop_name,
+               mop_purpose,
+               execution_cycle,
+               execution_frequency,
+               execution_unit,
+               approver_id,
+               approver_name,
+               approval_status,
+               approval_time,
+               approval_comment,
+               execution_status,
+               next_execution_time,
+               last_execution_time,
+               notify_users,
+               executor_id,
+               tools,
+               materials,
+               safety,
+               special_tools,
+               steps,
+               inspection_result,
+               planned_start_date,
+               planned_end_date,
+               item_count,
+               submit_time,
+               applicant_id,
+               applicant_name,
+               del_flag,
+               create_by,
+               create_time,
+               update_by,
+               update_time,
+               remark
+        from biz_maintenance
     </sql>
 
     <select id="selectBizMaintenanceList" parameterType="BizMaintenance" resultMap="BizMaintenanceResult">
         <include refid="selectBizMaintenanceVo"/>
         <where>  
-            <if test="planNo != null  and planNo != ''"> and plan_no = #{planNo}</if>
-            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="planNo != null  and planNo != ''"> and plan_no like concat('%', #{planNo}, '%')</if>
+            <if test="title != null  and title != ''"> and title like concat('%', #{title}, '%')</if>
             <if test="floor != null  and floor != ''"> and floor = #{floor}</if>
             <if test="version != null  and version != ''"> and version = #{version}</if>
             <if test="mopCategory != null  and mopCategory != ''"> and mop_category = #{mopCategory}</if>
@@ -79,6 +121,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="submitTime != null "> and submit_time = #{submitTime}</if>
             <if test="applicantId != null "> and applicant_id = #{applicantId}</if>
             <if test="applicantName != null  and applicantName != ''"> and applicant_name like concat('%', #{applicantName}, '%')</if>
+            <!-- Unified time filter by create_time using params.beginTime/endTime -->
+            <if test="params != null and params.beginTime != null and params.beginTime != ''"> and create_time &gt;= #{params.beginTime}</if>
+            <if test="params != null and params.endTime != null and params.endTime != ''"> and create_time &lt;= #{params.endTime}</if>
+            <if test="params != null and params.beginPlanTime != null and params.beginPlanTime != ''"> and next_execution_time &gt;= #{params.beginPlanTime}</if>
+            <if test="params != null and params.endPlanTime != null and params.endPlanTime != ''"> and next_execution_time &lt;= #{params.endPlanTime}</if>
+            <if test="params != null and params.beginSubmitTime != null and params.beginSubmitTime != ''"> and submit_time &gt;= #{params.beginSubmitTime}</if>
+            <if test="params != null and params.endSubmitTime != null and params.endSubmitTime != ''"> and submit_time &lt;= #{params.endSubmitTime}</if>
         </where>
     </select>
     
@@ -116,6 +165,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="specialTools != null">special_tools,</if>
             <if test="steps != null">steps,</if>
             <if test="inspectionResult != null">inspection_result,</if>
+            <if test="plannedStartDate != null">planned_start_date,</if>
+            <if test="plannedEndDate != null">planned_end_date,</if>
+            <if test="itemCount != null">item_count,</if>
             <if test="submitTime != null">submit_time,</if>
             <if test="applicantId != null">applicant_id,</if>
             <if test="applicantName != null">applicant_name,</if>
@@ -153,6 +205,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="specialTools != null">#{specialTools},</if>
             <if test="steps != null">#{steps},</if>
             <if test="inspectionResult != null">#{inspectionResult},</if>
+            <if test="plannedStartDate != null">#{plannedStartDate},</if>
+            <if test="plannedEndDate != null">#{plannedEndDate},</if>
+            <if test="itemCount != null">#{itemCount},</if>
             <if test="submitTime != null">#{submitTime},</if>
             <if test="applicantId != null">#{applicantId},</if>
             <if test="applicantName != null">#{applicantName},</if>
@@ -194,6 +249,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="specialTools != null">special_tools = #{specialTools},</if>
             <if test="steps != null">steps = #{steps},</if>
             <if test="inspectionResult != null">inspection_result = #{inspectionResult},</if>
+            <if test="plannedStartDate != null">planned_start_date = #{plannedStartDate},</if>
+            <if test="plannedEndDate != null">planned_end_date = #{plannedEndDate},</if>
+            <if test="itemCount != null">item_count = #{itemCount},</if>
             <if test="submitTime != null">submit_time = #{submitTime},</if>
             <if test="applicantId != null">applicant_id = #{applicantId},</if>
             <if test="applicantName != null">applicant_name = #{applicantName},</if>
@@ -223,5 +281,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select plan_no from biz_maintenance 
         where plan_no like concat(#{prefix}, '%') 
         order by plan_no desc limit 1
+    </select>
+
+    <select id="selectLatestPlan" resultMap="BizMaintenanceResult">
+        <include refid="selectBizMaintenanceVo"/>
+        where del_flag = '0'
+        order by coalesce(update_time, create_time) desc
+        limit 1
+    </select>
+
+    <select id="selectUpcomingPlans" resultMap="BizMaintenanceResult">
+        <include refid="selectBizMaintenanceVo"/>
+        <where>
+            and del_flag = '0'
+            <if test="beginTime != null"> and next_execution_time &gt;= #{beginTime}</if>
+            <if test="endTime != null"> and next_execution_time &lt;= #{endTime}</if>
+        </where>
+        order by next_execution_time asc
     </select>
 </mapper>

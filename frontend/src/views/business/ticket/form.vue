@@ -4,13 +4,13 @@
       <!-- 基础信息 -->
       <el-row>
         <el-col :span="12">
-          <el-form-item label="工单标题" prop="title">
-            <el-input v-model="form.title" placeholder="请输入工单标题" maxlength="100" show-word-limit />
+          <el-form-item :label="$t('business.ticket.field.title')" prop="title">
+            <el-input v-model="form.title" :placeholder="$t('business.ticket.placeholder.inputTitle')" maxlength="100" show-word-limit />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="优先级" prop="priority">
-            <el-select v-model="form.priority" placeholder="请选择优先级" @change="handlePriorityChange">
+          <el-form-item :label="$t('business.ticket.field.priority')" prop="priority">
+            <el-select v-model="form.priority" :placeholder="$t('business.ticket.placeholder.selectPriority')" @change="handlePriorityChange">
               <el-option v-for="dict in ticket_priority" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
@@ -19,12 +19,12 @@
 
       <el-row>
         <el-col :span="12">
-          <el-form-item label="报修人" prop="reporter">
-            <el-input v-model="form.reporter" placeholder="请输入报修人姓名" />
+          <el-form-item :label="$t('business.ticket.field.reporter')" prop="reporter">
+            <el-input v-model="form.reporter" :placeholder="$t('business.ticket.placeholder.inputReporterName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="处理时限">
+          <el-form-item :label="$t('business.ticket.field.timeLimit')">
             <el-input v-model="timeLimit" disabled>
               <template #append>
                 <el-tag :type="getPriorityType(form.priority)">{{ getDeadline() }}</el-tag>
@@ -37,13 +37,13 @@
       <!-- 故障信息 -->
       <el-row>
         <el-col :span="12">
-          <el-form-item label="故障设备" prop="equipment">
-            <el-input v-model="form.equipment" placeholder="请输入故障设备名称" />
+          <el-form-item :label="$t('business.ticket.field.equipment')" prop="equipment">
+            <el-input v-model="form.equipment" :placeholder="$t('business.ticket.placeholder.inputEquipmentName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="设备专业" prop="specialty">
-            <el-select v-model="form.specialty" placeholder="请选择设备专业">
+          <el-form-item :label="$t('business.ticket.field.specialty')" prop="specialty">
+            <el-select v-model="form.specialty" :placeholder="$t('business.ticket.placeholder.selectSpecialty')">
               <el-option v-for="dict in equipment_specialty" :key="dict.value" :label="dict.label"
                 :value="dict.value" />
             </el-select>
@@ -53,8 +53,8 @@
 
       <el-row>
         <el-col :span="24">
-          <el-form-item label="故障描述" prop="description">
-            <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请详细描述设备故障状况及位置" maxlength="500"
+          <el-form-item :label="$t('business.ticket.field.description')" prop="description">
+            <el-input v-model="form.description" type="textarea" :rows="4" :placeholder="$t('business.ticket.placeholder.inputDescriptionDetailedLocation')" maxlength="500"
               show-word-limit />
           </el-form-item>
         </el-col>
@@ -62,14 +62,14 @@
 
       <el-row>
         <el-col :span="12">
-          <el-form-item label="发现时间" prop="discoveryTime">
-            <el-date-picker v-model="form.discoveryTime" type="datetime" placeholder="选择故障发现时间"
+          <el-form-item :label="$t('business.ticket.field.discoveryTime')" prop="discoveryTime">
+            <el-date-picker v-model="form.discoveryTime" type="datetime" :placeholder="$t('business.ticket.placeholder.selectDiscoveryTimeShort')"
               format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" :default-time="defaultTime" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="指派给" prop="assigneeId">
-            <el-select v-model="form.assigneeId" placeholder="请选择处理人员" clearable>
+          <el-form-item :label="$t('business.ticket.field.assignee')" prop="assigneeId">
+            <el-select v-model="form.assigneeId" :placeholder="$t('business.ticket.placeholder.selectAssignee')" clearable>
               <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
             </el-select>
           </el-form-item>
@@ -78,8 +78,8 @@
 
       <el-row>
         <el-col :span="24">
-          <el-form-item label="应急处置" prop="emergencyAction">
-            <el-input v-model="form.emergencyAction" type="textarea" :rows="3" placeholder="请输入应急处置方法" maxlength="300"
+          <el-form-item :label="$t('business.ticket.field.emergencyAction')" prop="emergencyAction">
+            <el-input v-model="form.emergencyAction" type="textarea" :rows="3" :placeholder="$t('business.ticket.placeholder.inputEmergencyActionMethod')" maxlength="300"
               show-word-limit />
           </el-form-item>
         </el-col>
@@ -88,8 +88,8 @@
       <!-- 使用工单模板 -->
       <el-row v-if="!ticketId">
         <el-col :span="24">
-          <el-form-item label="选择模板">
-            <el-select v-model="templateId" placeholder="可选择工单模板快速填充" clearable @change="handleTemplateChange">
+          <el-form-item :label="$t('business.ticket.field.templateSelect')">
+            <el-select v-model="templateId" :placeholder="$t('business.ticket.placeholder.selectTemplateQuick')" clearable @change="handleTemplateChange">
               <el-option v-for="template in templateList" :key="template.templateId" :label="template.templateName"
                 :value="template.templateId" />
             </el-select>
@@ -100,7 +100,7 @@
       <!-- 附件上传 -->
       <el-row>
         <el-col :span="24">
-          <el-form-item label="附件上传">
+          <el-form-item :label="$t('business.ticket.field.attachmentUpload')">
             <file-upload v-model="form.attachments" :limit="5" :fileSize="10"
               :fileType='["jpg", "jpeg", "png", "gif", "mp4", "avi"]' :isShowTip="true" />
           </el-form-item>
@@ -110,10 +110,10 @@
       <!-- 通知设置 -->
       <el-row>
         <el-col :span="24">
-          <el-form-item label="通知设置">
-            <el-checkbox v-model="form.notifyEngineer">通知专业工程师</el-checkbox>
-            <el-checkbox v-model="form.notifySms">短信通知</el-checkbox>
-            <el-checkbox v-model="form.notifyEmail">邮件通知</el-checkbox>
+          <el-form-item :label="$t('business.ticket.field.notifySettings')">
+            <el-checkbox v-model="form.notifyEngineer">{{ $t('business.ticket.message.notifyEngineer') }}</el-checkbox>
+            <el-checkbox v-model="form.notifySms">{{ $t('business.ticket.message.smsNotify') }}</el-checkbox>
+            <el-checkbox v-model="form.notifyEmail">{{ $t('business.ticket.message.emailNotify') }}</el-checkbox>
           </el-form-item>
         </el-col>
       </el-row>
@@ -121,10 +121,9 @@
 
     <!-- 按钮组 -->
     <div class="form-footer">
-      <el-button @click="handleCancel">取 消</el-button>
-      <el-button type="primary" @click="submitForm" v-hasPermi="['business:ticket:add']" v-if="!ticketId">确
-        定</el-button>
-      <el-button type="primary" @click="submitForm" v-hasPermi="['business:ticket:edit']" v-else>确 定</el-button>
+      <el-button @click="handleCancel">{{ $t('business.ticket.message.cancel') }}</el-button>
+      <el-button type="primary" @click="submitForm" v-hasPermi="['business:ticket:add']" v-if="!ticketId">{{ $t('business.ticket.message.confirm') }}</el-button>
+      <el-button type="primary" @click="submitForm" v-hasPermi="['business:ticket:edit']" v-else>{{ $t('business.ticket.message.confirm') }}</el-button>
     </div>
   </div>
 </template>
@@ -132,8 +131,11 @@
 <script setup name="TicketForm">
 import { getCurrentInstance, ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 // import { getTicket, addTicket, updateTicket } from "@/api/business/ticket" // 真实接口接入时启用
 // import { listUser } from "@/api/system/user" // 当前使用本地 mock
+
+const { t } = useI18n()
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -169,27 +171,27 @@ const form = ref({
 // 验证规则
 const rules = {
   title: [
-    { required: true, message: '工单标题不能为空', trigger: 'blur' },
-    { min: 5, max: 100, message: '标题长度在 5 到 100 个字符', trigger: 'blur' }
+    { required: true, message: t('business.ticket.validation.titleRequired'), trigger: 'blur' },
+    { min: 5, max: 100, message: t('business.ticket.validation.titleLength'), trigger: 'blur' }
   ],
   priority: [
-    { required: true, message: '请选择优先级', trigger: 'change' }
+    { required: true, message: t('business.ticket.validation.priorityRequired'), trigger: 'change' }
   ],
   reporter: [
-    { required: true, message: '报修人不能为空', trigger: 'blur' }
+    { required: true, message: t('business.ticket.validation.reporterRequired'), trigger: 'blur' }
   ],
   equipment: [
-    { required: true, message: '故障设备不能为空', trigger: 'blur' }
+    { required: true, message: t('business.ticket.validation.equipmentNotEmpty'), trigger: 'blur' }
   ],
   specialty: [
-    { required: true, message: '请选择设备专业', trigger: 'change' }
+    { required: true, message: t('business.ticket.validation.specialtyRequired'), trigger: 'change' }
   ],
   description: [
-    { required: true, message: '故障描述不能为空', trigger: 'blur' },
-    { min: 10, max: 500, message: '描述长度在 10 到 500 个字符', trigger: 'blur' }
+    { required: true, message: t('business.ticket.validation.descriptionRequired'), trigger: 'blur' },
+    { min: 10, max: 500, message: t('business.ticket.validation.descriptionLength'), trigger: 'blur' }
   ],
   discoveryTime: [
-    { required: true, message: '请选择发现时间', trigger: 'change' }
+    { required: true, message: t('business.ticket.validation.discoveryTimeRequired'), trigger: 'change' }
   ]
 }
 
@@ -206,9 +208,9 @@ const defaultTime = ref([new Date(2000, 0, 1, 0, 0, 0), new Date(2000, 0, 1, 23,
 // 计算处理时限
 const timeLimit = computed(() => {
   const limits = {
-    high: '4小时',
-    medium: '8小时',
-    low: '24小时'
+    high: t('business.ticket.message.timeLimit4h'),
+    medium: t('business.ticket.message.timeLimit8h'),
+    low: t('business.ticket.message.timeLimit24h')
   }
   return limits[form.value.priority] || ''
 })
@@ -253,7 +255,7 @@ function handleTemplateChange(templateId) {
     return
   }
 
-  proxy.$modal.confirm('是否使用该模板填充表单？').then(() => {
+  proxy.$modal.confirm(t('business.ticket.message.confirmUseTemplate')).then(() => {
     // 获取模板数据并填充
     const template = templateList.value.find(t => t.templateId === templateId)
     if (template) {
@@ -263,7 +265,7 @@ function handleTemplateChange(templateId) {
       form.value.description = template.description
       form.value.emergencyAction = template.emergencyAction
 
-      proxy.$modal.msgSuccess("已应用模板")
+      proxy.$modal.msgSuccess(t('business.ticket.message.templateApplied'))
     }
   }).catch(() => {
     templateId.value = undefined
@@ -276,14 +278,14 @@ function submitForm() {
     if (!valid) return
     form.value.deadline = getDeadline()
     // Mock 分支：真实环境接入后调用接口
-    proxy.$modal.msgSuccess(form.value.ticketId ? "修改成功" : "新增成功")
+    proxy.$modal.msgSuccess(form.value.ticketId ? t('business.ticket.message.updateSuccess') : t('business.ticket.message.addSuccess'))
     router.push('/business/ticket')
   })
 }
 
 /** 取消 */
 function handleCancel() {
-  proxy.$modal.confirm('确定要取消吗？未保存的数据将丢失').then(() => {
+  proxy.$modal.confirm(t('business.ticket.message.confirmCancel')).then(() => {
     router.push('/business/ticket')
   }).catch(() => { })
 }

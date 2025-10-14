@@ -4,13 +4,13 @@
     <el-card class="header-card">
       <div class="header-actions">
         <div class="left">
-          <el-button type="primary" icon="Plus" @click="handleAdd">新增检查项</el-button>
-          <el-button icon="Download" @click="handleExport">导出配置</el-button>
-          <el-button icon="CopyDocument" @click="handleCopyFloor">复制楼层配置</el-button>
-          <el-button type="warning" icon="RefreshRight" @click="handleRestoreDefault">恢复默认</el-button>
+          <el-button type="primary" icon="Plus" @click="handleAdd">{{ $t('business.inspection.config.addItem') }}</el-button>
+          <el-button icon="Download" @click="handleExport">{{ $t('business.inspection.config.exportConfig') }}</el-button>
+          <el-button icon="CopyDocument" @click="handleCopyFloor">{{ $t('business.inspection.config.copyFloor') }}</el-button>
+          <el-button type="warning" icon="RefreshRight" @click="handleRestoreDefault">{{ $t('business.inspection.config.restoreDefault') }}</el-button>
         </div>
         <div class="right">
-          <el-button type="info" icon="QuestionFilled" @click="showHelp">配置说明</el-button>
+          <el-button type="info" icon="QuestionFilled" @click="showHelp">{{ $t('business.inspection.config.configHelp') }}</el-button>
         </div>
       </div>
     </el-card>
@@ -34,30 +34,30 @@
           <div class="statistics-bar">
             <el-row :gutter="20">
               <el-col :span="6">
-                <el-statistic title="检查项总数" :value="statistics.total" />
+                <el-statistic :title="$t('business.inspection.config.totalItems')" :value="statistics.total" />
               </el-col>
               <el-col :span="6">
-                <el-statistic title="必检项" :value="statistics.required" value-style="color: #f56c6c" />
+                <el-statistic :title="$t('business.inspection.config.requiredItems')" :value="statistics.required" value-style="color: #f56c6c" />
               </el-col>
               <el-col :span="6">
-                <el-statistic title="数值型" :value="statistics.number" />
+                <el-statistic :title="$t('business.inspection.config.numberType')" :value="statistics.number" />
               </el-col>
               <el-col :span="6">
-                <el-statistic title="布尔型" :value="statistics.boolean" />
+                <el-statistic :title="$t('business.inspection.config.booleanType')" :value="statistics.boolean" />
               </el-col>
             </el-row>
           </div>
 
           <!-- 检查项表格 -->
-          <el-table 
-            :data="currentItems" 
+          <el-table
+            :data="currentItems"
             v-loading="loading"
             row-key="id"
             stripe
           >
-            <el-table-column type="index" label="序号" width="60" align="center" />
-            
-            <el-table-column label="排序" width="80" align="center">
+            <el-table-column type="index" :label="$t('business.inspection.config.indexColumn')" width="60" align="center" />
+
+            <el-table-column :label="$t('business.inspection.config.sortColumn')" width="80" align="center">
               <template #default="scope">
                 <div class="sort-buttons">
                   <el-button 
@@ -80,26 +80,26 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="id" label="项目ID" width="150">
+            <el-table-column prop="id" :label="$t('business.inspection.config.itemId')" width="150">
               <template #default="scope">
                 <el-tag size="small">{{ scope.row.id }}</el-tag>
               </template>
             </el-table-column>
 
-            <el-table-column prop="label" label="检查项目" min-width="300" show-overflow-tooltip />
+            <el-table-column prop="label" :label="$t('business.inspection.config.itemName')" min-width="300" show-overflow-tooltip />
 
-            <el-table-column prop="type" label="数据类型" width="100" align="center">
+            <el-table-column prop="type" :label="$t('business.inspection.config.dataType')" width="100" align="center">
               <template #default="scope">
                 <el-tag :type="scope.row.type === 'boolean' ? 'success' : 'primary'" size="small">
-                  {{ scope.row.type === 'boolean' ? '布尔' : '数值' }}
+                  {{ scope.row.type === 'boolean' ? $t('business.inspection.config.boolean') : $t('business.inspection.config.number') }}
                 </el-tag>
               </template>
             </el-table-column>
 
-            <el-table-column label="正常范围" width="150" align="center">
+            <el-table-column :label="$t('business.inspection.config.normalRange')" width="150" align="center">
               <template #default="scope">
                 <span v-if="scope.row.type === 'boolean'">
-                  正常 = True
+                  {{ $t('business.inspection.config.normalEquals') }}
                 </span>
                 <span v-else>
                   {{ scope.row.min }}-{{ scope.row.max }} {{ scope.row.unit }}
@@ -107,7 +107,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="异常优先级" width="100" align="center">
+            <el-table-column :label="$t('business.inspection.config.anomalyPriority')" width="100" align="center">
               <template #default="scope">
                 <el-tag :type="getPriorityType(scope.row.label)" size="small">
                   {{ getPriorityLabel(scope.row.label) }}
@@ -115,19 +115,19 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="启用状态" width="80" align="center">
+            <el-table-column :label="$t('business.inspection.config.enableStatus')" width="80" align="center">
               <template #default="scope">
-                <el-switch 
-                  v-model="scope.row.enabled" 
+                <el-switch
+                  v-model="scope.row.enabled"
                   @change="updateStatus(scope.row)"
                 />
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" width="120" align="center" fixed="right">
+            <el-table-column :label="$t('business.inspection.config.operation')" width="120" align="center" fixed="right">
               <template #default="scope">
-                <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
+                <el-button link type="primary" size="small" @click="handleEdit(scope.row)">{{ $t('business.inspection.config.edit') }}</el-button>
+                <el-button link type="danger" size="small" @click="handleDelete(scope.row)">{{ $t('business.inspection.config.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -136,23 +136,23 @@
     </el-card>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog 
-      :title="dialogTitle" 
-      v-model="dialogVisible" 
+    <el-dialog
+      :title="dialogTitle"
+      v-model="dialogVisible"
       width="700px"
       :close-on-click-modal="false"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="项目ID" prop="id">
-          <el-input 
-            v-model="form.id" 
-            placeholder="如：oil_tank"
+        <el-form-item :label="$t('business.inspection.config.itemIdLabel')" prop="id">
+          <el-input
+            v-model="form.id"
+            :placeholder="$t('business.inspection.config.itemIdPlaceholder')"
             :disabled="editMode"
           />
         </el-form-item>
 
-        <el-form-item label="所属楼层" prop="floor">
-          <el-select v-model="form.floor" placeholder="请选择楼层" :disabled="editMode">
+        <el-form-item :label="$t('business.inspection.config.belongingFloor')" prop="floor">
+          <el-select v-model="form.floor" :placeholder="$t('business.inspection.config.selectFloor')" :disabled="editMode">
             <el-option
               v-for="floor in FLOORS"
               :key="floor.value"
@@ -162,32 +162,32 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="检查项目" prop="label">
-          <el-input v-model="form.label" placeholder="请输入检查项目名称" />
+        <el-form-item :label="$t('business.inspection.config.itemNameLabel')" prop="label">
+          <el-input v-model="form.label" :placeholder="$t('business.inspection.config.itemNamePlaceholder')" />
         </el-form-item>
 
-        <el-form-item label="数据类型" prop="type">
+        <el-form-item :label="$t('business.inspection.config.dataTypeLabel')" prop="type">
           <el-radio-group v-model="form.type" @change="handleTypeChange">
-            <el-radio label="boolean">布尔型（正常/异常）</el-radio>
-            <el-radio label="number">数值型（需要范围）</el-radio>
+            <el-radio label="boolean">{{ $t('business.inspection.config.booleanTypeLabel') }}</el-radio>
+            <el-radio label="number">{{ $t('business.inspection.config.numberTypeLabel') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <div v-if="form.type === 'number'">
           <el-row :gutter="20">
             <el-col :span="8">
-              <el-form-item label="最小值" prop="min">
+              <el-form-item :label="$t('business.inspection.config.minValue')" prop="min">
                 <el-input-number v-model="form.min" :precision="2" :step="0.1" />
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="最大值" prop="max">
+              <el-form-item :label="$t('business.inspection.config.maxValue')" prop="max">
                 <el-input-number v-model="form.max" :precision="2" :step="0.1" />
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="单位" prop="unit">
-                <el-select v-model="form.unit" placeholder="请选择单位" allow-create filterable>
+              <el-form-item :label="$t('business.inspection.config.unit')" prop="unit">
+                <el-select v-model="form.unit" :placeholder="$t('business.inspection.config.selectUnit')" allow-create filterable>
                   <el-option label="°C" value="°C" />
                   <el-option label="%" value="%" />
                   <el-option label="MPa" value="MPa" />
@@ -201,26 +201,26 @@
           </el-row>
         </div>
 
-        <el-form-item label="排序" prop="seq">
+        <el-form-item :label="$t('business.inspection.config.sequence')" prop="seq">
           <el-input-number v-model="form.seq" :min="1" :max="999" />
         </el-form-item>
 
-        <el-form-item label="启用状态">
+        <el-form-item :label="$t('business.inspection.config.enableStatusLabel')">
           <el-switch v-model="form.enabled" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('business.inspection.config.cancel') }}</el-button>
+        <el-button type="primary" @click="submitForm">{{ $t('business.inspection.config.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 复制楼层配置对话框 -->
-    <el-dialog title="复制楼层配置" v-model="copyDialogVisible" width="500px">
+    <el-dialog :title="$t('business.inspection.config.copyFloorConfig')" v-model="copyDialogVisible" width="500px">
       <el-form :model="copyForm" label-width="100px">
-        <el-form-item label="源楼层">
-          <el-select v-model="copyForm.sourceFloor" placeholder="请选择源楼层">
+        <el-form-item :label="$t('business.inspection.config.sourceFloor')">
+          <el-select v-model="copyForm.sourceFloor" :placeholder="$t('business.inspection.config.selectSourceFloor')">
             <el-option
               v-for="floor in FLOORS"
               :key="floor.value"
@@ -229,8 +229,8 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="目标楼层">
-          <el-select v-model="copyForm.targetFloor" placeholder="请选择目标楼层">
+        <el-form-item :label="$t('business.inspection.config.targetFloor')">
+          <el-select v-model="copyForm.targetFloor" :placeholder="$t('business.inspection.config.selectTargetFloor')">
             <el-option
               v-for="floor in FLOORS"
               :key="floor.value"
@@ -241,15 +241,15 @@
           </el-select>
         </el-form-item>
         <el-alert
-          title="注意：复制操作将覆盖目标楼层的现有配置"
+          :title="$t('business.inspection.config.copyWarning')"
           type="warning"
           :closable="false"
           show-icon
         />
       </el-form>
       <template #footer>
-        <el-button @click="copyDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmCopy">确定复制</el-button>
+        <el-button @click="copyDialogVisible = false">{{ $t('business.inspection.config.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmCopy">{{ $t('business.inspection.config.confirmCopyBtn') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -260,6 +260,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import { FLOORS, INSPECTION_ITEMS, getAnomalyPriority } from './constants'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 状态
 const loading = ref(false)
@@ -295,7 +298,7 @@ const statistics = computed(() => {
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return editMode.value ? '编辑检查项' : '新增检查项'
+  return editMode.value ? t('business.inspection.config.dialogTitleEdit') : t('business.inspection.config.dialogTitleAdd')
 })
 
 // 表单数据
@@ -320,22 +323,22 @@ const copyForm = ref({
 // 验证规则
 const rules = {
   id: [
-    { required: true, message: '请输入项目ID', trigger: 'blur' }
+    { required: true, message: t('business.inspection.config.validationItemIdRequired'), trigger: 'blur' }
   ],
   floor: [
-    { required: true, message: '请选择楼层', trigger: 'change' }
+    { required: true, message: t('business.inspection.config.validationFloorRequired'), trigger: 'change' }
   ],
   label: [
-    { required: true, message: '请输入检查项目名称', trigger: 'blur' }
+    { required: true, message: t('business.inspection.config.validationItemNameRequired'), trigger: 'blur' }
   ],
   type: [
-    { required: true, message: '请选择数据类型', trigger: 'change' }
+    { required: true, message: t('business.inspection.config.validationDataTypeRequired'), trigger: 'change' }
   ],
   min: [
-    { 
+    {
       validator: (rule, value, callback) => {
         if (form.value.type === 'number' && (value === undefined || value === '')) {
-          callback(new Error('请输入最小值'))
+          callback(new Error(t('business.inspection.config.validationMinValueRequired')))
         } else {
           callback()
         }
@@ -344,12 +347,12 @@ const rules = {
     }
   ],
   max: [
-    { 
+    {
       validator: (rule, value, callback) => {
         if (form.value.type === 'number' && (value === undefined || value === '')) {
-          callback(new Error('请输入最大值'))
+          callback(new Error(t('business.inspection.config.validationMaxValueRequired')))
         } else if (form.value.type === 'number' && value <= form.value.min) {
-          callback(new Error('最大值必须大于最小值'))
+          callback(new Error(t('business.inspection.config.validationMaxGreaterThanMin')))
         } else {
           callback()
         }
@@ -406,37 +409,37 @@ const handleEdit = (row) => {
 // 删除
 const handleDelete = async (row) => {
   await ElMessageBox.confirm(
-    `确定删除检查项"${row.label}"吗？`,
-    '系统提示',
+    t('business.inspection.config.deleteConfirm', { label: row.label }),
+    t('business.inspection.config.systemPrompt'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('business.inspection.config.confirmBtn'),
+      cancelButtonText: t('business.inspection.config.cancelBtn'),
       type: 'warning'
     }
   )
-  
+
   const index = currentItems.value.findIndex(item => item.id === row.id)
   if (index > -1) {
     currentItems.value.splice(index, 1)
   }
-  ElMessage.success('删除成功')
+  ElMessage.success(t('business.inspection.config.deleteSuccess'))
 }
 
 // 提交表单
 const submitForm = async () => {
   await formRef.value?.validate()
-  
+
   if (editMode.value) {
     const index = currentItems.value.findIndex(item => item.id === form.value.id)
     if (index > -1) {
       currentItems.value[index] = { ...form.value }
     }
-    ElMessage.success('更新成功')
+    ElMessage.success(t('business.inspection.config.updateSuccess'))
   } else {
     currentItems.value.push({ ...form.value })
-    ElMessage.success('新增成功')
+    ElMessage.success(t('business.inspection.config.addSuccess'))
   }
-  
+
   dialogVisible.value = false
 }
 
@@ -454,7 +457,7 @@ const handleTypeChange = () => {
 
 // 更新启用状态
 const updateStatus = (row) => {
-  ElMessage.success(row.enabled ? '已启用' : '已禁用')
+  ElMessage.success(row.enabled ? t('business.inspection.config.enabled') : t('business.inspection.config.disabled'))
 }
 
 // 上移
@@ -484,7 +487,7 @@ const handleExport = () => {
   link.href = window.URL.createObjectURL(blob)
   link.download = `巡检配置_${FLOORS.find(f => f.value === activeFloor.value)?.label}_${new Date().getTime()}.json`
   link.click()
-  ElMessage.success('导出成功')
+  ElMessage.success(t('business.inspection.config.exportSuccess'))
 }
 
 // 复制楼层配置
@@ -499,22 +502,22 @@ const handleCopyFloor = () => {
 // 确认复制
 const confirmCopy = async () => {
   if (!copyForm.value.targetFloor) {
-    ElMessage.warning('请选择目标楼层')
+    ElMessage.warning(t('business.inspection.config.selectTargetFloorWarning'))
     return
   }
-  
+
   await ElMessageBox.confirm(
-    '复制操作将覆盖目标楼层的现有配置，是否继续？',
-    '系统提示',
+    t('business.inspection.config.copyConfirm'),
+    t('business.inspection.config.systemPrompt'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('business.inspection.config.confirmBtn'),
+      cancelButtonText: t('business.inspection.config.cancelBtn'),
       type: 'warning'
     }
   )
-  
+
   configData[copyForm.value.targetFloor] = JSON.parse(JSON.stringify(configData[copyForm.value.sourceFloor]))
-  ElMessage.success('复制成功')
+  ElMessage.success(t('business.inspection.config.copySuccess'))
   copyDialogVisible.value = false
   activeFloor.value = copyForm.value.targetFloor
 }
@@ -522,17 +525,17 @@ const confirmCopy = async () => {
 // 恢复默认
 const handleRestoreDefault = async () => {
   await ElMessageBox.confirm(
-    '恢复默认配置将覆盖当前楼层的所有自定义配置，是否继续？',
-    '系统提示',
+    t('business.inspection.config.restoreConfirm'),
+    t('business.inspection.config.systemPrompt'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('business.inspection.config.confirmBtn'),
+      cancelButtonText: t('business.inspection.config.cancelBtn'),
       type: 'warning'
     }
   )
-  
+
   loadConfig(activeFloor.value)
-  ElMessage.success('已恢复默认配置')
+  ElMessage.success(t('business.inspection.config.restoreSuccess'))
 }
 
 // 获取优先级类型
@@ -549,12 +552,7 @@ const getPriorityType = (label) => {
 // 获取优先级标签
 const getPriorityLabel = (label) => {
   const priority = getAnomalyPriority(label)
-  const map = {
-    high: '高',
-    medium: '中',
-    low: '低'
-  }
-  return map[priority] || '低'
+  return t(`business.inspection.priority.${priority}`) || t('business.inspection.priority.low')
 }
 
 // 获取项目数量
@@ -565,30 +563,11 @@ const getItemCount = (floor) => {
 // 显示帮助
 const showHelp = () => {
   ElMessageBox.alert(
-    `
-    <h4>巡检配置说明</h4>
-    <ul style="line-height: 1.8">
-      <li><b>检查项目</b>：定义每个楼层需要检查的项目</li>
-      <li><b>数据类型</b>：
-        <ul style="margin-top: 5px">
-          <li>布尔型：只有正常/异常两种状态</li>
-          <li>数值型：需要记录具体数值，并设置正常范围</li>
-        </ul>
-      </li>
-      <li><b>异常优先级</b>：系统根据关键词自动判定优先级
-        <ul style="margin-top: 5px">
-          <li>高优先级：氢气、消防、漏水、漏油、UPS等</li>
-          <li>中优先级：温度、湿度、压力、电气间等</li>
-          <li>低优先级：卫生、照明、噪音等</li>
-        </ul>
-      </li>
-      <li><b>排序</b>：可以调整检查项的显示顺序</li>
-    </ul>
-    `,
-    '配置说明',
+    t('business.inspection.config.helpContent'),
+    t('business.inspection.config.helpTitle'),
     {
       dangerouslyUseHTMLString: true,
-      confirmButtonText: '知道了'
+      confirmButtonText: t('business.inspection.config.helpConfirm')
     }
   )
 }

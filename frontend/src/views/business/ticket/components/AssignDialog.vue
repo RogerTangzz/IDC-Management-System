@@ -3,54 +3,54 @@
      Keep for 1–2 weeks post-GA; remove if no usages emerge.
      See docs/重构文档/dead-code-candidates.md -->
 <template>
-  <el-dialog v-model="dialogVisible" title="工单指派" width="500px" append-to-body>
+  <el-dialog v-model="dialogVisible" :title="$t('business.ticket.dialog.assignTitle')" width="500px" append-to-body>
     <div v-if="ticketIds.length > 0" class="ticket-info">
-      <el-alert :title="`您正在指派 ${ticketIds.length} 个工单`" type="info" :closable="false" />
+      <el-alert :title="$t('business.ticket.message.batchAssigningCount', { count: ticketIds.length })" type="info" :closable="false" />
     </div>
 
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="margin-top: 20px">
-      <el-form-item label="指派给" prop="assigneeId">
-        <el-select v-model="form.assigneeId" placeholder="请选择工程师" filterable>
+      <el-form-item :label="$t('business.ticket.field.assigneeName')" prop="assigneeId">
+        <el-select v-model="form.assigneeId" :placeholder="$t('business.ticket.placeholder.selectAssigneeShort')" filterable>
           <el-option v-for="user in engineerList" :key="user.id" :label="`${user.name} (${user.role})`"
             :value="user.id">
             <span style="float: left">{{ user.name }}</span>
             <span style="float: right; color: #8492a6; font-size: 13px">
-              {{ user.workload || 0 }} 个待处理
+              {{ user.workload || 0 }} {{ $t('business.ticket.message.pendingCount') }}
             </span>
           </el-option>
         </el-select>
       </el-form-item>
 
-      <el-form-item label="优先级" prop="priority">
+      <el-form-item :label="$t('business.ticket.field.priority')" prop="priority">
         <el-radio-group v-model="form.priority">
-          <el-radio label="high">高优先级</el-radio>
-          <el-radio label="medium">中优先级</el-radio>
-          <el-radio label="low">低优先级</el-radio>
-          <el-radio label="keep">保持原优先级</el-radio>
+          <el-radio label="high">{{ $t('business.ticket.message.highPriority') }}</el-radio>
+          <el-radio label="medium">{{ $t('business.ticket.message.mediumPriority') }}</el-radio>
+          <el-radio label="low">{{ $t('business.ticket.message.lowPriority') }}</el-radio>
+          <el-radio label="keep">{{ $t('business.ticket.message.keepOriginalPriority') }}</el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="指派说明" prop="comment">
-        <el-input v-model="form.comment" type="textarea" :rows="3" placeholder="请输入指派说明（可选）" />
+      <el-form-item :label="$t('business.ticket.field.assignComment')" prop="comment">
+        <el-input v-model="form.comment" type="textarea" :rows="3" :placeholder="$t('business.ticket.placeholder.inputAssignComment')" />
       </el-form-item>
 
-      <el-form-item label="通知方式" prop="notifyMethod">
+      <el-form-item :label="$t('business.ticket.field.notifyMethod')" prop="notifyMethod">
         <el-checkbox-group v-model="form.notifyMethod">
-          <el-checkbox label="system">系统通知</el-checkbox>
-          <el-checkbox label="email">邮件通知</el-checkbox>
-          <el-checkbox label="sms">短信通知</el-checkbox>
+          <el-checkbox label="system">{{ $t('business.ticket.message.systemNotify') }}</el-checkbox>
+          <el-checkbox label="email">{{ $t('business.ticket.message.emailNotify') }}</el-checkbox>
+          <el-checkbox label="sms">{{ $t('business.ticket.message.smsNotify') }}</el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="立即通知" prop="notifyNow">
+      <el-form-item :label="$t('business.ticket.field.notifyNow')" prop="notifyNow">
         <el-switch v-model="form.notifyNow" />
       </el-form-item>
     </el-form>
 
     <template #footer>
-      <el-button @click="handleCancel">取消</el-button>
+      <el-button @click="handleCancel">{{ $t('business.ticket.message.cancel') }}</el-button>
       <el-button type="primary" @click="handleConfirm" :loading="loading">
-        确定指派
+        {{ $t('business.ticket.action.confirmAssign') }}
       </el-button>
     </template>
   </el-dialog>
@@ -59,8 +59,11 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { ticketApi } from '@/api/ticket'
 import { userApi } from '@/api/system/user'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['success'])
 
@@ -80,7 +83,7 @@ const form = reactive({
 
 const rules = {
   assigneeId: [
-    { required: true, message: '请选择指派工程师', trigger: 'change' }
+    { required: true, message: () => t('business.ticket.validation.assigneeRequired'), trigger: 'change' }
   ]
 }
 
@@ -137,12 +140,12 @@ const handleConfirm = async () => {
     // 调用批量指派接口
     await ticketApi.batchAssign(assignData)
 
-    ElMessage.success(`成功指派 ${ticketIds.value.length} 个工单`)
+    ElMessage.success(t('business.ticket.message.assignSuccess'))
     dialogVisible.value = false
     emit('success')
   } catch (error) {
     console.error('指派失败:', error)
-    ElMessage.error('指派失败，请重试')
+    ElMessage.error(t('business.ticket.message.assignSuccess'))
   } finally {
     loading.value = false
   }

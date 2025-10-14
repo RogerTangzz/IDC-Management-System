@@ -3,24 +3,24 @@
     <el-row :gutter="20" class="mb8">
       <el-col :span="24" class="mb8">
         <el-form :inline="true">
-          <el-form-item label="时间范围">
-            <el-date-picker v-model="range" type="daterange" value-format="YYYY-MM-DD" start-placeholder="开始日期" end-placeholder="结束日期" />
+          <el-form-item :label="$t('business.ticket.report.timeRange')">
+            <el-date-picker v-model="range" type="daterange" value-format="YYYY-MM-DD" :start-placeholder="$t('business.ticket.report.startDate')" :end-placeholder="$t('business.ticket.report.endDate')" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="reload">查询</el-button>
-            <el-button icon="Download" @click="exportReport">导出</el-button>
+            <el-button type="primary" icon="Search" @click="reload">{{ $t('business.ticket.report.query') }}</el-button>
+            <el-button icon="Download" @click="exportReport">{{ $t('business.ticket.report.export') }}</el-button>
           </el-form-item>
         </el-form>
       </el-col>
       <el-col :span="12">
         <el-card shadow="never">
-          <template #header><span>处理时长分布</span></template>
+          <template #header><span>{{ $t('business.ticket.report.durationDistribution') }}</span></template>
           <div ref="durationRef" style="height:320px"></div>
         </el-card>
       </el-col>
       <el-col :span="12">
         <el-card shadow="never">
-          <template #header><span>SLA 统计</span></template>
+          <template #header><span>{{ $t('business.ticket.report.slaStatistics') }}</span></template>
           <div ref="slaRef" style="height:320px"></div>
         </el-card>
       </el-col>
@@ -28,14 +28,14 @@
     <el-row :gutter="20">
       <el-col :span="24">
         <el-card shadow="never">
-          <template #header><span>近7日趋势</span></template>
+          <template #header><span>{{ $t('business.ticket.report.trend7Days') }}</span></template>
           <div ref="trendRef" style="height:320px"></div>
         </el-card>
       </el-col>
     </el-row>
     <div class="mt20">
-      <el-button type="primary" icon="Refresh" @click="reload">刷新</el-button>
-      <el-button icon="Back" @click="goBack">返回</el-button>
+      <el-button type="primary" icon="Refresh" @click="reload">{{ $t('business.ticket.report.refresh') }}</el-button>
+      <el-button icon="Back" @click="goBack">{{ $t('business.ticket.report.back') }}</el-button>
     </div>
   </div>
  </template>
@@ -43,9 +43,11 @@
 <script setup name="TicketReport">
 import { ref, onMounted, getCurrentInstance, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ticketAnalytics } from '@/api/business/ticket'
 import request from '@/utils/request'
 import * as echarts from 'echarts'
+const { t } = useI18n()
 const analytics = ref({ duration:{}, sla:{} })
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -72,7 +74,7 @@ async function load(){
     renderCharts()
     attachSlaClick()
   } catch(e) {
-    proxy.$modal.msgError('加载失败')
+    proxy.$modal.msgError(t('business.ticket.report.loadFailed'))
   }
 }
 function reload(){ load() }
@@ -87,7 +89,13 @@ function renderCharts(){
     const chart = echarts.init(durationRef.value)
     chart.setOption({
       tooltip: {},
-      xAxis: { type: 'category', data: ['<1h','1-4h','4-8h','8-24h','>=24h'] },
+      xAxis: { type: 'category', data: [
+        t('business.ticket.report.durationLt1h'),
+        t('business.ticket.report.durationBt1to4h'),
+        t('business.ticket.report.durationBt4to8h'),
+        t('business.ticket.report.durationBt8to24h'),
+        t('business.ticket.report.durationGe24h')
+      ] },
       yAxis: { type: 'value' },
       series: [{ type: 'bar', data: [d.lt1h||0, d.bt1to4h||0, d.bt4to8h||0, d.bt8to24h||0, d.ge24h||0] }]
     })
@@ -101,9 +109,9 @@ function renderCharts(){
       series: [{
         name: 'SLA', type: 'pie', radius: '60%',
         data: [
-          { name: '有时限', value: s.withDeadline||0 },
-          { name: '超时数量', value: s.timeoutCount||0 },
-          { name: '按时完成', value: s.ontimeCompleted||0 }
+          { name: t('business.ticket.report.withDeadline'), value: s.withDeadline||0 },
+          { name: t('business.ticket.report.timeoutCount'), value: s.timeoutCount||0 },
+          { name: t('business.ticket.report.ontimeCompleted'), value: s.ontimeCompleted||0 }
         ]
       }]
     })
@@ -160,12 +168,12 @@ async function renderTrend(){
     const chart = echarts.init(trendRef.value)
     chart.setOption({
       tooltip: { trigger:'axis' },
-      legend: { data:['新增','完成'] },
+      legend: { data:[t('business.ticket.report.created'), t('business.ticket.report.completed')] },
       xAxis: { type:'category', data: days },
       yAxis: { type:'value' },
       series: [
-        { name:'新增', type:'line', data: created },
-        { name:'完成', type:'line', data: completed }
+        { name:t('business.ticket.report.created'), type:'line', data: created },
+        { name:t('business.ticket.report.completed'), type:'line', data: completed }
       ]
     })
   }

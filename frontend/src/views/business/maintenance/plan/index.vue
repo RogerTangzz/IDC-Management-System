@@ -2,40 +2,40 @@
   <div class="app-container">
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="标题" prop="title">
-        <el-input v-model="queryParams.title" placeholder="请输入计划标题" clearable @keyup.enter="handleQuery" />
+      <el-form-item :label="$t('business.maintenance.field.title')" prop="title">
+        <el-input v-model="queryParams.title" :placeholder="$t('business.maintenance.placeholder.inputTitle')" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="楼层" prop="floor">
-        <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
-          <el-option label="1楼" value="1" />
-          <el-option label="2楼" value="2" />
-          <el-option label="3楼" value="3" />
-          <el-option label="4楼" value="4" />
-          <el-option label="全部楼层" value="all" />
+      <el-form-item :label="$t('business.maintenance.field.floor')" prop="floor">
+        <el-select v-model="queryParams.floor" :placeholder="$t('business.maintenance.placeholder.selectFloor')" clearable>
+          <el-option :label="$t('business.maintenance.floor.floor1')" value="1" />
+          <el-option :label="$t('business.maintenance.floor.floor2')" value="2" />
+          <el-option :label="$t('business.maintenance.floor.floor3')" value="3" />
+          <el-option :label="$t('business.maintenance.floor.floor4')" value="4" />
+          <el-option :label="$t('business.maintenance.floor.allFloors')" value="all" />
         </el-select>
       </el-form-item>
-      <el-form-item label="MOP类别" prop="mopCategory">
-        <el-select v-model="queryParams.mopCategory" placeholder="请选择类别" clearable>
+      <el-form-item :label="$t('business.maintenance.field.mopCategory')" prop="mopCategory">
+        <el-select v-model="queryParams.mopCategory" :placeholder="$t('business.maintenance.placeholder.selectCategory')" clearable>
           <el-option v-for="dict in mop_category" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="审核状态" prop="approvalStatus">
-        <el-select v-model="queryParams.approvalStatus" placeholder="请选择状态" clearable>
+      <el-form-item :label="$t('business.maintenance.field.approvalStatus')" prop="approvalStatus">
+        <el-select v-model="queryParams.approvalStatus" :placeholder="$t('business.maintenance.placeholder.selectStatus')" clearable>
           <el-option v-for="dict in approval_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="执行状态" prop="executionStatus">
-        <el-select v-model="queryParams.executionStatus" placeholder="请选择状态" clearable>
+      <el-form-item :label="$t('business.maintenance.field.executionStatus')" prop="executionStatus">
+        <el-select v-model="queryParams.executionStatus" :placeholder="$t('business.maintenance.placeholder.selectStatus')" clearable>
           <el-option v-for="dict in execution_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="计划时间">
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" value-format="YYYY-MM-DD" />
+      <el-form-item :label="$t('business.maintenance.field.planTime')">
+        <el-date-picker v-model="dateRange" type="daterange" :range-separator="$t('business.maintenance.message.to')" :start-placeholder="$t('business.maintenance.placeholder.startDate')"
+          :end-placeholder="$t('business.maintenance.placeholder.endDate')" value-format="YYYY-MM-DD" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('business.maintenance.action.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ $t('business.maintenance.action.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
@@ -43,34 +43,34 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd"
-          v-hasPermi="['business:maintenance:add']">新建计划</el-button>
+          v-hasPermi="['business:maintenance:add']">{{ $t('business.maintenance.action.add') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="success" plain icon="DocumentCopy" @click="handleCopyLast"
-          v-hasPermi="['business:maintenance:add']">复制上次</el-button>
+          v-hasPermi="['business:maintenance:add']">{{ $t('business.maintenance.action.copyLast') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['business:maintenance:edit']">修改</el-button>
+          v-hasPermi="['business:maintenance:edit']">{{ $t('business.maintenance.action.update') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['business:maintenance:remove']">删除</el-button>
+          v-hasPermi="['business:maintenance:remove']">{{ $t('business.maintenance.action.delete') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="Download" @click="handleExport"
-          v-hasPermi="['business:maintenance:export']">导出</el-button>
+          v-hasPermi="['business:maintenance:export']">{{ $t('business.maintenance.action.export') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="Upload" @click="triggerImport"
-          v-hasPermi="['business:maintenance:import']">导入</el-button>
+          v-hasPermi="['business:maintenance:import']">{{ $t('business.maintenance.action.import') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="info" plain icon="Download" @click="downloadTemplate"
-          v-hasPermi="['business:maintenance:import']">模板下载</el-button>
+          v-hasPermi="['business:maintenance:import']">{{ $t('business.maintenance.action.downloadTemplate') }}</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="info" plain icon="Calendar" @click="handleCalendar">日历视图</el-button>
+        <el-button type="info" plain icon="Calendar" @click="handleCalendar">{{ $t('business.maintenance.action.calendarView') }}</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -78,62 +78,62 @@
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="maintenanceList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="计划编号" align="center" prop="planNo" width="120" />
-      <el-table-column label="标题" align="left" prop="title" :show-overflow-tooltip="true" />
-      <el-table-column label="楼层" align="center" prop="floor" width="80">
+      <el-table-column :label="$t('business.maintenance.field.planNo')" align="center" prop="planNo" width="120" />
+      <el-table-column :label="$t('business.maintenance.field.title')" align="left" prop="title" :show-overflow-tooltip="true" />
+      <el-table-column :label="$t('business.maintenance.field.floor')" align="center" prop="floor" width="80">
         <template #default="scope">
           <el-tag>{{ getFloorLabel(scope.row.floor) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="版本" align="center" prop="version" width="80" />
-      <el-table-column label="MOP类别" align="center" prop="mopCategory" width="100">
+      <el-table-column :label="$t('business.maintenance.field.version')" align="center" prop="version" width="80" />
+      <el-table-column :label="$t('business.maintenance.field.mopCategory')" align="center" prop="mopCategory" width="100">
         <template #default="scope">
           <dict-tag :options="mop_category" :value="scope.row.mopCategory" />
         </template>
       </el-table-column>
-      <el-table-column label="执行周期" align="center" prop="executionCycle" width="100" />
-      <el-table-column label="审核状态" align="center" prop="approvalStatus" width="100">
+      <el-table-column :label="$t('business.maintenance.field.executionCycle')" align="center" prop="executionCycle" width="100" />
+      <el-table-column :label="$t('business.maintenance.field.approvalStatus')" align="center" prop="approvalStatus" width="100">
         <template #default="scope">
           <dict-tag :options="approval_status" :value="scope.row.approvalStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="执行状态" align="center" prop="executionStatus" width="100">
+      <el-table-column :label="$t('business.maintenance.field.executionStatus')" align="center" prop="executionStatus" width="100">
         <template #default="scope">
           <dict-tag :options="execution_status" :value="scope.row.executionStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="审核人" align="center" prop="approverName" width="100" />
-      <el-table-column label="下次执行" align="center" prop="nextExecutionTime" width="160">
+      <el-table-column :label="$t('business.maintenance.field.approverName')" align="center" prop="approverName" width="100" />
+      <el-table-column :label="$t('business.maintenance.field.nextExecutionTime')" align="center" prop="nextExecutionTime" width="160">
         <template #default="scope">
           <span v-if="scope.row.nextExecutionTime">
             {{ parseTime(scope.row.nextExecutionTime, '{y}-{m}-{d} {h}:{i}') }}
-            <el-tag v-if="isUpcoming(scope.row.nextExecutionTime)" type="warning" size="small">即将到期</el-tag>
+            <el-tag v-if="isUpcoming(scope.row.nextExecutionTime)" type="warning" size="small">{{ $t('business.maintenance.message.upcomingDue') }}</el-tag>
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+      <el-table-column :label="$t('business.maintenance.field.createTime')" align="center" prop="createTime" width="160">
         <template #default="scope">
           {{ parseTime(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="240">
+      <el-table-column :label="$t('business.maintenance.message.operation')" align="center" class-name="small-padding fixed-width" width="240">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)"
-            v-hasPermi="['business:maintenance:query']">查看</el-button>
+            v-hasPermi="['business:maintenance:query']">{{ $t('business.maintenance.action.view') }}</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus !== 'approved'">修改</el-button>
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus !== 'approved'">{{ $t('business.maintenance.action.update') }}</el-button>
           <el-button link type="success" icon="DocumentCopy" @click="handleCopy(scope.row)"
-            v-hasPermi="['business:maintenance:add']">复制</el-button>
+            v-hasPermi="['business:maintenance:add']">{{ $t('business.maintenance.action.copy') }}</el-button>
           <el-button link type="warning" icon="Promotion" @click="handleSubmit(scope.row)"
-            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus === 'draft'">提交</el-button>
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus === 'draft'">{{ $t('business.maintenance.action.submit') }}</el-button>
           <el-button link type="success" icon="Select" @click="handleApprove(scope.row)" :loading="actioningId === scope.row.planId" :disabled="actioningId === scope.row.planId"
             v-hasPermi="['business:maintenance:approve']"
-            v-if="scope.row.approvalStatus === 'pending' && canApprove">审核</el-button>
+            v-if="scope.row.approvalStatus === 'pending' && canApprove">{{ $t('business.maintenance.action.approve') }}</el-button>
           <el-button link type="primary" icon="VideoPlay" @click="handleExecute(scope.row)" :loading="actioningId === scope.row.planId" :disabled="actioningId === scope.row.planId"
             v-hasPermi="['business:maintenance:execute']"
-            v-if="scope.row.approvalStatus === 'approved' && scope.row.executionStatus === 'pending'">执行</el-button>
+            v-if="scope.row.approvalStatus === 'approved' && scope.row.executionStatus === 'pending'">{{ $t('business.maintenance.action.execute') }}</el-button>
           <el-button link type="warning" icon="Tickets" @click="handleGenerateTicket(scope.row)" :loading="actioningId === scope.row.planId" :disabled="actioningId === scope.row.planId"
-            v-hasPermi="['business:maintenance:ticket']" v-if="scope.row.approvalStatus === 'approved'">生成工单</el-button>
+            v-hasPermi="['business:maintenance:ticket']" v-if="scope.row.approvalStatus === 'approved'">{{ $t('business.maintenance.action.generateTicket') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -145,61 +145,61 @@
     <input ref="importInput" type="file" accept=".xls,.xlsx" style="display:none" @change="onImportFileChange" />
 
     <!-- 导入结果弹窗 -->
-    <el-dialog title="导入结果" v-model="importResultOpen" width="600px" append-to-body>
+    <el-dialog :title="$t('business.maintenance.dialog.importResultTitle')" v-model="importResultOpen" width="600px" append-to-body>
       <el-descriptions :column="3" border class="mb8">
-        <el-descriptions-item label="总计">{{ importResult.total }}</el-descriptions-item>
-        <el-descriptions-item label="成功">{{ importResult.success }}</el-descriptions-item>
-        <el-descriptions-item label="失败">{{ importResult.failed }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.maintenance.message.importTotal')">{{ importResult.total }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.maintenance.message.importSuccess')">{{ importResult.success }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.maintenance.message.importFailed2')">{{ importResult.failed }}</el-descriptions-item>
       </el-descriptions>
       <el-table v-if="(importResult.errors||[]).length" :data="importResult.errors" height="240">
-        <el-table-column label="行号" prop="row" width="100" />
-        <el-table-column label="错误信息" prop="message" />
+        <el-table-column :label="$t('business.maintenance.message.importRowNo')" prop="row" width="100" />
+        <el-table-column :label="$t('business.maintenance.message.importErrorMsg')" prop="message" />
       </el-table>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="importResultOpen = false">关闭</el-button>
-          <el-button type="warning" @click="exportImportErrors">导出失败明细</el-button>
+          <el-button @click="importResultOpen = false">{{ $t('business.maintenance.action.close') }}</el-button>
+          <el-button type="warning" @click="exportImportErrors">{{ $t('business.maintenance.action.exportFailures') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- 提交审核对话框 -->
-    <el-dialog title="提交审核" v-model="submitOpen" width="500px" append-to-body>
+    <el-dialog :title="$t('business.maintenance.dialog.submitApprovalTitle')" v-model="submitOpen" width="500px" append-to-body>
       <el-form ref="submitRef" :model="submitForm" :rules="submitRules" label-width="80px">
-        <el-form-item label="审核人" prop="approverId">
-          <el-select v-model="submitForm.approverId" placeholder="请选择审核人">
+        <el-form-item :label="$t('business.maintenance.field.approverId')" prop="approverId">
+          <el-select v-model="submitForm.approverId" :placeholder="$t('business.maintenance.placeholder.selectApprover')">
             <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="submitForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        <el-form-item :label="$t('business.maintenance.field.remark')" prop="remark">
+          <el-input v-model="submitForm.remark" type="textarea" :rows="3" :placeholder="$t('business.maintenance.placeholder.inputRemark')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForApproval">确 定</el-button>
-          <el-button @click="submitOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitForApproval">{{ $t('business.maintenance.message.confirm') }}</el-button>
+          <el-button @click="submitOpen = false">{{ $t('business.maintenance.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- 审核对话框 -->
-    <el-dialog title="审核维保计划" v-model="approveOpen" width="500px" append-to-body>
+    <el-dialog :title="$t('business.maintenance.dialog.approveTitle')" v-model="approveOpen" width="500px" append-to-body>
       <el-form ref="approveRef" :model="approveForm" :rules="approveRules" label-width="80px">
-        <el-form-item label="审核结果" prop="result">
+        <el-form-item :label="$t('business.maintenance.field.result')" prop="result">
           <el-radio-group v-model="approveForm.result">
-            <el-radio label="approved">通过</el-radio>
-            <el-radio label="rejected">拒绝</el-radio>
+            <el-radio label="approved">{{ $t('business.maintenance.message.passed') }}</el-radio>
+            <el-radio label="rejected">{{ $t('business.maintenance.message.refused') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="审核意见" prop="comment">
-          <el-input v-model="approveForm.comment" type="textarea" :rows="3" placeholder="请输入审核意见" />
+        <el-form-item :label="$t('business.maintenance.field.comment')" prop="comment">
+          <el-input v-model="approveForm.comment" type="textarea" :rows="3" :placeholder="$t('business.maintenance.placeholder.inputComment')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitApprovalResult">确 定</el-button>
-          <el-button @click="approveOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitApprovalResult">{{ $t('business.maintenance.message.confirm') }}</el-button>
+          <el-button @click="approveOpen = false">{{ $t('business.maintenance.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -208,6 +208,7 @@
 
 <script setup lang="ts" name="MaintenancePlan">
 import { ref, reactive, toRefs, onMounted, getCurrentInstance, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import useUserStore from '@/store/modules/user'
 import { withMineOnly } from '@/utils/business/mineOnly'
 import { useRouter } from 'vue-router'
@@ -219,6 +220,7 @@ import {
 import { parseTime } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance();
+const { t } = useI18n()
 const userStore = useUserStore()
 // 简易管理员判断（含 'admin' | 'ROLE_ADMIN'）
 const isAdmin = computed(() => Array.isArray(userStore.roles) && (userStore.roles.includes('admin') || userStore.roles.includes('ROLE_ADMIN')))
@@ -272,11 +274,11 @@ const { queryParams, form: _form, submitForm, approveForm } = toRefs(data);
 
 // 表单验证
 const submitRules = {
-  approverId: [{ required: true, message: "请选择审核人", trigger: "change" }]
+  approverId: [{ required: true, message: t('business.maintenance.validation.approverRequired'), trigger: "change" }]
 };
 const approveRules = {
-  result: [{ required: true, message: "请选择审核结果", trigger: "change" }],
-  comment: [{ required: true, message: "请输入审核意见", trigger: "blur" }]
+  result: [{ required: true, message: t('business.maintenance.validation.resultRequired'), trigger: "change" }],
+  comment: [{ required: true, message: t('business.maintenance.validation.commentRequired'), trigger: "blur" }]
 };
 
 /** 查询维保计划列表 */
@@ -297,11 +299,11 @@ function getList() {
 /** 获取楼层标签 */
 function getFloorLabel(floor) {
   const labels = {
-    '1': '1楼',
-    '2': '2楼',
-    '3': '3楼',
-    '4': '4楼',
-    'all': '全部楼层'
+    '1': t('business.maintenance.floor.floor1'),
+    '2': t('business.maintenance.floor.floor2'),
+    '3': t('business.maintenance.floor.floor3'),
+    '4': t('business.maintenance.floor.floor4'),
+    'all': t('business.maintenance.floor.allFloors')
   };
   return labels[floor] || floor;
 }
@@ -347,7 +349,7 @@ function handleCopyLast() {
     const lastPlan = planList.value.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))[0];
     router.push('/business/maintenance/plan/form?copy=' + lastPlan.planId);
   } else {
-    proxy.$modal.msgWarning("暂无可复制的维保计划");
+    proxy.$modal.msgWarning(t('business.maintenance.message.noPlanAvailable'));
   }
 }
 
@@ -364,10 +366,10 @@ function handleView(row) {
 
 /** 复制计划 */
 function handleCopy(row) {
-  proxy.$modal.confirm('是否复制该维保计划？').then(() => {
+  proxy.$modal.confirm(t('business.maintenance.message.confirmCopyPlan')).then(() => {
     return copyLastPlan(row.planId);
   }).then(() => {
-    proxy.$modal.msgSuccess("复制成功");
+    proxy.$modal.msgSuccess(t('business.maintenance.message.copySuccess'));
     getList();
   }).catch(() => { });
 }
@@ -388,7 +390,7 @@ function submitForApproval() {
   proxy.$refs["submitRef"].validate(valid => {
     if (valid) {
       submitApproval(submitForm.value.planId, submitForm.value.approverId).then(_response => {
-        proxy.$modal.msgSuccess("提交成功");
+        proxy.$modal.msgSuccess(t('business.maintenance.message.submitSuccess'));
         submitOpen.value = false;
         getList();
       });
@@ -411,40 +413,40 @@ emplate>
   <div class="app-container">
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="标题" prop="title">
-        <el-input v-model="queryParams.title" placeholder="请输入计划标题" clearable @keyup.enter="handleQuery" />
+      <el-form-item :label="$t('business.maintenance.field.title')" prop="title">
+        <el-input v-model="queryParams.title" :placeholder="$t('business.maintenance.placeholder.inputTitle')" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="楼层" prop="floor">
-        <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
-          <el-option label="1楼" value="1" />
-          <el-option label="2楼" value="2" />
-          <el-option label="3楼" value="3" />
-          <el-option label="4楼" value="4" />
-          <el-option label="全部楼层" value="all" />
+      <el-form-item :label="$t('business.maintenance.field.floor')" prop="floor">
+        <el-select v-model="queryParams.floor" :placeholder="$t('business.maintenance.placeholder.selectFloor')" clearable>
+          <el-option :label="$t('business.maintenance.floor.floor1')" value="1" />
+          <el-option :label="$t('business.maintenance.floor.floor2')" value="2" />
+          <el-option :label="$t('business.maintenance.floor.floor3')" value="3" />
+          <el-option :label="$t('business.maintenance.floor.floor4')" value="4" />
+          <el-option :label="$t('business.maintenance.floor.allFloors')" value="all" />
         </el-select>
       </el-form-item>
-      <el-form-item label="MOP类别" prop="mopCategory">
-        <el-select v-model="queryParams.mopCategory" placeholder="请选择类别" clearable>
+      <el-form-item :label="$t('business.maintenance.field.mopCategory')" prop="mopCategory">
+        <el-select v-model="queryParams.mopCategory" :placeholder="$t('business.maintenance.placeholder.selectCategory')" clearable>
           <el-option v-for="dict in mop_category" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="审核状态" prop="approvalStatus">
-        <el-select v-model="queryParams.approvalStatus" placeholder="请选择状态" clearable>
+      <el-form-item :label="$t('business.maintenance.field.approvalStatus')" prop="approvalStatus">
+        <el-select v-model="queryParams.approvalStatus" :placeholder="$t('business.maintenance.placeholder.selectStatus')" clearable>
           <el-option v-for="dict in approval_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="执行状态" prop="executionStatus">
-        <el-select v-model="queryParams.executionStatus" placeholder="请选择状态" clearable>
+      <el-form-item :label="$t('business.maintenance.field.executionStatus')" prop="executionStatus">
+        <el-select v-model="queryParams.executionStatus" :placeholder="$t('business.maintenance.placeholder.selectStatus')" clearable>
           <el-option v-for="dict in execution_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="计划时间">
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" value-format="YYYY-MM-DD" />
+      <el-form-item :label="$t('business.maintenance.field.planTime')">
+        <el-date-picker v-model="dateRange" type="daterange" :range-separator="$t('business.maintenance.message.to')" :start-placeholder="$t('business.maintenance.placeholder.startDate')"
+          :end-placeholder="$t('business.maintenance.placeholder.endDate')" value-format="YYYY-MM-DD" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('business.maintenance.action.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ $t('business.maintenance.action.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
@@ -452,34 +454,34 @@ emplate>
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd"
-          v-hasPermi="['business:maintenance:add']">新建计划</el-button>
+          v-hasPermi="['business:maintenance:add']">{{ $t('business.maintenance.action.add') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="success" plain icon="DocumentCopy" @click="handleCopyLast"
-          v-hasPermi="['business:maintenance:add']">复制上次</el-button>
+          v-hasPermi="['business:maintenance:add']">{{ $t('business.maintenance.action.copyLast') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['business:maintenance:edit']">修改</el-button>
+          v-hasPermi="['business:maintenance:edit']">{{ $t('business.maintenance.action.update') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['business:maintenance:remove']">删除</el-button>
+          v-hasPermi="['business:maintenance:remove']">{{ $t('business.maintenance.action.delete') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="Download" @click="handleExport"
-          v-hasPermi="['business:maintenance:export']">导出</el-button>
+          v-hasPermi="['business:maintenance:export']">{{ $t('business.maintenance.action.export') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="Upload" @click="triggerImport"
-          v-hasPermi="['business:maintenance:import']">导入</el-button>
+          v-hasPermi="['business:maintenance:import']">{{ $t('business.maintenance.action.import') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="info" plain icon="Download" @click="downloadTemplate"
-          v-hasPermi="['business:maintenance:import']">模板下载</el-button>
+          v-hasPermi="['business:maintenance:import']">{{ $t('business.maintenance.action.downloadTemplate') }}</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="info" plain icon="Calendar" @click="handleCalendar">日历视图</el-button>
+        <el-button type="info" plain icon="Calendar" @click="handleCalendar">{{ $t('business.maintenance.action.calendarView') }}</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -487,54 +489,54 @@ emplate>
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="maintenanceList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="计划编号" align="center" prop="planNo" width="120" />
-      <el-table-column label="标题" align="left" prop="title" :show-overflow-tooltip="true" />
-      <el-table-column label="楼层" align="center" prop="floor" width="80">
+      <el-table-column :label="$t('business.maintenance.field.planNo')" align="center" prop="planNo" width="120" />
+      <el-table-column :label="$t('business.maintenance.field.title')" align="left" prop="title" :show-overflow-tooltip="true" />
+      <el-table-column :label="$t('business.maintenance.field.floor')" align="center" prop="floor" width="80">
         <template #default="scope">
           <el-tag>{{ getFloorLabel(scope.row.floor) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="版本" align="center" prop="version" width="80" />
-      <el-table-column label="MOP类别" align="center" prop="mopCategory" width="100">
+      <el-table-column :label="$t('business.maintenance.field.version')" align="center" prop="version" width="80" />
+      <el-table-column :label="$t('business.maintenance.field.mopCategory')" align="center" prop="mopCategory" width="100">
         <template #default="scope">
           <dict-tag :options="mop_category" :value="scope.row.mopCategory" />
         </template>
       </el-table-column>
-      <el-table-column label="执行周期" align="center" prop="executionCycle" width="100" />
-      <el-table-column label="审核状态" align="center" prop="approvalStatus" width="100">
+      <el-table-column :label="$t('business.maintenance.field.executionCycle')" align="center" prop="executionCycle" width="100" />
+      <el-table-column :label="$t('business.maintenance.field.approvalStatus')" align="center" prop="approvalStatus" width="100">
         <template #default="scope">
           <dict-tag :options="approval_status" :value="scope.row.approvalStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="执行状态" align="center" prop="executionStatus" width="100">
+      <el-table-column :label="$t('business.maintenance.field.executionStatus')" align="center" prop="executionStatus" width="100">
         <template #default="scope">
           <dict-tag :options="execution_status" :value="scope.row.executionStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="审核人" align="center" prop="approverName" width="100" />
-      <el-table-column label="下次执行" align="center" prop="nextExecutionTime" width="160">
+      <el-table-column :label="$t('business.maintenance.field.approverName')" align="center" prop="approverName" width="100" />
+      <el-table-column :label="$t('business.maintenance.field.nextExecutionTime')" align="center" prop="nextExecutionTime" width="160">
         <template #default="scope">
           <span v-if="scope.row.nextExecutionTime">
             {{ parseTime(scope.row.nextExecutionTime, '{y}-{m}-{d} {h}:{i}') }}
-            <el-tag v-if="isUpcoming(scope.row.nextExecutionTime)" type="warning" size="small">即将到期</el-tag>
+            <el-tag v-if="isUpcoming(scope.row.nextExecutionTime)" type="warning" size="small">{{ $t('business.maintenance.message.upcomingDue') }}</el-tag>
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+      <el-table-column :label="$t('business.maintenance.field.createTime')" align="center" prop="createTime" width="160">
         <template #default="scope">
           {{ parseTime(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="240">
+      <el-table-column :label="$t('business.maintenance.message.operation')" align="center" class-name="small-padding fixed-width" width="240">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)"
-            v-hasPermi="['business:maintenance:query']">查看</el-button>
+            v-hasPermi="['business:maintenance:query']">{{ $t('business.maintenance.action.view') }}</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus !== 'approved'">修改</el-button>
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus !== 'approved'">{{ $t('business.maintenance.action.update') }}</el-button>
           <el-button link type="success" icon="DocumentCopy" @click="handleCopy(scope.row)"
-            v-hasPermi="['business:maintenance:add']">复制</el-button>
+            v-hasPermi="['business:maintenance:add']">{{ $t('business.maintenance.action.copy') }}</el-button>
           <el-button link type="warning" icon="Promotion" @click="handleSubmit(scope.row)"
-            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus === 'draft'">提交</el-button>
+            v-hasPermi="['business:maintenance:edit']" v-if="scope.row.approvalStatus === 'draft'">{{ $t('business.maintenance.action.submit') }}</el-button>
           <el-button link type="success" icon="Select" @click="handleApprove(scope.row)"
             v-hasPermi="['business:maintenance:approve']"
             v-if="scope.row.approvalStatus === 'pending' && canApprove">审核</el-button>
@@ -554,61 +556,61 @@ emplate>
     <input ref="importInput" type="file" accept=".xls,.xlsx" style="display:none" @change="onImportFileChange" />
 
     <!-- 导入结果弹窗 -->
-    <el-dialog title="导入结果" v-model="importResultOpen" width="600px" append-to-body>
+    <el-dialog :title="$t('business.maintenance.dialog.importResultTitle')" v-model="importResultOpen" width="600px" append-to-body>
       <el-descriptions :column="3" border class="mb8">
-        <el-descriptions-item label="总计">{{ importResult.total }}</el-descriptions-item>
-        <el-descriptions-item label="成功">{{ importResult.success }}</el-descriptions-item>
-        <el-descriptions-item label="失败">{{ importResult.failed }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.maintenance.message.importTotal')">{{ importResult.total }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.maintenance.message.importSuccess')">{{ importResult.success }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.maintenance.message.importFailed2')">{{ importResult.failed }}</el-descriptions-item>
       </el-descriptions>
       <el-table v-if="(importResult.errors||[]).length" :data="importResult.errors" height="240">
-        <el-table-column label="行号" prop="row" width="100" />
-        <el-table-column label="错误信息" prop="message" />
+        <el-table-column :label="$t('business.maintenance.message.importRowNo')" prop="row" width="100" />
+        <el-table-column :label="$t('business.maintenance.message.importErrorMsg')" prop="message" />
       </el-table>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="importResultOpen = false">关闭</el-button>
-          <el-button type="warning" @click="exportImportErrors">导出失败明细</el-button>
+          <el-button @click="importResultOpen = false">{{ $t('business.maintenance.action.close') }}</el-button>
+          <el-button type="warning" @click="exportImportErrors">{{ $t('business.maintenance.action.exportFailures') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- 提交审核对话框 -->
-    <el-dialog title="提交审核" v-model="submitOpen" width="500px" append-to-body>
+    <el-dialog :title="$t('business.maintenance.dialog.submitApprovalTitle')" v-model="submitOpen" width="500px" append-to-body>
       <el-form ref="submitRef" :model="submitForm" :rules="submitRules" label-width="80px">
-        <el-form-item label="审核人" prop="approverId">
-          <el-select v-model="submitForm.approverId" placeholder="请选择审核人">
+        <el-form-item :label="$t('business.maintenance.field.approverId')" prop="approverId">
+          <el-select v-model="submitForm.approverId" :placeholder="$t('business.maintenance.placeholder.selectApprover')">
             <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="submitForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        <el-form-item :label="$t('business.maintenance.field.remark')" prop="remark">
+          <el-input v-model="submitForm.remark" type="textarea" :rows="3" :placeholder="$t('business.maintenance.placeholder.inputRemark')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForApproval">确 定</el-button>
-          <el-button @click="submitOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitForApproval">{{ $t('business.maintenance.message.confirm') }}</el-button>
+          <el-button @click="submitOpen = false">{{ $t('business.maintenance.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- 审核对话框 -->
-    <el-dialog title="审核维保计划" v-model="approveOpen" width="500px" append-to-body>
+    <el-dialog :title="$t('business.maintenance.dialog.approveTitle')" v-model="approveOpen" width="500px" append-to-body>
       <el-form ref="approveRef" :model="approveForm" :rules="approveRules" label-width="80px">
-        <el-form-item label="审核结果" prop="result">
+        <el-form-item :label="$t('business.maintenance.field.result')" prop="result">
           <el-radio-group v-model="approveForm.result">
-            <el-radio label="approved">通过</el-radio>
-            <el-radio label="rejected">拒绝</el-radio>
+            <el-radio label="approved">{{ $t('business.maintenance.message.passed') }}</el-radio>
+            <el-radio label="rejected">{{ $t('business.maintenance.message.refused') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="审核意见" prop="comment">
-          <el-input v-model="approveForm.comment" type="textarea" :rows="3" placeholder="请输入审核意见" />
+        <el-form-item :label="$t('business.maintenance.field.comment')" prop="comment">
+          <el-input v-model="approveForm.comment" type="textarea" :rows="3" :placeholder="$t('business.maintenance.placeholder.inputComment')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitApprovalResult">确 定</el-button>
-          <el-button @click="approveOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitApprovalResult">{{ $t('business.maintenance.message.confirm') }}</el-button>
+          <el-button @click="approveOpen = false">{{ $t('business.maintenance.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -617,6 +619,7 @@ emplate>
 
 <script setup lang="ts" name="MaintenancePlan">
 import { ref, reactive, toRefs, onMounted, getCurrentInstance, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import useUserStore from '@/store/modules/user'
 import { withMineOnly } from '@/utils/business/mineOnly'
 import { useRouter } from 'vue-router'
@@ -628,6 +631,7 @@ import {
 import { parseTime } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance();
+const { t } = useI18n()
 const userStore = useUserStore()
 // 简易管理员判断（含 'admin' | 'ROLE_ADMIN'）
 const isAdmin = computed(() => Array.isArray(userStore.roles) && (userStore.roles.includes('admin') || userStore.roles.includes('ROLE_ADMIN')))
@@ -680,11 +684,11 @@ const { queryParams, form: _form, submitForm, approveForm } = toRefs(data);
 
 // 表单验证
 const submitRules = {
-  approverId: [{ required: true, message: "请选择审核人", trigger: "change" }]
+  approverId: [{ required: true, message: t('business.maintenance.validation.approverRequired'), trigger: "change" }]
 };
 const approveRules = {
-  result: [{ required: true, message: "请选择审核结果", trigger: "change" }],
-  comment: [{ required: true, message: "请输入审核意见", trigger: "blur" }]
+  result: [{ required: true, message: t('business.maintenance.validation.resultRequired'), trigger: "change" }],
+  comment: [{ required: true, message: t('business.maintenance.validation.commentRequired'), trigger: "blur" }]
 };
 
 /** 查询维保计划列表 */
@@ -705,11 +709,11 @@ function getList() {
 /** 获取楼层标签 */
 function getFloorLabel(floor) {
   const labels = {
-    '1': '1楼',
-    '2': '2楼',
-    '3': '3楼',
-    '4': '4楼',
-    'all': '全部楼层'
+    '1': t('business.maintenance.floor.floor1'),
+    '2': t('business.maintenance.floor.floor2'),
+    '3': t('business.maintenance.floor.floor3'),
+    '4': t('business.maintenance.floor.floor4'),
+    'all': t('business.maintenance.floor.allFloors')
   };
   return labels[floor] || floor;
 }
@@ -755,7 +759,7 @@ function handleCopyLast() {
     const lastPlan = planList.value.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))[0];
     router.push('/business/maintenance/plan/form?copy=' + lastPlan.planId);
   } else {
-    proxy.$modal.msgWarning("暂无可复制的维保计划");
+    proxy.$modal.msgWarning(t('business.maintenance.message.noPlanAvailable'));
   }
 }
 
@@ -772,10 +776,10 @@ function handleView(row) {
 
 /** 复制计划 */
 function handleCopy(row) {
-  proxy.$modal.confirm('是否复制该维保计划？').then(() => {
+  proxy.$modal.confirm(t('business.maintenance.message.confirmCopyPlan')).then(() => {
     return copyLastPlan(row.planId);
   }).then(() => {
-    proxy.$modal.msgSuccess("复制成功");
+    proxy.$modal.msgSuccess(t('business.maintenance.message.copySuccess'));
     getList();
   }).catch(() => { });
 }
@@ -796,7 +800,7 @@ function submitForApproval() {
   proxy.$refs["submitRef"].validate(valid => {
     if (valid) {
       submitApproval(submitForm.value.planId, submitForm.value.approverId).then(_response => {
-        proxy.$modal.msgSuccess("提交成功");
+        proxy.$modal.msgSuccess(t('business.maintenance.message.submitSuccess'));
         submitOpen.value = false;
         getList();
       });
@@ -819,20 +823,17 @@ function submitApprovalResult() {
       actioningId.value = approveForm.value.planId;
       if (approveForm.value.result === 'approved') {
         approvePlan(approveForm.value.planId, approveForm.value.comment).then(() => {
-          proxy.$modal.msgSuccess("审核通过");
+          proxy.$modal.msgSuccess(t('business.maintenance.message.approved'));
           approveOpen.value = false;
           getList();
         }).finally(() => { actioningId.value = null });
       } else {
         rejectPlan(approveForm.value.planId, approveForm.value.comment).then(() => {
-          proxy.$modal.msgSuccess("审核拒绝");
+          proxy.$modal.msgSuccess(t('business.maintenance.message.rejected'));
           approveOpen.value = false;
           getList();
         }).finally(() => { actioningId.value = null });
-    }
-  });
-}    }
-  }).finally(() => { actioningId.value = null });
+      }
     }
   });
 }
@@ -840,11 +841,11 @@ function submitApprovalResult() {
 function handleExecute(row) {
   loading.value = true
   actioningId.value = row.planId;
-  proxy.$modal.confirm('确认开始执行该维保计划吗？').then(() => {
+  proxy.$modal.confirm(t('business.maintenance.message.confirmExecute')).then(() => {
     actioningId.value = row.planId;
     return startExecution(row.planId);
   }).then(() => {
-    proxy.$modal.msgSuccess("已开始执行");
+    proxy.$modal.msgSuccess(t('business.maintenance.message.executeSuccess'));
     getList();
   }).catch(() => { }).finally(() => { loading.value = false; actioningId.value = null })
 }
@@ -854,11 +855,11 @@ function handleExecute(row) {
 function handleGenerateTicket(row) {
   loading.value = true
   actioningId.value = row.planId;
-  proxy.$modal.confirm('确认生成维保工单吗？').then(() => {
+  proxy.$modal.confirm(t('business.maintenance.message.confirmGenerateTicket')).then(() => {
     actioningId.value = row.planId;
     return generateTicket(row.planId);
   }).then(() => {
-    proxy.$modal.msgSuccess("工单生成成功");
+    proxy.$modal.msgSuccess(t('business.maintenance.message.generateTicketSuccess'));
     getList();
   }).catch(() => { }).finally(() => { loading.value = false; actioningId.value = null })
 }
@@ -867,11 +868,11 @@ function handleGenerateTicket(row) {
 /** 删除按钮操作 */
 function handleDelete(row) {
   const planIds = row.planId || ids.value;
-  proxy.$modal.confirm('是否确认删除维保计划编号为"' + planIds + '"的数据项？').then(function () {
+  proxy.$modal.confirm(t('business.maintenance.message.confirmDelete', { id: planIds })).then(function () {
     return delMaintenance(planIds);
   }).then(() => {
     getList();
-    proxy.$modal.msgSuccess("删除成功");
+    proxy.$modal.msgSuccess(t('business.maintenance.message.deleteSuccess'));
   }).catch(() => { });
 }
 
@@ -920,7 +921,7 @@ async function onImportFileChange(e){
     importResultOpen.value = true
     getList()
   } catch (err) {
-    proxy.$modal.msgError('导入失败')
+    proxy.$modal.msgError(t('business.maintenance.message.importFailed'))
   } finally {
     if (importInput.value) importInput.value.value = ''
   }
@@ -952,7 +953,7 @@ function exportImportErrors(){
   }
   // 兜底：使用 API 获取 blob
   downloadMaintenanceImportErrors(taskId).catch(() => {
-    proxy?.$modal?.msgError?.('下载失败明细失败')
+    proxy?.$modal?.msgError?.(t('business.maintenance.message.downloadErrorsFailed'))
   })
 }
 

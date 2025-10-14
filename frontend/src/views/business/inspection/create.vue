@@ -3,33 +3,33 @@
     <!-- 基本信息 -->
     <el-card class="mb20">
       <template #header>
-        <span>巡检基本信息</span>
-        <el-button v-if="!inspectionId" type="info" style="float: right" @click="handleCopyLast">复制上次巡检</el-button>
+        <span>{{ $t('business.inspection.message.basicInfo') }}</span>
+        <el-button v-if="!inspectionId" type="info" style="float: right" @click="handleCopyLast">{{ $t('business.inspection.action.copyLast') }}</el-button>
       </template>
 
       <el-form ref="inspectionRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
-            <el-form-item label="巡检日期" prop="inspectionDate">
-              <el-date-picker v-model="form.inspectionDate" type="date" placeholder="选择日期" format="YYYY-MM-DD"
+            <el-form-item :label="$t('business.inspection.field.inspectionDate')" prop="inspectionDate">
+              <el-date-picker v-model="form.inspectionDate" type="date" :placeholder="$t('business.inspection.placeholder.selectDate')" format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="巡检人员" prop="inspectorName">
-              <el-input v-model="form.inspectorName" placeholder="请输入巡检人员" />
+            <el-form-item :label="$t('business.inspection.field.inspectorName')" prop="inspectorName">
+              <el-input v-model="form.inspectorName" :placeholder="$t('business.inspection.placeholder.inputInspector')" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="接力人员">
-              <el-input v-model="form.relayPerson" placeholder="接力人员（可选）" />
+            <el-form-item :label="$t('business.inspection.field.relayPerson')">
+              <el-input v-model="form.relayPerson" :placeholder="$t('business.inspection.placeholder.inputRelayPerson')" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
-            <el-form-item label="备注">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+            <el-form-item :label="$t('business.inspection.field.remark')">
+              <el-input v-model="form.remark" type="textarea" :placeholder="$t('business.inspection.placeholder.inputRemark')" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -39,20 +39,20 @@
     <!-- 巡检进度 -->
     <el-card class="mb20">
       <div class="progress-info">
-        <span>巡检进度：</span>
+        <span>{{ $t('business.inspection.message.inspectionProgress') }}：</span>
         <el-progress :percentage="progress" :status="progress === 100 ? 'success' : ''" style="width: 400px" />
-        <span class="ml10">{{ completedCount }}/{{ totalCount }}项</span>
+        <span class="ml10">{{ $t('business.inspection.message.completedCount', { completed: completedCount, total: totalCount }) }}</span>
       </div>
     </el-card>
 
     <!-- 巡检项目 -->
     <el-card>
       <template #header>
-        <span>巡检项目</span>
+        <span>{{ $t('business.inspection.message.inspectionItems') }}</span>
       </template>
 
       <el-tabs v-model="activeTab">
-        <el-tab-pane label="1楼（22项）" name="floor1">
+        <el-tab-pane :label="$t('business.inspection.message.floorLabelWithCount', { floor: 1, count: 22 })" name="floor1">
           <div class="inspection-items">
             <div v-for="(item, index) in INSPECTION_ITEMS.floor1" :key="item.id" class="inspection-item">
               <div class="item-index">{{ index + 1 }}</div>
@@ -65,8 +65,8 @@
                 </div>
                 <div class="item-input">
                   <el-radio-group v-if="item.type === 'boolean'" v-model="form.items.floor1[item.id]">
-                    <el-radio :label="true">正常</el-radio>
-                    <el-radio :label="false">异常</el-radio>
+                    <el-radio :label="true">{{ $t('business.inspection.message.normal') }}</el-radio>
+                    <el-radio :label="false">{{ $t('business.inspection.message.abnormal') }}</el-radio>
                   </el-radio-group>
                   <el-input-number v-else-if="item.type === 'number'" v-model="form.items.floor1[item.id]"
                     :min="item.min" :max="item.max" :precision="2" :controls-position="'right'" />
@@ -77,7 +77,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="2楼（18项）" name="floor2">
+        <el-tab-pane :label="$t('business.inspection.message.floorLabelWithCount', { floor: 2, count: 18 })" name="floor2">
           <div class="inspection-items">
             <div v-for="(item, index) in INSPECTION_ITEMS.floor2" :key="item.id" class="inspection-item">
               <div class="item-index">{{ index + 1 }}</div>
@@ -85,8 +85,8 @@
                 <div class="item-label">{{ item.label }}</div>
                 <div class="item-input">
                   <el-radio-group v-model="form.items.floor2[item.id]">
-                    <el-radio :label="true">正常</el-radio>
-                    <el-radio :label="false">异常</el-radio>
+                    <el-radio :label="true">{{ $t('business.inspection.message.normal') }}</el-radio>
+                    <el-radio :label="false">{{ $t('business.inspection.message.abnormal') }}</el-radio>
                   </el-radio-group>
                 </div>
               </div>
@@ -94,7 +94,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="3楼（13项）" name="floor3">
+        <el-tab-pane :label="$t('business.inspection.message.floorLabelWithCount', { floor: 3, count: 13 })" name="floor3">
           <div class="inspection-items">
             <div v-for="(item, index) in INSPECTION_ITEMS.floor3" :key="item.id" class="inspection-item">
               <div class="item-index">{{ index + 1 }}</div>
@@ -102,8 +102,8 @@
                 <div class="item-label">{{ item.label }}</div>
                 <div class="item-input">
                   <el-radio-group v-model="form.items.floor3[item.id]">
-                    <el-radio :label="true">正常</el-radio>
-                    <el-radio :label="false">异常</el-radio>
+                    <el-radio :label="true">{{ $t('business.inspection.message.normal') }}</el-radio>
+                    <el-radio :label="false">{{ $t('business.inspection.message.abnormal') }}</el-radio>
                   </el-radio-group>
                 </div>
               </div>
@@ -111,7 +111,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="4楼（3项）" name="floor4">
+        <el-tab-pane :label="$t('business.inspection.message.floorLabelWithCount', { floor: 4, count: 3 })" name="floor4">
           <div class="inspection-items">
             <div v-for="(item, index) in INSPECTION_ITEMS.floor4" :key="item.id" class="inspection-item">
               <div class="item-index">{{ index + 1 }}</div>
@@ -124,8 +124,8 @@
                 </div>
                 <div class="item-input">
                   <el-radio-group v-if="item.type === 'boolean'" v-model="form.items.floor4[item.id]">
-                    <el-radio :label="true">正常</el-radio>
-                    <el-radio :label="false">异常</el-radio>
+                    <el-radio :label="true">{{ $t('business.inspection.message.normal') }}</el-radio>
+                    <el-radio :label="false">{{ $t('business.inspection.message.abnormal') }}</el-radio>
                   </el-radio-group>
                   <el-input-number v-else-if="item.type === 'number'" v-model="form.items.floor4[item.id]"
                     :min="item.min" :max="item.max" :precision="0" />
@@ -141,36 +141,36 @@
     <!-- 现场照片 -->
     <el-card class="mt20">
       <template #header>
-        <span>现场照片</span>
+        <span>{{ $t('business.inspection.message.onSitePhotos') }}</span>
       </template>
       <image-upload v-model="form.photos" :limit="6" />
     </el-card>
 
     <!-- 操作按钮 -->
     <div class="mt20 text-center">
-      <el-button type="primary" @click="handleSubmit">保存并检查异常</el-button>
-      <el-button @click="handleCancel">取消</el-button>
+      <el-button type="primary" @click="handleSubmit">{{ $t('business.inspection.action.saveAndCheck') }}</el-button>
+      <el-button @click="handleCancel">{{ $t('business.inspection.action.cancel') }}</el-button>
     </div>
 
     <!-- 异常确认对话框 -->
-    <el-dialog title="检测到异常项" v-model="anomalyDialogVisible" width="600px">
-      <el-alert :title="`发现 ${anomalies.length} 个异常项`" type="warning" :closable="false" />
+    <el-dialog :title="$t('business.inspection.message.anomalyDetected')" v-model="anomalyDialogVisible" width="600px">
+      <el-alert :title="$t('business.inspection.message.anomalyFoundCount', { count: anomalies.length })" type="warning" :closable="false" />
       <el-table :data="anomalies" class="mt10">
-        <el-table-column prop="floor" label="楼层" width="80" />
-        <el-table-column prop="itemName" label="检查项" />
-        <el-table-column prop="value" label="异常值" width="100" />
-        <el-table-column prop="priority" label="优先级" width="80">
+        <el-table-column prop="floor" :label="$t('business.inspection.field.floor')" width="80" />
+        <el-table-column prop="itemName" :label="$t('business.inspection.field.itemName')" />
+        <el-table-column prop="value" :label="$t('business.inspection.field.value')" width="100" />
+        <el-table-column prop="priority" :label="$t('business.inspection.field.priority')" width="80">
           <template #default="scope">
             <el-tag :type="getPriorityType(scope.row.priority)">
-              {{ scope.row.priority }}
+              {{ $t('business.inspection.priority.' + scope.row.priority) }}
             </el-tag>
           </template>
         </el-table-column>
       </el-table>
       <template #footer>
-        <el-checkbox v-model="autoGenerateTickets">自动生成工单</el-checkbox>
-        <el-button @click="anomalyDialogVisible = false">跳过</el-button>
-        <el-button type="primary" @click="confirmAnomalies">确认</el-button>
+        <el-checkbox v-model="autoGenerateTickets">{{ $t('business.inspection.message.autoGenerateTickets') }}</el-checkbox>
+        <el-button @click="anomalyDialogVisible = false">{{ $t('business.inspection.action.skip') }}</el-button>
+        <el-button type="primary" @click="confirmAnomalies">{{ $t('business.inspection.action.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -179,12 +179,14 @@
 <script setup name="InspectionCreate">
 import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { INSPECTION_ITEMS, anomalyDetectionRules, anomalyPriorityRules } from './constants'
 import { addInspection, updateInspection, getInspection, getLatestInspection, generateTickets } from '@/api/business/inspection'
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 // 数据定义
 const inspectionId = ref(route.params.id)
@@ -211,10 +213,10 @@ const form = ref({
 // 验证规则
 const rules = {
   inspectionDate: [
-    { required: true, message: '请选择巡检日期', trigger: 'change' }
+    { required: true, message: t('business.inspection.validation.inspectionDateRequired'), trigger: 'change' }
   ],
   inspectorName: [
-    { required: true, message: '请输入巡检人员', trigger: 'blur' }
+    { required: true, message: t('business.inspection.validation.inspectorNameRequired'), trigger: 'blur' }
   ]
 }
 
@@ -264,9 +266,9 @@ function handleCopyLast() {
     if (response.data) {
       form.value.items = normalizeItems(response.data.items)
       form.value.remark = `[复制自巡检#${response.data.inspectionNo}]`
-      proxy.$modal.msgSuccess('已复制上次巡检记录')
+      proxy.$modal.msgSuccess(t('business.inspection.message.copySuccess'))
     } else {
-      proxy.$modal.msgWarning('没有找到上次巡检记录')
+      proxy.$modal.msgWarning(t('business.inspection.message.noLastInspection'))
     }
   })
 }
@@ -347,7 +349,7 @@ function saveInspection() {
     if (!inspectionId.value && res?.data?.inspectionId) {
       inspectionId.value = res.data.inspectionId
     }
-    proxy.$modal.msgSuccess(inspectionId.value ? '修改成功' : '新增成功')
+    proxy.$modal.msgSuccess(inspectionId.value ? t('business.inspection.message.updateSuccess') : t('business.inspection.message.addSuccess'))
     return res
   })
 }
@@ -360,15 +362,15 @@ function confirmAnomalies() {
   saveInspection().then(() => {
     if (needTickets) {
       if (!inspectionId.value) {
-        proxy.$modal.msgError('未获取到巡检ID，无法生成工单')
+        proxy.$modal.msgError(t('business.inspection.message.noInspectionIdForTicket'))
         return
       }
       generateTickets(inspectionId.value, anomalies.value).then(response => {
         const created = (response && (response.data || response.rows)) || []
         const n = Array.isArray(created) ? created.length : (created ? 1 : 0)
-        proxy.$modal.msgSuccess(`已生成 ${n} 个工单`)
+        proxy.$modal.msgSuccess(t('business.inspection.message.generateTicketsSuccess2', { count: n }))
         if (Array.isArray(created) && created.length > 0 && created[0]?.ticketId) {
-          proxy.$modal.confirm('是否前往第一张工单详情？').then(() => {
+          proxy.$modal.confirm(t('business.inspection.message.confirmCancelInspection')).then(() => {
             router.push('/business/ticket/detail/' + created[0].ticketId)
           }).catch(() => {
             router.push('/business/ticket/list')

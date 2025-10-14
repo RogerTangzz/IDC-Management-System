@@ -141,6 +141,9 @@ CREATE TABLE `biz_maintenance` (
   `special_tools` text COMMENT '特殊工具',
   `steps` text COMMENT '执行步骤',
   `inspection_result` text COMMENT '巡检结果',
+  `planned_start_date` datetime DEFAULT NULL COMMENT 'Planned start date',
+  `planned_end_date` datetime DEFAULT NULL COMMENT 'Planned end date',
+  `item_count` int DEFAULT NULL COMMENT 'Maintenance item count',
   `submit_time` datetime COMMENT '提交时间',
   `applicant_id` bigint(20) COMMENT '申请人ID',
   `applicant_name` varchar(50) COMMENT '申请人姓名',
@@ -216,3 +219,4 @@ CREATE TABLE `biz_maintenance_execution` (
   KEY `idx_execution_status` (`execution_status`),
   KEY `idx_execution_time` (`actual_execution_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='维保执行记录表';
+

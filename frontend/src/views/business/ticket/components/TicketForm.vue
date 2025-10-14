@@ -6,13 +6,13 @@
     <el-form ref="formRef" :model="form" :rules="rules" :disabled="mode === 'view'" label-width="100px">
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="工单标题" prop="title">
-            <el-input v-model="form.title" placeholder="请输入工单标题" />
+          <el-form-item :label="$t('business.ticket.field.title')" prop="title">
+            <el-input v-model="form.title" :placeholder="$t('business.ticket.placeholder.inputTitle')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="优先级" prop="priority">
-            <el-select v-model="form.priority" placeholder="请选择优先级">
+          <el-form-item :label="$t('business.ticket.field.priority')" prop="priority">
+            <el-select v-model="form.priority" :placeholder="$t('business.ticket.placeholder.selectPriority')">
               <el-option v-for="item in Object.values(TICKET_PRIORITY)" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
@@ -22,45 +22,45 @@
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="使用模板" prop="templateId" v-if="mode === 'create'">
-            <el-select v-model="form.templateId" placeholder="选择模板（可选）" clearable @change="handleTemplateChange">
+          <el-form-item :label="$t('business.ticket.field.templateId')" prop="templateId" v-if="mode === 'create'">
+            <el-select v-model="form.templateId" :placeholder="$t('business.ticket.placeholder.selectTemplate')" clearable @change="handleTemplateChange">
               <el-option v-for="item in templates" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="处理时限" prop="deadline">
-            <el-date-picker v-model="form.deadline" type="datetime" placeholder="选择处理时限" :disabled="true" />
+          <el-form-item :label="$t('business.ticket.field.deadline')" prop="deadline">
+            <el-date-picker v-model="form.deadline" type="datetime" :placeholder="$t('business.ticket.placeholder.selectDeadline')" :disabled="true" />
           </el-form-item>
         </el-col>
       </el-row>
 
-      <el-form-item label="故障描述" prop="description">
-        <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请详细描述故障情况" />
+      <el-form-item :label="$t('business.ticket.field.description')" prop="description">
+        <el-input v-model="form.description" type="textarea" :rows="4" :placeholder="$t('business.ticket.placeholder.inputDescription')" />
       </el-form-item>
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="报修人" prop="reporterName">
-            <el-input v-model="form.reporterName" placeholder="请输入报修人姓名" />
+          <el-form-item :label="$t('business.ticket.field.reporterName')" prop="reporterName">
+            <el-input v-model="form.reporterName" :placeholder="$t('business.ticket.placeholder.inputReporterName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="联系电话" prop="reporterPhone">
-            <el-input v-model="form.reporterPhone" placeholder="请输入联系电话" />
+          <el-form-item :label="$t('business.ticket.field.reporterPhone')" prop="reporterPhone">
+            <el-input v-model="form.reporterPhone" :placeholder="$t('business.ticket.placeholder.inputReporterPhone')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="故障设备" prop="equipmentName">
-            <el-input v-model="form.equipmentName" placeholder="请输入故障设备名称" />
+          <el-form-item :label="$t('business.ticket.field.equipment')" prop="equipmentName">
+            <el-input v-model="form.equipmentName" :placeholder="$t('business.ticket.placeholder.inputEquipmentName')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="设备专业" prop="equipmentSpecialty">
-            <el-select v-model="form.equipmentSpecialty" placeholder="请选择设备专业">
+          <el-form-item :label="$t('business.ticket.field.specialty')" prop="equipmentSpecialty">
+            <el-select v-model="form.equipmentSpecialty" :placeholder="$t('business.ticket.placeholder.selectSpecialty')">
               <el-option v-for="item in EQUIPMENT_SPECIALTY" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
@@ -68,32 +68,32 @@
         </el-col>
       </el-row>
 
-      <el-form-item label="设备位置" prop="location">
-        <el-input v-model="form.location" placeholder="请输入设备位置（如：1楼机房）" />
+      <el-form-item :label="$t('business.ticket.field.location')" prop="location">
+        <el-input v-model="form.location" :placeholder="$t('business.ticket.placeholder.inputLocation')" />
       </el-form-item>
 
-      <el-form-item label="故障时间" prop="faultTime">
-        <el-date-picker v-model="form.faultTime" type="datetime" placeholder="选择故障发现时间"
+      <el-form-item :label="$t('business.ticket.field.discoveryTime')" prop="faultTime">
+        <el-date-picker v-model="form.faultTime" type="datetime" :placeholder="$t('business.ticket.placeholder.selectDiscoveryTimeShort')"
           value-format="YYYY-MM-DD HH:mm:ss" />
       </el-form-item>
 
-      <el-form-item label="应急处置" prop="emergencyMeasure">
-        <el-input v-model="form.emergencyMeasure" type="textarea" :rows="3" placeholder="请描述应急处置方法" />
+      <el-form-item :label="$t('business.ticket.field.emergencyAction')" prop="emergencyMeasure">
+        <el-input v-model="form.emergencyMeasure" type="textarea" :rows="3" :placeholder="$t('business.ticket.placeholder.inputEmergencyActionMethod')" />
       </el-form-item>
 
-      <el-form-item label="附件" prop="attachments">
+      <el-form-item :label="$t('business.ticket.field.attachments')" prop="attachments">
         <el-upload :action="uploadUrl" :headers="uploadHeaders" :file-list="fileList" :on-success="handleUploadSuccess"
           :on-remove="handleRemove" :before-upload="beforeUpload" multiple :limit="5">
-          <el-button type="primary">点击上传</el-button>
+          <el-button type="primary">{{ $t('business.ticket.field.attachmentUpload') }}</el-button>
           <template #tip>
-            <div class="el-upload__tip">支持jpg/png/pdf文件，单个文件不超过10MB</div>
+            <div class="el-upload__tip">{{ $t('business.ticket.message.uploadTip') }}</div>
           </template>
           <!-- src/views/ticket/components/TicketForm.vue -->
 
         </el-upload>
       </el-form-item>
 
-      <el-form-item label="通知工程师" prop="notifyEngineer">
+      <el-form-item :label="$t('business.ticket.message.notifyEngineer')" prop="notifyEngineer">
         <el-switch v-model="form.notifyEngineer" />
       </el-form-item>
     </el-form>
@@ -105,9 +105,12 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { ticketApi, ticketTemplateApi } from '@/api/ticket'
 import { TICKET_PRIORITY, EQUIPMENT_SPECIALTY } from '../constants'
 import { getToken } from '@/utils/auth'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['success'])
 
@@ -138,38 +141,38 @@ const form = reactive({
 
 const rules = {
   title: [
-    { required: true, message: '请输入工单标题', trigger: 'blur' },
-    { min: 5, max: 100, message: '标题长度在 5 到 100 个字符', trigger: 'blur' }
+    { required: true, message: () => t('business.ticket.validation.titleRequired'), trigger: 'blur' },
+    { min: 5, max: 100, message: () => t('business.ticket.validation.titleLength'), trigger: 'blur' }
   ],
   priority: [
-    { required: true, message: '请选择优先级', trigger: 'change' }
+    { required: true, message: () => t('business.ticket.validation.priorityRequired'), trigger: 'change' }
   ],
   description: [
-    { required: true, message: '请输入故障描述', trigger: 'blur' }
+    { required: true, message: () => t('business.ticket.validation.descriptionRequired'), trigger: 'blur' }
   ],
   reporterName: [
-    { required: true, message: '请输入报修人姓名', trigger: 'blur' }
+    { required: true, message: () => t('business.ticket.validation.reporterRequired'), trigger: 'blur' }
   ],
   reporterPhone: [
-    { required: true, message: '请输入联系电话', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+    { required: true, message: () => t('business.ticket.validation.reporterPhoneRequired'), trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: () => t('business.ticket.validation.reporterPhoneFormat'), trigger: 'blur' }
   ],
   equipmentName: [
-    { required: true, message: '请输入故障设备名称', trigger: 'blur' }
+    { required: true, message: () => t('business.ticket.validation.equipmentRequired'), trigger: 'blur' }
   ],
   equipmentSpecialty: [
-    { required: true, message: '请选择设备专业', trigger: 'change' }
+    { required: true, message: () => t('business.ticket.validation.specialtyRequired'), trigger: 'change' }
   ],
   location: [
-    { required: true, message: '请输入设备位置', trigger: 'blur' }
+    { required: true, message: () => t('business.ticket.validation.locationRequired'), trigger: 'blur' }
   ]
 }
 
 const dialogTitle = computed(() => {
   const titles = {
-    create: '新建工单',
-    edit: '修改工单',
-    view: '工单详情'
+    create: t('business.ticket.dialog.addTitle'),
+    edit: t('business.ticket.dialog.updateTitle'),
+    view: t('business.ticket.dialog.detailTitle')
   }
   return titles[mode.value]
 })
@@ -262,7 +265,7 @@ const handleRemove = (file) => {
 const beforeUpload = (file) => {
   const isLt10M = file.size / 1024 / 1024 < 10
   if (!isLt10M) {
-    ElMessage.error('上传文件大小不能超过 10MB!')
+    ElMessage.error(t('business.ticket.message.uploadSizeLimit'))
     return false
   }
   return true
@@ -276,10 +279,10 @@ const _submitForm = async () => {
   try {
     if (form.id) {
       await ticketApi.update(form.id, form)
-      ElMessage.success('修改成功')
+      ElMessage.success(t('business.ticket.message.updateSuccess'))
     } else {
       await ticketApi.create(form)
-      ElMessage.success('新建成功')
+      ElMessage.success(t('business.ticket.message.addSuccess'))
     }
 
     dialogVisible.value = false

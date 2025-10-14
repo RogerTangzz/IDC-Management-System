@@ -3,19 +3,19 @@
     <!-- 时间范围选择 -->
     <el-card class="filter-card">
       <el-form :inline="true">
-        <el-form-item label="统计时间">
-          <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-            end-placeholder="结束日期" :shortcuts="shortcuts" @change="handleDateChange" />
+        <el-form-item :label="$t('business.inspection.statistics.statisticTime')">
+          <el-date-picker v-model="dateRange" type="daterange" :range-separator="$t('business.inspection.statistics.rangeSeparator')" :start-placeholder="$t('business.inspection.statistics.startDate')"
+            :end-placeholder="$t('business.inspection.statistics.endDate')" @change="handleDateChange" />
         </el-form-item>
-        <el-form-item label="楼层">
-          <el-select v-model="selectedFloor" placeholder="全部楼层" clearable @change="handleFloorChange">
-            <el-option label="全部楼层" value="" />
+        <el-form-item :label="$t('business.inspection.statistics.floor')">
+          <el-select v-model="selectedFloor" :placeholder="$t('business.inspection.statistics.allFloors')" clearable @change="handleFloorChange">
+            <el-option :label="$t('business.inspection.statistics.allFloors')" value="" />
             <el-option v-for="floor in FLOORS" :key="floor.value" :label="floor.label" :value="floor.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="Refresh" @click="refreshData">刷新数据</el-button>
-          <el-button icon="Download" @click="exportReport">导出报表</el-button>
+          <el-button type="primary" icon="Refresh" @click="refreshData">{{ $t('business.inspection.statistics.refreshData') }}</el-button>
+          <el-button icon="Download" @click="exportReport">{{ $t('business.inspection.statistics.exportReport') }}</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -24,12 +24,12 @@
     <el-row :gutter="20" class="statistics-cards">
       <el-col :xs="24" :sm="12" :md="6">
         <el-card>
-          <el-statistic title="巡检总数" :value="statistics.total">
-            <template #suffix>次</template>
+          <el-statistic :title="$t('business.inspection.statistics.totalInspections')" :value="statistics.total">
+            <template #suffix>{{ $t('business.inspection.statistics.times') }}</template>
           </el-statistic>
           <div class="statistic-footer">
             <div class="footer-item">
-              <span>较上期</span>
+              <span>{{ $t('business.inspection.statistics.comparedToPrevious') }}</span>
               <span class="green">
                 <el-icon>
                   <CaretTop />
@@ -42,7 +42,7 @@
       </el-col>
       <el-col :xs="24" :sm="12" :md="6">
         <el-card>
-          <el-statistic title="完成率" :value="statistics.completionRate" :precision="1">
+          <el-statistic :title="$t('business.inspection.statistics.completionRate')" :value="statistics.completionRate" :precision="1">
             <template #suffix>%</template>
           </el-statistic>
           <el-progress :percentage="statistics.completionRate" :show-text="false" />
@@ -50,12 +50,12 @@
       </el-col>
       <el-col :xs="24" :sm="12" :md="6">
         <el-card>
-          <el-statistic title="异常发现数" :value="statistics.anomalyCount" value-style="color: #cf1322">
-            <template #suffix>项</template>
+          <el-statistic :title="$t('business.inspection.statistics.anomalyCount')" :value="statistics.anomalyCount" value-style="color: #cf1322">
+            <template #suffix>{{ $t('business.inspection.statistics.items') }}</template>
           </el-statistic>
           <div class="statistic-footer">
             <div class="footer-item">
-              <span>生成工单</span>
+              <span>{{ $t('business.inspection.statistics.generateTickets') }}</span>
               <span class="red">{{ statistics.ticketCount }}</span>
             </div>
           </div>
@@ -63,12 +63,12 @@
       </el-col>
       <el-col :xs="24" :sm="12" :md="6">
         <el-card>
-          <el-statistic title="平均完成时长" :value="statistics.avgDuration" :precision="1">
-            <template #suffix>分钟</template>
+          <el-statistic :title="$t('business.inspection.statistics.avgDuration')" :value="statistics.avgDuration" :precision="1">
+            <template #suffix>{{ $t('business.inspection.statistics.minutes') }}</template>
           </el-statistic>
           <div class="statistic-footer">
             <div class="footer-item">
-              <span>较上期</span>
+              <span>{{ $t('business.inspection.statistics.comparedToPrevious') }}</span>
               <span class="green">
                 <el-icon>
                   <CaretBottom />
@@ -88,11 +88,11 @@
         <el-card class="chart-card">
           <template #header>
             <div class="chart-header">
-              <span>巡检完成趋势</span>
+              <span>{{ $t('business.inspection.statistics.inspectionTrend') }}</span>
               <el-radio-group v-model="trendType" size="small" @change="updateTrendChart">
-                <el-radio-button label="day">日</el-radio-button>
-                <el-radio-button label="week">周</el-radio-button>
-                <el-radio-button label="month">月</el-radio-button>
+                <el-radio-button label="day">{{ $t('business.inspection.statistics.day') }}</el-radio-button>
+                <el-radio-button label="week">{{ $t('business.inspection.statistics.week') }}</el-radio-button>
+                <el-radio-button label="month">{{ $t('business.inspection.statistics.month') }}</el-radio-button>
               </el-radio-group>
             </div>
           </template>
@@ -104,7 +104,7 @@
       <el-col :xs="24" :md="12">
         <el-card class="chart-card">
           <template #header>
-            <span>各楼层巡检对比</span>
+            <span>{{ $t('business.inspection.statistics.floorComparison') }}</span>
           </template>
           <div id="floorChart" class="chart-container"></div>
         </el-card>
@@ -114,7 +114,7 @@
       <el-col :xs="24" :md="12">
         <el-card class="chart-card">
           <template #header>
-            <span>异常项TOP10</span>
+            <span>{{ $t('business.inspection.statistics.anomalyTop10') }}</span>
           </template>
           <div id="anomalyChart" class="chart-container"></div>
         </el-card>
@@ -124,7 +124,7 @@
       <el-col :xs="24" :md="12">
         <el-card class="chart-card">
           <template #header>
-            <span>巡检人员工作量</span>
+            <span>{{ $t('business.inspection.statistics.workload') }}</span>
           </template>
           <div id="workloadChart" class="chart-container"></div>
         </el-card>
@@ -134,58 +134,58 @@
     <!-- 异常处理时效分析 -->
     <el-card class="table-card">
       <template #header>
-        <span>异常处理时效分析</span>
+        <span>{{ $t('business.inspection.statistics.anomalyAnalysis') }}</span>
       </template>
       <el-table :data="anomalyAnalysis" stripe>
-        <el-table-column prop="floor" label="楼层" width="80">
+        <el-table-column prop="floor" :label="$t('business.inspection.statistics.floorLabel')" width="80">
           <template #default="scope">
             {{ getFloorLabel(scope.row.floor) }}
           </template>
         </el-table-column>
-        <el-table-column prop="itemName" label="检查项" show-overflow-tooltip />
-        <el-table-column prop="count" label="异常次数" width="90" align="center">
+        <el-table-column prop="itemName" :label="$t('business.inspection.statistics.itemName')" show-overflow-tooltip />
+        <el-table-column prop="count" :label="$t('business.inspection.statistics.anomalyTimes')" width="90" align="center">
           <template #default="scope">
             <el-tag type="danger">{{ scope.row.count }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="avgTime" label="平均处理时长" width="120" align="center">
+        <el-table-column prop="avgTime" :label="$t('business.inspection.statistics.avgHandleTime')" width="120" align="center">
           <template #default="scope">
-            {{ scope.row.avgTime }}小时
+            {{ scope.row.avgTime }}{{ $t('business.inspection.statistics.hours') }}
           </template>
         </el-table-column>
-        <el-table-column prop="priority" label="优先级" width="80" align="center">
+        <el-table-column prop="priority" :label="$t('business.inspection.statistics.priorityLabel')" width="80" align="center">
           <template #default="scope">
             <el-tag :type="getPriorityType(scope.row.priority)">
               {{ getPriorityLabel(scope.row.priority) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="suggestion" label="改进建议" show-overflow-tooltip />
+        <el-table-column prop="suggestion" :label="$t('business.inspection.statistics.suggestion')" show-overflow-tooltip />
       </el-table>
     </el-card>
 
     <!-- 巡检完成率排行 -->
     <el-card class="table-card">
       <template #header>
-        <span>巡检完成率排行</span>
+        <span>{{ $t('business.inspection.statistics.completionRanking') }}</span>
       </template>
       <el-table :data="completionRanking" stripe>
-        <el-table-column type="index" label="排名" width="60" align="center" />
-        <el-table-column prop="name" label="巡检人员" width="120" />
-        <el-table-column prop="total" label="巡检次数" width="90" align="center" />
-        <el-table-column prop="completed" label="完成次数" width="90" align="center" />
-        <el-table-column prop="completionRate" label="完成率" width="100" align="center">
+        <el-table-column type="index" :label="$t('business.inspection.statistics.rank')" width="60" align="center" />
+        <el-table-column prop="name" :label="$t('business.inspection.statistics.inspector')" width="120" />
+        <el-table-column prop="total" :label="$t('business.inspection.statistics.inspectionTimes')" width="90" align="center" />
+        <el-table-column prop="completed" :label="$t('business.inspection.statistics.completedTimes')" width="90" align="center" />
+        <el-table-column prop="completionRate" :label="$t('business.inspection.statistics.completionRateLabel')" width="100" align="center">
           <template #default="scope">
             <el-progress :percentage="scope.row.completionRate" :text-inside="true" :stroke-width="18"
               :status="getProgressStatus(scope.row.completionRate)" />
           </template>
         </el-table-column>
-        <el-table-column prop="avgDuration" label="平均时长" width="100" align="center">
+        <el-table-column prop="avgDuration" :label="$t('business.inspection.statistics.avgDurationLabel')" width="100" align="center">
           <template #default="scope">
-            {{ scope.row.avgDuration }}分钟
+            {{ scope.row.avgDuration }}{{ $t('business.inspection.statistics.minutes') }}
           </template>
         </el-table-column>
-        <el-table-column prop="anomalyFoundRate" label="异常发现率" width="110" align="center">
+        <el-table-column prop="anomalyFoundRate" :label="$t('business.inspection.statistics.anomalyFoundRate')" width="110" align="center">
           <template #default="scope">
             {{ scope.row.anomalyFoundRate }}%
           </template>
@@ -201,6 +201,9 @@ import { ElMessage } from 'element-plus'
 import { CaretTop, CaretBottom } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { FLOORS } from './constants'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 数据状态
 const dateRange = ref([
@@ -289,36 +292,7 @@ let floorChart = null
 let anomalyChart = null
 let workloadChart = null
 
-// 快捷时间选项
-const shortcuts = [
-  {
-    text: '最近一周',
-    value: () => {
-      const end = new Date()
-      const start = new Date()
-      start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
-      return [start, end]
-    }
-  },
-  {
-    text: '最近一月',
-    value: () => {
-      const end = new Date()
-      const start = new Date()
-      start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
-      return [start, end]
-    }
-  },
-  {
-    text: '最近三月',
-    value: () => {
-      const end = new Date()
-      const start = new Date()
-      start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
-      return [start, end]
-    }
-  }
-]
+// 快捷时间选项 (shortcuts text is handled by element-plus internally based on locale)
 
 // 初始化趋势图
 const initTrendChart = () => {
@@ -328,7 +302,7 @@ const initTrendChart = () => {
       trigger: 'axis'
     },
     legend: {
-      data: ['巡检次数', '异常数量']
+      data: [t('business.inspection.statistics.inspectionCount'), t('business.inspection.statistics.anomalyCountLabel')]
     },
     grid: {
       left: '3%',
@@ -346,14 +320,14 @@ const initTrendChart = () => {
     },
     series: [
       {
-        name: '巡检次数',
+        name: t('business.inspection.statistics.inspectionCount'),
         type: 'line',
         smooth: true,
         data: [12, 15, 13, 18, 20, 17, 19],
         itemStyle: { color: '#409eff' }
       },
       {
-        name: '异常数量',
+        name: t('business.inspection.statistics.anomalyCountLabel'),
         type: 'line',
         smooth: true,
         data: [2, 3, 1, 4, 2, 3, 2],
@@ -373,7 +347,7 @@ const initFloorChart = () => {
       axisPointer: { type: 'shadow' }
     },
     legend: {
-      data: ['巡检次数', '异常次数', '完成率']
+      data: [t('business.inspection.statistics.inspectionCount'), t('business.inspection.statistics.anomalyTimes'), t('business.inspection.statistics.completionRateShort')]
     },
     grid: {
       left: '3%',
@@ -383,16 +357,16 @@ const initFloorChart = () => {
     },
     xAxis: {
       type: 'category',
-      data: ['1楼', '2楼', '3楼', '4楼']
+      data: [t('business.inspection.statistics.floor1'), t('business.inspection.statistics.floor2'), t('business.inspection.statistics.floor3'), t('business.inspection.statistics.floor4')]
     },
     yAxis: [
       {
         type: 'value',
-        name: '次数'
+        name: t('business.inspection.statistics.countLabel')
       },
       {
         type: 'value',
-        name: '完成率',
+        name: t('business.inspection.statistics.completionRateShort'),
         max: 100,
         axisLabel: {
           formatter: '{value}%'
@@ -401,19 +375,19 @@ const initFloorChart = () => {
     ],
     series: [
       {
-        name: '巡检次数',
+        name: t('business.inspection.statistics.inspectionCount'),
         type: 'bar',
         data: [45, 38, 32, 28],
         itemStyle: { color: '#409eff' }
       },
       {
-        name: '异常次数',
+        name: t('business.inspection.statistics.anomalyTimes'),
         type: 'bar',
         data: [12, 8, 6, 5],
         itemStyle: { color: '#f56c6c' }
       },
       {
-        name: '完成率',
+        name: t('business.inspection.statistics.completionRateShort'),
         type: 'line',
         yAxisIndex: 1,
         data: [95, 92, 88, 90],
@@ -444,20 +418,20 @@ const initAnomalyChart = () => {
     yAxis: {
       type: 'category',
       data: [
-        '机房温度超标',
-        '冷却塔故障',
-        'UPS告警',
-        '漏水检测',
-        '消防设备异常',
-        '油机故障',
-        '配电异常',
-        '湿度超标',
-        '门禁异常',
-        '照明故障'
+        t('business.inspection.statistics.tempExceed'),
+        t('business.inspection.statistics.coolingTowerFault'),
+        t('business.inspection.statistics.upsAlarm'),
+        t('business.inspection.statistics.leakDetection'),
+        t('business.inspection.statistics.fireEquipmentAnomaly'),
+        t('business.inspection.statistics.generatorFault'),
+        t('business.inspection.statistics.powerDistributionAnomaly'),
+        t('business.inspection.statistics.humidityExceed'),
+        t('business.inspection.statistics.accessControlAnomaly'),
+        t('business.inspection.statistics.lightingFault')
       ].reverse()
     },
     series: [{
-      name: '异常次数',
+      name: t('business.inspection.statistics.anomalyTimes'),
       type: 'bar',
       data: [2, 3, 3, 4, 5, 6, 7, 8, 10, 12].reverse(),
       itemStyle: {
@@ -487,7 +461,7 @@ const initWorkloadChart = () => {
       left: 'center'
     },
     series: [{
-      name: '巡检工作量',
+      name: t('business.inspection.statistics.inspectionWorkload'),
       type: 'pie',
       radius: ['40%', '70%'],
       avoidLabelOverlap: false,
@@ -511,11 +485,11 @@ const initWorkloadChart = () => {
         show: false
       },
       data: [
-        { value: 28, name: '张三' },
-        { value: 25, name: '李四' },
-        { value: 22, name: '王五' },
-        { value: 20, name: '赵六' },
-        { value: 15, name: '其他' }
+        { value: 28, name: t('business.inspection.statistics.zhang') },
+        { value: 25, name: t('business.inspection.statistics.li') },
+        { value: 22, name: t('business.inspection.statistics.wang') },
+        { value: 20, name: t('business.inspection.statistics.zhao') },
+        { value: 15, name: t('business.inspection.statistics.others') }
       ]
     }]
   }
@@ -534,10 +508,10 @@ const generateDateLabels = (type) => {
       labels.push(`${date.getMonth() + 1}/${date.getDate()}`)
     } else if (type === 'week') {
       date.setDate(date.getDate() - i * 7)
-      labels.push(`第${count - i}周`)
+      labels.push(t('business.inspection.statistics.weekLabel', { week: count - i }))
     } else {
       date.setMonth(date.getMonth() - i)
-      labels.push(`${date.getMonth() + 1}月`)
+      labels.push(t('business.inspection.statistics.monthLabel', { month: date.getMonth() + 1 }))
     }
   }
   return labels
@@ -566,7 +540,7 @@ const updateTrendChart = () => {
 
 // 刷新数据
 const refreshData = () => {
-  ElMessage.success('数据已刷新')
+  ElMessage.success(t('business.inspection.statistics.dataRefreshed'))
   // 重新加载图表数据
   if (trendChart) trendChart.resize()
   if (floorChart) floorChart.resize()
@@ -576,7 +550,7 @@ const refreshData = () => {
 
 // 导出报表
 const exportReport = () => {
-  ElMessage.success('正在生成报表...')
+  ElMessage.success(t('business.inspection.statistics.generatingReport'))
   // 导出逻辑
 }
 
@@ -598,12 +572,7 @@ const getPriorityType = (priority) => {
 
 // 获取优先级标签
 const getPriorityLabel = (priority) => {
-  const map = {
-    high: '高',
-    medium: '中',
-    low: '低'
-  }
-  return map[priority] || priority
+  return t(`business.inspection.priority.${priority}`) || priority
 }
 
 // 获取进度条状态

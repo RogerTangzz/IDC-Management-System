@@ -1,0 +1,25 @@
+{
+  "sla": {
+    "title": "SLA 阈值设置",
+    "field": {
+      "enabled": "启用SLA提醒",
+      "warnBeforeHours": "即将超时阈值(小时)",
+      "lowHours": "低优先级处理时限(小时)",
+      "mediumHours": "中优先级处理时限(小时)",
+      "highHours": "高优先级处理时限(小时)"
+    },
+    "action": {
+      "save": "保存",
+      "reset": "重置"
+    },
+    "validation": {
+      "warnBeforeHoursRequired": "请输入阈值",
+      "lowHoursRequired": "请输入低优先级时限",
+      "mediumHoursRequired": "请输入中优先级时限",
+      "highHoursRequired": "请输入高优先级时限"
+    },
+    "message": {
+      "saveSuccess": "保存成功"
+    }
+  }
+}

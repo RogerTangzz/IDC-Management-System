@@ -4,26 +4,26 @@
     <!-- 搜索区域 -->
     <el-card class="search-card">
       <el-form :model="queryParams" ref="queryRef" :inline="true">
-        <el-form-item label="计划名称" prop="planName">
-          <el-input v-model="queryParams.planName" placeholder="请输入计划名称" clearable @keyup.enter="handleQuery" />
+        <el-form-item :label="$t('business.maintenance.field.title')" prop="planName">
+          <el-input v-model="queryParams.planName" :placeholder="$t('business.maintenance.placeholder.inputTitle')" clearable @keyup.enter="handleQuery" />
         </el-form-item>
-        <el-form-item label="执行人" prop="executorName">
-          <el-input v-model="queryParams.executorName" placeholder="请输入执行人" clearable />
+        <el-form-item :label="$t('business.maintenance.field.executorId')" prop="executorName">
+          <el-input v-model="queryParams.executorName" :placeholder="$t('business.maintenance.placeholder.selectExecutor')" clearable />
         </el-form-item>
-        <el-form-item label="执行状态" prop="status">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable>
-            <el-option label="执行中" value="executing" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="已中止" value="aborted" />
+        <el-form-item :label="$t('business.maintenance.field.executionStatus')" prop="status">
+          <el-select v-model="queryParams.status" :placeholder="$t('business.maintenance.message.all')" clearable>
+            <el-option :label="$t('business.maintenance.status.executing')" value="executing" />
+            <el-option :label="$t('business.maintenance.status.completed')" value="completed" />
+            <el-option :label="$t('business.maintenance.message.noData')" value="aborted" />
           </el-select>
         </el-form-item>
-        <el-form-item label="执行时间">
-          <el-date-picker v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至"
-            start-placeholder="开始日期" end-placeholder="结束日期" @change="handleDateChange" />
+        <el-form-item :label="$t('business.maintenance.field.planTime')">
+          <el-date-picker v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" :range-separator="$t('business.maintenance.message.to')"
+            :start-placeholder="$t('business.maintenance.placeholder.startDate')" :end-placeholder="$t('business.maintenance.placeholder.endDate')" @change="handleDateChange" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('business.maintenance.action.search') }}</el-button>
+          <el-button icon="Refresh" @click="resetQuery">{{ $t('business.maintenance.action.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -32,57 +32,57 @@
     <el-card class="table-card">
       <template #header>
         <div class="card-header">
-          <span>执行记录列表</span>
-          <el-button type="warning" icon="Download" @click="handleExport">导出</el-button>
+          <span>{{ $t('business.maintenance.message.executionRecord') }}</span>
+          <el-button type="warning" icon="Download" @click="handleExport">{{ $t('business.maintenance.action.export') }}</el-button>
         </div>
       </template>
 
       <el-table v-loading="loading" :data="executionList" border stripe>
-        <el-table-column label="执行编号" prop="executionNo" width="120" align="center" />
-        <el-table-column label="计划名称" prop="planName" min-width="200" show-overflow-tooltip />
-        <el-table-column label="执行人" prop="executorName" width="100" align="center" />
-        <el-table-column label="开始时间" prop="startTime" width="160" align="center">
+        <el-table-column :label="$t('business.maintenance.field.planNo')" prop="executionNo" width="120" align="center" />
+        <el-table-column :label="$t('business.maintenance.field.title')" prop="planName" min-width="200" show-overflow-tooltip />
+        <el-table-column :label="$t('business.maintenance.field.executorId')" prop="executorName" width="100" align="center" />
+        <el-table-column :label="$t('business.maintenance.field.planTime')" prop="startTime" width="160" align="center">
           <template #default="scope">
             {{ parseTime(scope.row.startTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="完成时间" prop="endTime" width="160" align="center">
+        <el-table-column :label="$t('business.maintenance.field.nextExecutionTime')" prop="endTime" width="160" align="center">
           <template #default="scope">
             {{ scope.row.endTime ? parseTime(scope.row.endTime) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="耗时" prop="duration" width="100" align="center">
+        <el-table-column :label="$t('business.maintenance.field.remark')" prop="duration" width="100" align="center">
           <template #default="scope">
             {{ formatDuration(scope.row.duration) }}
           </template>
         </el-table-column>
-        <el-table-column label="执行状态" prop="status" width="100" align="center">
+        <el-table-column :label="$t('business.maintenance.field.executionStatus')" prop="status" width="100" align="center">
           <template #default="scope">
             <el-tag :type="getStatusType(scope.row.status)">
               {{ getStatusLabel(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="执行结果" prop="result" width="100" align="center">
+        <el-table-column :label="$t('business.maintenance.field.executionResult')" prop="result" width="100" align="center">
           <template #default="scope">
             <el-tag v-if="scope.row.result" :type="scope.row.result === 'success' ? 'success' : 'danger'">
-              {{ scope.row.result === 'success' ? '成功' : '失败' }}
+              {{ scope.row.result === 'success' ? $t('business.maintenance.message.importSuccess') : $t('business.maintenance.message.importFailed') }}
             </el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column :label="$t('business.maintenance.message.operation')" width="200" align="center" fixed="right">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="handleDetail(scope.row)">
-              查看详情
+              {{ $t('business.maintenance.action.detail') }}
             </el-button>
             <el-button v-if="scope.row.status === 'executing'" link type="success" size="small"
               @click="handleComplete(scope.row)">
-              完成执行
+              {{ $t('business.maintenance.action.completeExecution') }}
             </el-button>
             <el-button v-if="scope.row.status === 'executing'" link type="danger" size="small"
               @click="handleAbort(scope.row)">
-              中止执行
+              {{ $t('business.maintenance.action.close') }}
             </el-button>
           </template>
         </el-table-column>
@@ -94,27 +94,27 @@
     </el-card>
 
     <!-- 完成执行对话框 -->
-    <el-dialog v-model="completeDialogVisible" title="完成执行" width="600px">
+    <el-dialog v-model="completeDialogVisible" :title="$t('business.maintenance.action.completeExecution')" width="600px">
       <el-form ref="completeFormRef" :model="completeForm" :rules="completeRules" label-width="100px">
-        <el-form-item label="执行结果" prop="result">
+        <el-form-item :label="$t('business.maintenance.field.executionResult')" prop="result">
           <el-radio-group v-model="completeForm.result">
-            <el-radio label="success">成功</el-radio>
-            <el-radio label="failed">失败</el-radio>
+            <el-radio label="success">{{ $t('business.maintenance.message.importSuccess') }}</el-radio>
+            <el-radio label="failed">{{ $t('business.maintenance.message.importFailed') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="执行说明" prop="description">
-          <el-input v-model="completeForm.description" type="textarea" :rows="4" placeholder="请输入执行说明" />
+        <el-form-item :label="$t('business.maintenance.field.comment')" prop="description">
+          <el-input v-model="completeForm.description" type="textarea" :rows="4" :placeholder="$t('business.maintenance.placeholder.inputComment')" />
         </el-form-item>
-        <el-form-item label="发现问题" prop="issues">
-          <el-input v-model="completeForm.issues" type="textarea" :rows="3" placeholder="如有问题请描述" />
+        <el-form-item :label="$t('business.maintenance.field.remark')" prop="issues">
+          <el-input v-model="completeForm.issues" type="textarea" :rows="3" :placeholder="$t('business.maintenance.placeholder.inputComment')" />
         </el-form-item>
-        <el-form-item label="处理措施" prop="actions">
-          <el-input v-model="completeForm.actions" type="textarea" :rows="3" placeholder="采取的处理措施" />
+        <el-form-item :label="$t('business.maintenance.field.remark')" prop="actions">
+          <el-input v-model="completeForm.actions" type="textarea" :rows="3" :placeholder="$t('business.maintenance.placeholder.inputComment')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="completeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitComplete">确定</el-button>
+        <el-button @click="completeDialogVisible = false">{{ $t('business.maintenance.message.cancel') }}</el-button>
+        <el-button type="primary" @click="submitComplete">{{ $t('business.maintenance.message.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -123,7 +123,10 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 // 移除未使用的 maintenancePlanApi 与 parseTime 引入
+
+const { t } = useI18n()
 
 // 状态
 const loading = ref(false)
@@ -154,8 +157,8 @@ const completeForm = reactive({
 })
 
 const completeRules = {
-  result: [{ required: true, message: '请选择执行结果', trigger: 'change' }],
-  description: [{ required: true, message: '请输入执行说明', trigger: 'blur' }]
+  result: [{ required: true, message: t('business.maintenance.placeholder.inputResult'), trigger: 'change' }],
+  description: [{ required: true, message: t('business.maintenance.placeholder.inputComment'), trigger: 'blur' }]
 }
 
 // 模拟数据
@@ -291,7 +294,11 @@ const formatDuration = (minutes) => {
 
 // 状态标签
 const getStatusLabel = (status) => {
-  const map = { executing: '执行中', completed: '已完成', aborted: '已中止' }
+  const map = {
+    executing: t('business.maintenance.status.executing'),
+    completed: t('business.maintenance.status.completed'),
+    aborted: t('business.maintenance.message.noData')
+  }
   return map[status] || status
 }
 

@@ -2,22 +2,22 @@
   <div class="app-container">
     <!-- 搜索表单 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="模板名称" prop="templateName">
-        <el-input v-model="queryParams.templateName" placeholder="请输入模板名称" clearable @keyup.enter="handleQuery" />
+      <el-form-item :label="$t('business.ticket.template.templateName')" prop="templateName">
+        <el-input v-model="queryParams.templateName" :placeholder="$t('business.ticket.template.inputTemplateName')" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="故障类型" prop="faultType">
-        <el-select v-model="queryParams.faultType" placeholder="请选择" clearable>
+      <el-form-item :label="$t('business.ticket.template.faultType')" prop="faultType">
+        <el-select v-model="queryParams.faultType" :placeholder="$t('business.ticket.placeholder.selectSpecialty')" clearable>
           <el-option v-for="dict in fault_type" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="设备专业" prop="specialty">
-        <el-select v-model="queryParams.specialty" placeholder="请选择" clearable>
+      <el-form-item :label="$t('business.ticket.field.specialty')" prop="specialty">
+        <el-select v-model="queryParams.specialty" :placeholder="$t('business.ticket.placeholder.selectSpecialty')" clearable>
           <el-option v-for="dict in equipment_specialty" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('business.ticket.action.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ $t('business.ticket.action.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
@@ -25,19 +25,19 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd"
-          v-hasPermi="['business:ticket:template:add']">新增模板</el-button>
+          v-hasPermi="['business:ticket:template:add']">{{ $t('business.ticket.template.addTemplate') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['business:ticket:template:edit']">修改</el-button>
+          v-hasPermi="['business:ticket:template:edit']">{{ $t('business.ticket.action.edit') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['business:ticket:template:remove']">删除</el-button>
+          v-hasPermi="['business:ticket:template:remove']">{{ $t('business.ticket.action.delete') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="Download" @click="handleExport"
-          v-hasPermi="['business:ticket:template:export']">导出</el-button>
+          v-hasPermi="['business:ticket:template:export']">{{ $t('business.ticket.action.export') }}</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -45,47 +45,47 @@
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="templateList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="模板编号" align="center" prop="templateNo" width="120" />
-      <el-table-column label="模板名称" align="center" prop="templateName" :show-overflow-tooltip="true" />
-      <el-table-column label="故障类型" align="center" prop="faultType" width="100">
+      <el-table-column :label="$t('business.ticket.template.templateNo')" align="center" prop="templateNo" width="120" />
+      <el-table-column :label="$t('business.ticket.template.templateName')" align="center" prop="templateName" :show-overflow-tooltip="true" />
+      <el-table-column :label="$t('business.ticket.template.faultType')" align="center" prop="faultType" width="100">
         <template #default="scope">
           <dict-tag :options="fault_type" :value="scope.row.faultType" />
         </template>
       </el-table-column>
-      <el-table-column label="默认优先级" align="center" prop="priority" width="100">
+      <el-table-column :label="$t('business.ticket.template.defaultPriority')" align="center" prop="priority" width="100">
         <template #default="scope">
           <dict-tag :options="ticket_priority" :value="scope.row.priority" />
         </template>
       </el-table-column>
-      <el-table-column label="设备专业" align="center" prop="specialty" width="100">
+      <el-table-column :label="$t('business.ticket.field.specialty')" align="center" prop="specialty" width="100">
         <template #default="scope">
           <dict-tag :options="equipment_specialty" :value="scope.row.specialty" />
         </template>
       </el-table-column>
-      <el-table-column label="使用次数" align="center" prop="useCount" width="90">
+      <el-table-column :label="$t('business.ticket.template.useCount')" align="center" prop="useCount" width="90">
         <template #default="scope">
-          <el-tag>{{ scope.row.useCount }}次</el-tag>
+          <el-tag>{{ scope.row.useCount }}{{ $t('business.ticket.template.useCountSuffix') }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" prop="status" width="80">
+      <el-table-column :label="$t('business.ticket.template.status')" align="center" prop="status" width="80">
         <template #default="scope">
           <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
             @change="handleStatusChange(scope.row)"></el-switch>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+      <el-table-column :label="$t('business.ticket.field.createTime')" align="center" prop="createTime" width="160">
         <template #default="scope">
           {{ parseTime(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
+      <el-table-column :label="$t('business.ticket.action.edit')" align="center" class-name="small-padding fixed-width" width="180">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)"
-            v-hasPermi="['business:ticket:template:query']">查看</el-button>
+            v-hasPermi="['business:ticket:template:query']">{{ $t('business.ticket.action.view') }}</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['business:ticket:template:edit']">修改</el-button>
+            v-hasPermi="['business:ticket:template:edit']">{{ $t('business.ticket.action.edit') }}</el-button>
           <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['business:ticket:template:remove']">删除</el-button>
+            v-hasPermi="['business:ticket:template:remove']">{{ $t('business.ticket.action.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -100,13 +100,13 @@
       <el-form ref="templateRef" :model="form" :rules="rules" label-width="100px" @keydown.enter.prevent="onEnterSubmit">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="模板名称" prop="templateName">
-              <el-input v-model="form.templateName" placeholder="请输入模板名称" maxlength="50" show-word-limit />
+            <el-form-item :label="$t('business.ticket.template.templateName')" prop="templateName">
+              <el-input v-model="form.templateName" :placeholder="$t('business.ticket.template.inputTemplateName')" maxlength="50" show-word-limit />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="故障类型" prop="faultType">
-              <el-select v-model="form.faultType" placeholder="请选择故障类型">
+            <el-form-item :label="$t('business.ticket.template.faultType')" prop="faultType">
+              <el-select v-model="form.faultType" :placeholder="$t('business.ticket.template.selectFaultType')">
                 <el-option v-for="dict in fault_type" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
@@ -114,7 +114,7 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="默认优先级" prop="priority">
+            <el-form-item :label="$t('business.ticket.template.defaultPriority')" prop="priority">
               <el-radio-group v-model="form.priority">
                 <el-radio v-for="dict in ticket_priority" :key="dict.value" :label="dict.value">{{ dict.label
                   }}</el-radio>
@@ -122,66 +122,66 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="设备专业" prop="specialty">
-              <el-select v-model="form.specialty" placeholder="请选择">
+            <el-form-item :label="$t('business.ticket.field.specialty')" prop="specialty">
+              <el-select v-model="form.specialty" :placeholder="$t('business.ticket.placeholder.selectSpecialty')">
                 <el-option v-for="dict in equipment_specialty" :key="dict.value" :label="dict.label"
                   :value="dict.value" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="默认标题" prop="defaultTitle">
-          <el-input v-model="form.defaultTitle" placeholder="请输入默认标题" />
+        <el-form-item :label="$t('business.ticket.template.defaultTitle')" prop="defaultTitle">
+          <el-input v-model="form.defaultTitle" :placeholder="$t('business.ticket.template.inputDefaultTitle')" />
         </el-form-item>
-        <el-form-item label="故障描述" prop="defaultDescription">
-          <el-input v-model="form.defaultDescription" type="textarea" :rows="4" placeholder="请输入默认故障描述" maxlength="500"
+        <el-form-item :label="$t('business.ticket.template.defaultDescription')" prop="defaultDescription">
+          <el-input v-model="form.defaultDescription" type="textarea" :rows="4" :placeholder="$t('business.ticket.template.inputDefaultDescription')" maxlength="500"
             show-word-limit />
         </el-form-item>
-        <el-form-item label="应急处置" prop="defaultEmergencyAction">
-          <el-input v-model="form.defaultEmergencyAction" type="textarea" :rows="3" placeholder="请输入默认应急处置方法"
+        <el-form-item :label="$t('business.ticket.template.defaultEmergencyAction')" prop="defaultEmergencyAction">
+          <el-input v-model="form.defaultEmergencyAction" type="textarea" :rows="3" :placeholder="$t('business.ticket.template.inputDefaultEmergencyAction')"
             maxlength="300" show-word-limit />
         </el-form-item>
-        <el-form-item label="处理方案" prop="defaultSolution">
-          <el-input v-model="form.defaultSolution" type="textarea" :rows="4" placeholder="请输入默认处理方案" maxlength="500"
+        <el-form-item :label="$t('business.ticket.template.defaultSolution')" prop="defaultSolution">
+          <el-input v-model="form.defaultSolution" type="textarea" :rows="4" :placeholder="$t('business.ticket.template.inputDefaultSolution')" maxlength="500"
             show-word-limit />
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+        <el-form-item :label="$t('business.ticket.field.remark')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :placeholder="$t('business.ticket.placeholder.inputRemark')" />
         </el-form-item>
       </el-form>
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" :loading="submitting" :disabled="submitting" @click="submitForm">确 定</el-button>
-          <el-button :disabled="submitting" @click="cancel">取 消</el-button>
+          <el-button type="primary" :loading="submitting" :disabled="submitting" @click="submitForm">{{ $t('business.ticket.message.confirm') }}</el-button>
+          <el-button :disabled="submitting" @click="cancel">{{ $t('business.ticket.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog title="模板详情" v-model="detailOpen" width="700px" append-to-body>
+    <el-dialog :title="$t('business.ticket.template.detailTitle')" v-model="detailOpen" width="700px" append-to-body>
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="模板编号">{{ detail.templateNo }}</el-descriptions-item>
-        <el-descriptions-item label="模板名称">{{ detail.templateName }}</el-descriptions-item>
-        <el-descriptions-item label="故障类型">
+        <el-descriptions-item :label="$t('business.ticket.template.templateNo')">{{ detail.templateNo }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.template.templateName')">{{ detail.templateName }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.template.faultType')">
           <dict-tag :options="fault_type" :value="detail.faultType" />
         </el-descriptions-item>
-        <el-descriptions-item label="默认优先级">
+        <el-descriptions-item :label="$t('business.ticket.template.defaultPriority')">
           <dict-tag :options="ticket_priority" :value="detail.priority" />
         </el-descriptions-item>
-        <el-descriptions-item label="设备专业">
+        <el-descriptions-item :label="$t('business.ticket.field.specialty')">
           <dict-tag :options="equipment_specialty" :value="detail.specialty" />
         </el-descriptions-item>
-        <el-descriptions-item label="使用次数">{{ detail.useCount }}次</el-descriptions-item>
-        <el-descriptions-item label="默认标题" :span="2">{{ detail.defaultTitle }}</el-descriptions-item>
-        <el-descriptions-item label="故障描述" :span="2">{{ detail.defaultDescription }}</el-descriptions-item>
-        <el-descriptions-item label="应急处置" :span="2">{{ detail.defaultEmergencyAction }}</el-descriptions-item>
-        <el-descriptions-item label="处理方案" :span="2">{{ detail.defaultSolution }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">{{ parseTime(detail.createTime) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.template.useCount')">{{ detail.useCount }}{{ $t('business.ticket.template.useCountSuffix') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.template.defaultTitle')" :span="2">{{ detail.defaultTitle }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.template.defaultDescription')" :span="2">{{ detail.defaultDescription }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.template.defaultEmergencyAction')" :span="2">{{ detail.defaultEmergencyAction }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.template.defaultSolution')" :span="2">{{ detail.defaultSolution }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('business.ticket.field.createTime')" :span="2">{{ parseTime(detail.createTime) }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="detailOpen = false">关 闭</el-button>
+          <el-button @click="detailOpen = false">{{ $t('business.ticket.action.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -190,6 +190,7 @@
 
 <script setup name="TicketTemplate">
 import { ref, reactive, toRefs, getCurrentInstance, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { listTemplate, getTemplate, delTemplate, addTemplate, updateTemplate, changeTemplateStatus } from "@/api/business/ticketTemplate";
 import { parseTime } from '@/utils/ruoyi'
 import { ensureSafeRequest } from '@/views/business/ticket/index.util'
@@ -198,6 +199,7 @@ import useTicketTemplate from '@/views/business/ticket/useTicketTemplate'
 import { nextTick, watch } from 'vue'
 import { track } from '@/infra/telemetry'
 import FeatureFlags from '@/config/FeatureFlags'
+const { t } = useI18n()
 
 const { proxy } = getCurrentInstance();
 
@@ -227,23 +229,23 @@ const data = reactive({
   },
   rules: {
     templateName: [
-      { required: true, message: "模板名称不能为空", trigger: "blur" },
-      { min: 2, max: 50, message: "模板名称长度在 2 到 50 个字符", trigger: "blur" }
+      { required: true, message: t('business.ticket.template.templateNameRequired'), trigger: "blur" },
+      { min: 2, max: 50, message: t('business.ticket.template.templateNameLength'), trigger: "blur" }
     ],
     faultType: [
-      { required: true, message: "请选择故障类型", trigger: "change" }
+      { required: true, message: t('business.ticket.template.faultTypeRequired'), trigger: "change" }
     ],
     priority: [
-      { required: true, message: "请选择默认优先级", trigger: "change" }
+      { required: true, message: t('business.ticket.template.priorityRequired'), trigger: "change" }
     ],
     specialty: [
-      { required: true, message: "请选择设备专业", trigger: "change" }
+      { required: true, message: t('business.ticket.template.specialtyRequired'), trigger: "change" }
     ],
     defaultTitle: [
-      { required: true, message: "默认标题不能为空", trigger: "blur" }
+      { required: true, message: t('business.ticket.template.defaultTitleRequired'), trigger: "blur" }
     ],
     defaultDescription: [
-      { required: true, message: "故障描述不能为空", trigger: "blur" }
+      { required: true, message: t('business.ticket.template.defaultDescriptionRequired'), trigger: "blur" }
     ]
   }
 });
@@ -295,7 +297,7 @@ function handleSelectionChange(selection) {
 function handleAdd() {
   reset();
   open.value = true;
-  title.value = "添加工单模板";
+  title.value = t('business.ticket.template.addTemplate');
 }
 
 /** 查看详情 */
@@ -313,7 +315,7 @@ function handleUpdate(row) {
   getTemplate(templateId).then(_response => {
     form.value = _response.data;
     open.value = true;
-    title.value = "修改工单模板";
+    title.value = t('business.ticket.template.updateTemplate');
   });
 }
 
@@ -339,7 +341,7 @@ function submitForm() {
   const formRef = proxy.$refs?.["templateRef"]
   if (!formRef || typeof formRef.validate !== 'function') {
     // 安全兜底：无表单引用时直接提示
-    try { proxy.$modal?.msgError?.('表单未就绪') } catch {}
+    try { proxy.$modal?.msgError?.(t('business.ticket.message.formNotReady')) } catch {}
     return
   }
   formRef.validate(async (valid, fields) => {
@@ -386,21 +388,21 @@ function onEnterSubmit() {
 /** 删除按钮操作 */
 function handleDelete(row) {
   const templateIds = row.templateId || ids.value;
-  proxy.$modal.confirm('是否确认删除工单模板编号为"' + templateIds + '"的数据项？').then(function () {
+  proxy.$modal.confirm(t('business.ticket.template.confirmDelete', { id: templateIds })).then(function () {
     return delTemplate(templateIds);
   }).then(() => {
     getList();
-    proxy.$modal.msgSuccess("删除成功");
+    proxy.$modal.msgSuccess(t('business.ticket.message.deleteSuccess'));
   }).catch(() => { });
 }
 
 /** 状态修改 */
 function handleStatusChange(row) {
-  let text = row.status === "0" ? "启用" : "停用";
-  proxy.$modal.confirm('确认要"' + text + '""' + row.templateName + '"模板吗？').then(function () {
+  let text = row.status === "0" ? t('business.ticket.template.statusEnable') : t('business.ticket.template.statusDisable');
+  proxy.$modal.confirm(t('business.ticket.template.confirmStatusChange', { text, name: row.templateName })).then(function () {
     return changeTemplateStatus(row.templateId, row.status);
   }).then(() => {
-    proxy.$modal.msgSuccess(text + "成功");
+    proxy.$modal.msgSuccess(t('business.ticket.template.statusChangeSuccess', { text }));
   }).catch(function () {
     row.status = row.status === "0" ? "1" : "0";
   });

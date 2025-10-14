@@ -109,6 +109,9 @@ CREATE TABLE `biz_maintenance` (
   `special_tools` text COMMENT '特殊工具',
   `steps` text COMMENT '执行步骤',
   `inspection_result` text COMMENT '巡检结果',
+  `planned_start_date` datetime DEFAULT NULL COMMENT 'Planned start date',
+  `planned_end_date` datetime DEFAULT NULL COMMENT 'Planned end date',
+  `item_count` int DEFAULT NULL COMMENT 'Maintenance item count',
   `submit_time` datetime COMMENT '提交时间',
   `applicant_id` bigint(20) COMMENT '申请人ID',
   `applicant_name` varchar(50) COMMENT '申请人姓名',
@@ -211,4 +214,4 @@ INSERT INTO `biz_ticket` VALUES
 
 -- 插入示例维保计划
 INSERT INTO `biz_maintenance` VALUES 
-(1, 'MP202501001', '1楼月度维保计划', '1', 'V1.0', 'monthly', '配电系统月检', '确保配电系统稳定运行', '每月一次', 1, 'month', 1, 'admin', 'draft', NULL, NULL, 'pending', DATE_ADD(NOW(), INTERVAL 1 MONTH), NULL, '1,2,3', NULL, '万用表、绝缘电阻测试仪', '清洁剂、抹布', '绝缘手套、护目镜', NULL, '1.检查配电柜\n2.测试绝缘电阻\n3.紧固接线端子', NULL, NULL, 1, 'admin', '0', 'admin', NOW(), 'admin', NOW(), NULL);
+(1, 'MP202501001', '1¥�¶�ά���ƻ�', '1', 'V1.0', 'monthly', '���ϵͳ�¼�', 'ȷ�����ϵͳ�ȶ�����', 'ÿ��һ��', 1, 'month', 1, 'admin', 'draft', NULL, NULL, 'pending', DATE_ADD(NOW(), INTERVAL 1 MONTH), NULL, '1,2,3', NULL, '���ñ�����Ե���������', '������Ĩ��', '��Ե���ס���Ŀ��', NULL, '1.�������\n2.���Ծ�Ե����\n3.���̽��߶���', NULL, DATE_ADD(NOW(), INTERVAL 1 MONTH), DATE_ADD(NOW(), INTERVAL 1 MONTH), 3, NULL, 1, 'admin', '0', 'admin', NOW(), 'admin', NOW(), NULL);

@@ -3,13 +3,13 @@
     <el-card class="header-card">
       <div class="header-content">
         <div class="header-left">
-          <el-button link type="primary" icon="Back" @click="handleClose">返回列表</el-button>
+          <el-button link type="primary" icon="Back" @click="handleClose">{{ $t('business.inspection.action.backToList') }}</el-button>
         </div>
         <div class="header-center">
-          <h2>巡检详情 - {{ form.inspectionNo || '-' }}</h2>
+          <h2>{{ $t('business.inspection.message.detailTitle') }} - {{ form.inspectionNo || '-' }}</h2>
         </div>
         <div class="header-right">
-          <el-button type="primary" icon="Document" @click="() => generateTicketsByIds(selectedAnomalyIds)" :loading="generating" :disabled="generating">生成工单</el-button>
+          <el-button type="primary" icon="Document" @click="() => generateTicketsByIds(selectedAnomalyIds)" :loading="generating" :disabled="generating">{{ $t('business.inspection.action.generateTickets') }}</el-button>
         </div>
       </div>
     </el-card>
@@ -17,10 +17,10 @@
     <el-card class="items-card" v-loading="loading">
       <template #header>
         <div class="card-header">
-          <span class="descriptions-title">异常项汇总</span>
+          <span class="descriptions-title">{{ $t('business.inspection.message.anomalySummary') }}</span>
           <div>
-            <el-button text size="small" @click="selectAllAnomalies">全选</el-button>
-            <el-button text size="small" @click="clearSelectedAnomalies">清空</el-button>
+            <el-button text size="small" @click="selectAllAnomalies">{{ $t('business.inspection.action.selectAll') }}</el-button>
+            <el-button text size="small" @click="clearSelectedAnomalies">{{ $t('business.inspection.action.clearSelection') }}</el-button>
           </div>
         </div>
       </template>
@@ -30,8 +30,8 @@
             <div class="anomaly-header">
               <el-checkbox :label="item.id" style="margin-right: 10px" />
               <span class="anomaly-index">{{ index + 1 }}</span>
-              <span class="anomaly-title">{{ item.label || item.itemName || ('异常项' + (index+1)) }}</span>
-              <el-button v-if="!item.ticketId" link type="primary" size="small" @click="(e) => onItemGenerate(item, e)" :loading="generating" :disabled="generating">生成工单</el-button>
+              <span class="anomaly-title">{{ item.label || item.itemName || (t('business.inspection.message.anomaly_item', { index: index + 1 })) }}</span>
+              <el-button v-if="!item.ticketId" link type="primary" size="small" @click="(e) => onItemGenerate(item, e)" :loading="generating" :disabled="generating">{{ $t('business.inspection.action.generateTickets') }}</el-button>
             </div>
           </div>
         </el-checkbox-group>
@@ -44,7 +44,9 @@
 import { ref, computed, getCurrentInstance } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { generateTickets } from '@/api/business/inspection'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
@@ -68,14 +70,14 @@ function resolveInspectionId(){
 
 async function generateTicketsByIds(ids){
   if (!Array.isArray(ids) || ids.length === 0) {
-    proxy?.$modal?.msgWarning?.('请先选择异常项')
+    proxy?.$modal?.msgWarning?.(t('business.inspection.message.selectAnomalyFirst'))
     return
   }
   if (generating.value) return
   // 先置为 loading，防止用户重复点击；若用户取消再回滚
   generating.value = true
   try {
-    await proxy?.$modal?.confirm?.('确认生成工单吗？')
+    await proxy?.$modal?.confirm?.(t('business.inspection.message.confirmGenerateTicketsForAnomaly'))
   } catch {
     generating.value = false
     return
@@ -84,9 +86,9 @@ async function generateTicketsByIds(ids){
     const resp = await generateTickets(resolveInspectionId(), ids)
     const created = (resp && (resp.data || resp.rows)) || []
     const n = Array.isArray(created) ? created.length : (created ? 1 : 0)
-    proxy?.$modal?.msgSuccess?.(`已生成 ${n} 个工单`)
+    proxy?.$modal?.msgSuccess?.(t('business.inspection.message.generateTicketsSuccess2', { count: n }))
     try {
-      await proxy?.$modal?.confirm?.('是否查看生成的工单？')
+      await proxy?.$modal?.confirm?.(t('business.inspection.message.confirmViewTicket'))
       const first = Array.isArray(created) ? created[0] : created
       const tid = first && (first.ticketId ?? first.id ?? first.ticketNo ?? first.ticket_no)
       if (tid) router.push('/business/ticket/detail/' + tid)
@@ -107,7 +109,7 @@ function onItemGenerate(item, e){
 
 async function generateSelectedTickets(){
   if (!selectedAnomalyIds.value || selectedAnomalyIds.value.length === 0){
-    proxy?.$modal?.msgWarning?.('请先选择异常项')
+    proxy?.$modal?.msgWarning?.(t('business.inspection.message.selectAnomalyFirst'))
     return
   }
   await generateTicketsByIds(selectedAnomalyIds.value)

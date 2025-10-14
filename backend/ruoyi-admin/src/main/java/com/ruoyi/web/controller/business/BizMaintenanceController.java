@@ -44,7 +44,7 @@ public class BizMaintenanceController extends BaseController {
         String obc = pd.getOrderByColumn();
         String isAsc = pd.getIsAsc();
         java.util.Set<String> whitelist = new java.util.HashSet<>(java.util.Arrays.asList(
-                "planId", "title", "version", "approvalStatus", "executionStatus", "lastStatusTime", "createTime"));
+                "planId", "planNo", "title", "version", "approvalStatus", "executionStatus", "lastExecutionTime", "nextExecutionTime", "createTime", "updateTime"));
         String safeOrderBy = "";
         if (StringUtils.isNotEmpty(obc) && whitelist.contains(obc)) {
             safeOrderBy = com.ruoyi.common.utils.StringUtils.toUnderScoreCase(obc) + " " + (StringUtils.isEmpty(isAsc) ? "asc" : isAsc);

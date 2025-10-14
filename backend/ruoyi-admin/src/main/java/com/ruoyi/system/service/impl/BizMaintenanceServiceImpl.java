@@ -1,7 +1,9 @@
 package com.ruoyi.system.service.impl;
 
 import java.util.List;
+import java.util.Date;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.common.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.BizMaintenanceMapper;
@@ -29,7 +31,9 @@ public class BizMaintenanceServiceImpl implements IBizMaintenanceService
     @Override
     public BizMaintenance selectBizMaintenanceByPlanId(Long planId)
     {
-        return bizMaintenanceMapper.selectBizMaintenanceByPlanId(planId);
+        BizMaintenance plan = bizMaintenanceMapper.selectBizMaintenanceByPlanId(planId);
+        applyDerivedFields(plan);
+        return plan;
     }
 
     /**
@@ -41,7 +45,9 @@ public class BizMaintenanceServiceImpl implements IBizMaintenanceService
     @Override
     public List<BizMaintenance> selectBizMaintenanceList(BizMaintenance bizMaintenance)
     {
-        return bizMaintenanceMapper.selectBizMaintenanceList(bizMaintenance);
+        List<BizMaintenance> list = bizMaintenanceMapper.selectBizMaintenanceList(bizMaintenance);
+        applyDerivedFields(list);
+        return list;
     }
 
     /**
@@ -105,4 +111,89 @@ public class BizMaintenanceServiceImpl implements IBizMaintenanceService
     {
         return bizMaintenanceMapper.deleteBizMaintenanceByPlanId(planId);
     }
+
+    private void applyDerivedFields(List<BizMaintenance> plans)
+    {
+        if (plans == null || plans.isEmpty())
+        {
+            return;
+        }
+        for (BizMaintenance plan : plans)
+        {
+            applyDerivedFields(plan);
+        }
+    }
+
+    private void applyDerivedFields(BizMaintenance plan)
+    {
+        if (plan == null)
+        {
+            return;
+        }
+        if (plan.getPlannedStartDate() == null)
+        {
+            plan.setPlannedStartDate(coalesce(
+                    plan.getNextExecutionTime(),
+                    plan.getLastExecutionTime(),
+                    plan.getCreateTime()));
+        }
+        if (plan.getPlannedEndDate() == null)
+        {
+            plan.setPlannedEndDate(coalesce(
+                    plan.getNextExecutionTime(),
+                    plan.getLastExecutionTime(),
+                    plan.getCreateTime()));
+        }
+        if (plan.getItemCount() == null)
+        {
+            Integer derived = deriveItemCount(plan.getSteps());
+            if (derived != null)
+            {
+                plan.setItemCount(derived);
+            }
+        }
+    }
+
+    private Date coalesce(Date... candidates)
+    {
+        if (candidates == null)
+        {
+            return null;
+        }
+        for (Date candidate : candidates)
+        {
+            if (candidate != null)
+            {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private Integer deriveItemCount(String steps)
+    {
+        if (StringUtils.isBlank(steps))
+        {
+            return null;
+        }
+        String normalized = steps
+                .replace("\r", "\n")
+                .replaceAll("(?i)</li>", "\n")
+                .replaceAll("(?i)<li[^>]*>", "\n")
+                .replaceAll("(?i)<br\\s*/?>", "\n")
+                .replaceAll("(?i)&nbsp;", " ")
+                .replaceAll("<[^>]+>", " ");
+        String[] segments = normalized.split("\n");
+        int count = 0;
+        for (String segment : segments)
+        {
+            String compact = segment.replaceAll("\\s+", "");
+            if (StringUtils.isNotEmpty(compact))
+            {
+                count++;
+            }
+        }
+        return count > 0 ? count : null;
+    }
+
 }

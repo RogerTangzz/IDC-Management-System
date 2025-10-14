@@ -1,0 +1,81 @@
+{
+  "login": {
+    "title": "用户登录",
+    "account": "账号",
+    "password": "密码",
+    "code": "验证码",
+    "rememberMe": "记住密码",
+    "loginBtn": "登 录",
+    "loggingIn": "登 录 中...",
+    "register": "立即注册",
+    "validation": {
+      "accountRequired": "请输入您的账号",
+      "passwordRequired": "请输入您的密码",
+      "codeRequired": "请输入验证码"
+    },
+    "confirm": {
+      "logout": "确定注销并退出系统吗？",
+      "logoutTitle": "提示"
+    },
+    "footer": "Copyright © 2018-2025 ruoyi.vip All Rights Reserved."
+  },
+  "navbar": {
+    "message": {
+      "unread": "未读消息",
+      "more": "更多",
+      "markAllRead": "全部已读",
+      "noUnread": "暂无未读",
+      "markRead": "已读"
+    },
+    "tooltip": {
+      "sourceCode": "源码地址",
+      "docs": "文档地址",
+      "theme": "主题模式",
+      "size": "布局大小"
+    },
+    "user": {
+      "profile": "个人中心",
+      "layout": "布局设置",
+      "logout": "退出登录"
+    },
+    "confirm": {
+      "ok": "确定",
+      "cancel": "取消"
+    }
+  },
+  "dashboard": {
+    "title": "若依后台管理框架",
+    "description": "一直想做一款后台管理系统，看了很多优秀的开源项目但是发现没有合适自己的。于是利用空闲休息时间开始自己写一套后台系统。如此有了若依管理系统，她可以用于所有的Web应用程序，如网站管理后台，网站会员中心，CMS，CRM，OA等等，当然，您也可以对她进行深度定制，以做出更强系统。所有前端后台代码封装过后十分精简易上手，出错概率低。同时支持移动客户端访问。系统会陆续更新一些实用功能。",
+    "version": "当前版本",
+    "free": "免费开源",
+    "visitGitee": "访问码云",
+    "visitHome": "访问主页",
+    "techStack": "技术选型",
+    "backend": "后端技术",
+    "frontend": "前端技术",
+    "contact": "联系信息",
+    "updateLog": "更新日志",
+    "donate": "捐赠支持",
+    "donateText": "你可以请作者喝杯咖啡表示鼓励",
+    "summary": {
+      "todayNew": "今日新增工单",
+      "todayCompleted": "今日完成工单",
+      "open": "进行中(非关闭)工单",
+      "nearDue": "即将超时",
+      "overdue": "已逾期待办",
+      "unread": "未读消息"
+    }
+  },
+  "error": {
+    "401": {
+      "title": "您无权访问该页面",
+      "subtitle": "您没有访问该资源的权限，请联系管理员授权",
+      "backHome": "返回首页"
+    },
+    "404": {
+      "title": "页面不存在",
+      "subtitle": "抱歉，您访问的页面不存在",
+      "backHome": "返回首页"
+    }
+  }
+}

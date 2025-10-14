@@ -3,19 +3,19 @@
     <el-card shadow="never">
       <template #header>
         <div class="header">
-          <span>机柜 U 位图 - #{{ rackId }}</span>
+          <span>{{ $t('business.asset.rack.detail.title') }} - #{{ rackId }}</span>
           <div>
-            <el-button type="primary" @click="applyOccupy">占用所选</el-button>
-            <el-button @click="applyRelease">释放所选</el-button>
-            <el-button @click="getUnits">刷新</el-button>
+            <el-button type="primary" @click="applyOccupy">{{ $t('business.asset.rack.action.occupy') }}</el-button>
+            <el-button @click="applyRelease">{{ $t('business.asset.rack.action.release') }}</el-button>
+            <el-button @click="getUnits">{{ $t('business.asset.rack.action.refresh') }}</el-button>
           </div>
         </div>
       </template>
       <div class="rack">
         <div v-for="u in units" :key="u.uIndex" class="urow" :class="{ occ: u.occupied==='Y', sel: selected.has(u.uIndex) }" @click="toggle(u.uIndex)">
-          <div class="u-index">U{{ u.uIndex }}</div>
+          <div class="u-index">{{ $t('business.asset.rack.field.uIndex') }}{{ u.uIndex }}</div>
           <div class="u-body">
-            <div class="u-label">{{ u.label || (u.occupied==='Y'?'占用':'空闲') }}</div>
+            <div class="u-label">{{ u.label || (u.occupied==='Y' ? $t('business.asset.rack.uStatus.occupied') : $t('business.asset.rack.uStatus.free')) }}</div>
             <div class="u-owner" v-if="u.owner">{{ u.owner }}</div>
           </div>
         </div>
@@ -26,8 +26,11 @@
 
 <script setup name="RackDetail">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { getRackUnits, occupyUnits } from '@/api/business/asset'
+
+const { t } = useI18n()
 const route = useRoute()
 const rackId = route.params.rackId
 const units = ref([])

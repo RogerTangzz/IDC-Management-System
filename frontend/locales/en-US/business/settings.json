@@ -1,0 +1,25 @@
+{
+  "sla": {
+    "title": "SLA Threshold Settings",
+    "field": {
+      "enabled": "Enable SLA Reminder",
+      "warnBeforeHours": "Warning Threshold (Hours)",
+      "lowHours": "Low Priority Time Limit (Hours)",
+      "mediumHours": "Medium Priority Time Limit (Hours)",
+      "highHours": "High Priority Time Limit (Hours)"
+    },
+    "action": {
+      "save": "Save",
+      "reset": "Reset"
+    },
+    "validation": {
+      "warnBeforeHoursRequired": "Please enter threshold",
+      "lowHoursRequired": "Please enter low priority time limit",
+      "mediumHoursRequired": "Please enter medium priority time limit",
+      "highHoursRequired": "Please enter high priority time limit"
+    },
+    "message": {
+      "saveSuccess": "Saved successfully"
+    }
+  }
+}

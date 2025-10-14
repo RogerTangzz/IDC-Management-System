@@ -3,10 +3,10 @@
     <el-card v-loading="loading">
       <template #header>
         <div class="card-header">
-          <span class="title">工单详情 - {{ form.ticketNo }}</span>
+          <span class="title">{{ $t('business.ticket.dialog.detailTitle') }} - {{ form.ticketNo }}</span>
           <div class="header-buttons">
-            <el-button link type="primary" icon="Refresh" @click="getDetail">刷新</el-button>
-            <el-button link type="primary" icon="Close" @click="handleClose">关闭</el-button>
+            <el-button link type="primary" icon="Refresh" @click="getDetail">{{ $t('business.ticket.action.refresh') }}</el-button>
+            <el-button link type="primary" icon="Close" @click="handleClose">{{ $t('business.ticket.action.close') }}</el-button>
           </div>
         </div>
       </template>
@@ -14,54 +14,54 @@
       <!-- 基础信息 -->
       <el-descriptions :column="3" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">基础信息</span>
+          <span class="descriptions-title">{{ $t('business.ticket.detail.basicInfo') }}</span>
         </template>
-        <el-descriptions-item label="工单编号">
+        <el-descriptions-item :label="$t('business.ticket.field.ticketNo')">
           <span class="text-primary">{{ form.ticketNo }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="工单状态">
+        <el-descriptions-item :label="$t('business.ticket.field.status')">
           <dict-tag :options="ticket_status" :value="form.status" />
         </el-descriptions-item>
-        <el-descriptions-item label="最新动作">
+        <el-descriptions-item :label="$t('business.ticket.field.latestAction')">
           <dict-tag :options="ticket_action" :value="form.lastAction" />
         </el-descriptions-item>
-        <el-descriptions-item label="最新状态时间">
+        <el-descriptions-item :label="$t('business.ticket.field.latestStatusTime')">
           {{ parseTime(form.lastStatusTime) || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="优先级">
+        <el-descriptions-item :label="$t('business.ticket.field.priority')">
           <dict-tag :options="ticket_priority" :value="form.priority" />
         </el-descriptions-item>
-        <el-descriptions-item label="工单标题" :span="3">
+        <el-descriptions-item :label="$t('business.ticket.field.title')" :span="3">
           {{ form.title }}
         </el-descriptions-item>
-        <el-descriptions-item label="处理时限">
+        <el-descriptions-item :label="$t('business.ticket.field.deadline')">
           <el-countdown v-if="form.status !== 'completed' && form.status !== 'closed'" :value="deadlineValue"
             format="HH:mm:ss" @finish="handleTimeout" />
           <span v-else>{{ parseTime(form.deadline) }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="剩余时间">
+        <el-descriptions-item :label="$t('business.ticket.message.remainTime')">
           <el-tag :type="getTimeoutType()">{{ getRemainTime() }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="指派给">
-          {{ form.assigneeName || '未指派' }}
+        <el-descriptions-item :label="$t('business.ticket.field.assigneeName')">
+          {{ form.assigneeName || $t('business.ticket.message.unassigned') }}
         </el-descriptions-item>
       </el-descriptions>
 
       <!-- 报修信息 -->
       <el-descriptions :column="2" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">报修信息</span>
+          <span class="descriptions-title">{{ $t('business.ticket.detail.reportInfo') }}</span>
         </template>
-        <el-descriptions-item label="报修人">
+        <el-descriptions-item :label="$t('business.ticket.field.reporterName')">
           {{ form.reporterName }}
         </el-descriptions-item>
-        <el-descriptions-item label="联系电话">
+        <el-descriptions-item :label="$t('business.ticket.field.reporterPhone')">
           {{ form.reporterPhone || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="报修时间">
+        <el-descriptions-item :label="$t('business.ticket.field.createTime')">
           {{ parseTime(form.createTime) }}
         </el-descriptions-item>
-        <el-descriptions-item label="发现时间">
+        <el-descriptions-item :label="$t('business.ticket.field.discoveryTime')">
           {{ parseTime(form.discoveryTime) }}
         </el-descriptions-item>
       </el-descriptions>
@@ -69,43 +69,43 @@
       <!-- 故障信息 -->
       <el-descriptions :column="2" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">故障信息</span>
+          <span class="descriptions-title">{{ $t('business.ticket.detail.faultInfo') }}</span>
         </template>
-        <el-descriptions-item label="故障设备">
+        <el-descriptions-item :label="$t('business.ticket.field.equipment')">
           {{ form.equipment }}
         </el-descriptions-item>
-        <el-descriptions-item label="设备专业">
+        <el-descriptions-item :label="$t('business.ticket.field.specialty')">
           <dict-tag :options="equipment_specialty" :value="form.specialty" />
         </el-descriptions-item>
-        <el-descriptions-item label="设备位置" :span="2">
+        <el-descriptions-item :label="$t('business.ticket.field.location')" :span="2">
           {{ form.location || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="故障描述" :span="2">
+        <el-descriptions-item :label="$t('business.ticket.field.description')" :span="2">
           <div class="description-content">{{ form.description }}</div>
         </el-descriptions-item>
-        <el-descriptions-item label="应急处置" :span="2">
-          <div class="description-content">{{ form.emergencyAction || '无' }}</div>
+        <el-descriptions-item :label="$t('business.ticket.field.emergencyAction')" :span="2">
+          <div class="description-content">{{ form.emergencyAction || $t('business.ticket.message.noFile') }}</div>
         </el-descriptions-item>
       </el-descriptions>
 
       <!-- 处理信息 -->
       <el-descriptions :column="2" border class="margin-bottom" v-if="form.status !== 'pending'">
         <template #title>
-          <span class="descriptions-title">处理信息</span>
+          <span class="descriptions-title">{{ $t('business.ticket.detail.processInfo') }}</span>
         </template>
-        <el-descriptions-item label="处理人">
+        <el-descriptions-item :label="$t('business.ticket.field.assignee')">
           {{ form.assigneeName || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="开始时间">
+        <el-descriptions-item :label="$t('business.ticket.field.startTime')">
           {{ parseTime(startTime) || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="处理方法" :span="2">
-          <div class="description-content">{{ form.solution || '处理中...' }}</div>
+        <el-descriptions-item :label="$t('business.ticket.field.solution')" :span="2">
+          <div class="description-content">{{ form.solution || $t('business.ticket.message.processing') }}</div>
         </el-descriptions-item>
-        <el-descriptions-item label="完成时间" v-if="form.status === 'completed' || form.status === 'closed'">
+        <el-descriptions-item :label="$t('business.ticket.field.completionTime')" v-if="form.status === 'completed' || form.status === 'closed'">
           {{ parseTime(form.completionTime) }}
         </el-descriptions-item>
-        <el-descriptions-item label="处理耗时" v-if="form.status === 'completed' || form.status === 'closed'">
+        <el-descriptions-item :label="$t('business.ticket.field.duration')" v-if="form.status === 'completed' || form.status === 'closed'">
           {{ form.duration || '-' }}
         </el-descriptions-item>
       </el-descriptions>
@@ -113,9 +113,9 @@
       <!-- 附件信息 -->
       <el-descriptions :column="1" border class="margin-bottom" v-if="form.attachments">
         <template #title>
-          <span class="descriptions-title">附件信息</span>
+          <span class="descriptions-title">{{ $t('business.ticket.detail.attachmentInfo') }}</span>
         </template>
-        <el-descriptions-item label="附件列表">
+        <el-descriptions-item :label="$t('business.ticket.detail.attachmentList')">
           <div class="attachment-list">
             <div v-for="(file, index) in attachmentList" :key="index" class="attachment-item">
               <el-link :href="file.url" target="_blank" :underline="false">
@@ -132,15 +132,15 @@
       <!-- 操作日志 -->
       <el-descriptions :column="1" border class="margin-bottom">
         <template #title>
-          <span class="descriptions-title">操作日志</span>
+          <span class="descriptions-title">{{ $t('business.ticket.detail.operationLog') }}</span>
         </template>
         <el-descriptions-item label="">
           <div class="log-filters">
-            <el-select v-model="logFilters.action" placeholder="动作" clearable size="small" style="width:130px;margin-right:8px" @change="reloadLogs">
+            <el-select v-model="logFilters.action" :placeholder="$t('business.ticket.field.latestAction')" clearable size="small" style="width:130px;margin-right:8px" @change="reloadLogs">
               <el-option v-for="opt in actionOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
             </el-select>
-            <el-date-picker v-model="logFilters.daterange" type="datetimerange" range-separator="至" start-placeholder="开始时间" end-placeholder="结束时间" size="small" value-format="YYYY-MM-DD HH:mm:ss" @change="reloadLogs" style="margin-right:8px" />
-            <el-button size="small" icon="Refresh" @click="resetLogFilters">重置</el-button>
+            <el-date-picker v-model="logFilters.daterange" type="datetimerange" range-separator="至" :start-placeholder="$t('business.ticket.field.startTime')" :end-placeholder="$t('business.ticket.report.endDate')" size="small" value-format="YYYY-MM-DD HH:mm:ss" @change="reloadLogs" style="margin-right:8px" />
+            <el-button size="small" icon="Refresh" @click="resetLogFilters">{{ $t('business.ticket.action.reset') }}</el-button>
           </div>
           <el-timeline>
             <el-timeline-item v-for="(log, index) in logList" :key="index" :timestamp="parseTime(log.createTime)"
@@ -148,7 +148,7 @@
               <div class="log-content">
                 <span class="log-user">{{ log.operatorName || log.userName || '-' }}</span>
                 <span class="log-action">{{ actionLabel(log.action) }}<span v-if="log.oldStatus || log.newStatus">：{{ log.oldStatus || '-' }} → {{ log.newStatus || '-' }}</span></span>
-                <div class="log-remark" v-if="log.remark">备注：{{ log.remark }}</div>
+                <div class="log-remark" v-if="log.remark">{{ $t('business.ticket.logAction.remark') }}：{{ log.remark }}</div>
               </div>
             </el-timeline-item>
           </el-timeline>
@@ -170,68 +170,68 @@
       <!-- 操作按钮 -->
       <div class="action-buttons">
         <el-button type="primary" icon="Edit" @click="handleEdit" v-hasPermi="['business:ticket:edit']"
-          v-if="form.status !== 'closed'">编辑</el-button>
+          v-if="form.status !== 'closed'">{{ $t('business.ticket.action.edit') }}</el-button>
 
         <el-button type="success" icon="User" @click="handleAssign" v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'pending'">指派</el-button>
+          v-if="form.status === 'pending'">{{ $t('business.ticket.action.assign') }}</el-button>
 
         <el-button type="warning" icon="VideoPlay" @click="handleStart" v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'assigned'">开始处理</el-button>
+          v-if="form.status === 'assigned'">{{ $t('business.ticket.action.start') }}</el-button>
 
         <el-button type="success" icon="CircleCheck" @click="handleComplete" v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'processing'">完成工单</el-button>
+          v-if="form.status === 'processing'">{{ $t('business.ticket.action.complete') }}</el-button>
 
         <el-button type="danger" icon="CircleClose" @click="handleCloseTicket" v-hasPermi="['business:ticket:edit']"
-          v-if="form.status === 'completed'">关闭工单</el-button>
-  <el-button type="warning" icon="RefreshLeft" @click="handleReopen" v-hasPermi="['business:ticket:reopen']" v-if="form.status === 'closed'">重新打开</el-button>
+          v-if="form.status === 'completed'">{{ $t('business.ticket.action.closeTicket') }}</el-button>
+  <el-button type="warning" icon="RefreshLeft" @click="handleReopen" v-hasPermi="['business:ticket:reopen']" v-if="form.status === 'closed'">{{ $t('business.ticket.action.reopen') }}</el-button>
 
-        <el-button type="info" icon="Printer" @click="handlePrint">打印</el-button>
+        <el-button type="info" icon="Printer" @click="handlePrint">{{ $t('business.ticket.action.print') }}</el-button>
 
-        <el-button icon="Back" @click="handleClose">返回</el-button>
+        <el-button icon="Back" @click="handleClose">{{ $t('business.ticket.action.back') }}</el-button>
       </div>
     </el-card>
 
     <!-- 指派对话框 -->
-    <el-dialog title="指派工单" v-model="assignOpen" width="500px" append-to-body>
+    <el-dialog :title="$t('business.ticket.dialog.assignTitle')" v-model="assignOpen" width="500px" append-to-body>
       <el-form ref="assignRef" :model="assignForm" :rules="assignRules" label-width="80px">
-        <el-form-item label="指派给" prop="assigneeId">
-          <el-select v-model="assignForm.assigneeId" placeholder="请选择处理人员">
+        <el-form-item :label="$t('business.ticket.field.assigneeName')" prop="assigneeId">
+          <el-select v-model="assignForm.assigneeId" :placeholder="$t('business.ticket.placeholder.selectAssigneeShort')">
             <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="assignForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        <el-form-item :label="$t('business.ticket.field.remark')" prop="remark">
+          <el-input v-model="assignForm.remark" type="textarea" :rows="3" :placeholder="$t('business.ticket.placeholder.inputRemark')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitAssign">确 定</el-button>
-          <el-button @click="assignOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitAssign">{{ $t('business.ticket.message.confirm') }}</el-button>
+          <el-button @click="assignOpen = false">{{ $t('business.ticket.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- 完成对话框 -->
-    <el-dialog title="完成工单" v-model="completeOpen" width="600px" append-to-body>
+    <el-dialog :title="$t('business.ticket.dialog.completeTitle')" v-model="completeOpen" width="600px" append-to-body>
       <el-form ref="completeRef" :model="completeForm" :rules="completeRules" label-width="100px">
-        <el-form-item label="处理方法" prop="solution">
-          <el-input v-model="completeForm.solution" type="textarea" :rows="4" placeholder="请输入处理方法" />
+        <el-form-item :label="$t('business.ticket.field.solution')" prop="solution">
+          <el-input v-model="completeForm.solution" type="textarea" :rows="4" :placeholder="$t('business.ticket.placeholder.inputSolution')" />
         </el-form-item>
-        <el-form-item label="处理结果" prop="result">
+        <el-form-item :label="$t('business.ticket.field.result')" prop="result">
           <el-radio-group v-model="completeForm.result">
-            <el-radio label="resolved">已解决</el-radio>
-            <el-radio label="temporary">临时处理</el-radio>
-            <el-radio label="transferred">转其他部门</el-radio>
+            <el-radio label="resolved">{{ $t('business.ticket.result.resolved') }}</el-radio>
+            <el-radio label="temporary">{{ $t('business.ticket.result.temporary') }}</el-radio>
+            <el-radio label="transferred">{{ $t('business.ticket.result.transferred') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="completeForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        <el-form-item :label="$t('business.ticket.field.remark')" prop="remark">
+          <el-input v-model="completeForm.remark" type="textarea" :rows="3" :placeholder="$t('business.ticket.placeholder.inputRemark')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitComplete">确 定</el-button>
-          <el-button @click="completeOpen = false">取 消</el-button>
+          <el-button type="primary" @click="submitComplete">{{ $t('business.ticket.message.confirm') }}</el-button>
+          <el-button @click="completeOpen = false">{{ $t('business.ticket.message.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -244,8 +244,11 @@ import { getTicket, assignTickets, updateTicket } from '@/api/business/ticket'
 import request from '@/utils/request'
 import { reopenTicket } from '@/api/business/ticket'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 // import { getTicket, updateTicket } from "@/api/business/ticket" // 后端集成后恢复
 // import { listUser } from "@/api/system/user" // 当前使用本地 mock
+
+const { t } = useI18n()
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -286,11 +289,11 @@ const completeForm = ref({
 
 // 验证规则
 const assignRules = {
-  assigneeId: [{ required: true, message: "请选择处理人员", trigger: "change" }]
+  assigneeId: [{ required: true, message: t("business.ticket.validation.assigneeRequired"), trigger: "change" }]
 }
 const completeRules = {
-  solution: [{ required: true, message: "请输入处理方法", trigger: "blur" }],
-  result: [{ required: true, message: "请选择处理结果", trigger: "change" }]
+  solution: [{ required: true, message: t("business.ticket.validation.solutionRequired"), trigger: "blur" }],
+  result: [{ required: true, message: t("business.ticket.validation.resultRequired"), trigger: "change" }]
 }
 
 /** 获取工单详情 */
@@ -316,7 +319,7 @@ function getRemainTime() {
   const diff = deadline - now
 
   if (diff <= 0) {
-    return '已超时'
+    return t('business.ticket.message.timeoutStatus')
   }
 
   const hours = Math.floor(diff / (1000 * 60 * 60))
@@ -327,14 +330,14 @@ function getRemainTime() {
 /** 获取超时类型 */
 function getTimeoutType() {
   const remain = getRemainTime()
-  if (remain === '已超时') return 'danger'
+  if (remain === t('business.ticket.message.timeoutStatus')) return 'danger'
   if (remain.includes('小时') && parseInt(remain) < 2) return 'warning'
   return 'success'
 }
 
 /** 超时处理 */
 function handleTimeout() {
-  proxy.$modal.msgWarning("工单已超时，请尽快处理")
+  proxy.$modal.msgWarning(t("business.ticket.message.timeout"))
 }
 
 /** 编辑 */
@@ -359,7 +362,7 @@ function submitAssign() {
     const user = userList.value.find(u => u.userId === assignForm.value.assigneeId)
     if (!user) return
     await assignTickets({ ticketIds: [ticketId], assigneeId: user.userId, assigneeName: user.nickName })
-    proxy.$modal.msgSuccess('指派成功')
+    proxy.$modal.msgSuccess(t('business.ticket.message.assignSuccess'))
     assignOpen.value = false
     getDetail()
   })
@@ -367,9 +370,9 @@ function submitAssign() {
 
 /** 开始处理 */
 function handleStart() {
-  proxy.$modal.confirm('确认开始处理该工单吗？').then(async () => {
+  proxy.$modal.confirm(t('business.ticket.message.confirmStart')).then(async () => {
     await request.post(`/business/ticket/start/${ticketId}`)
-    proxy.$modal.msgSuccess('已开始处理')
+    proxy.$modal.msgSuccess(t('business.ticket.message.startSuccess'))
     getDetail()
   }).catch(() => { })
 }
@@ -389,7 +392,7 @@ function submitComplete() {
   proxy.$refs["completeRef"].validate(async valid => {
     if (!valid) return
     await request.post('/business/ticket/complete', { ticketId, solution: completeForm.value.solution, result: completeForm.value.result })
-    proxy.$modal.msgSuccess('工单已完成')
+    proxy.$modal.msgSuccess(t('business.ticket.message.completeSuccess'))
     completeOpen.value = false
     getDetail()
   })
@@ -397,18 +400,18 @@ function submitComplete() {
 
 /** 关闭工单 */
 function handleCloseTicket() {
-  proxy.$modal.confirm('确认关闭该工单吗？').then(async () => {
+  proxy.$modal.confirm(t('business.ticket.message.confirmClose')).then(async () => {
     await request.post(`/business/ticket/close/${ticketId}`)
-    proxy.$modal.msgSuccess('工单已关闭')
+    proxy.$modal.msgSuccess(t('business.ticket.message.closeSuccess'))
     getDetail()
   }).catch(() => { })
 }
 
 /** 重新打开 */
 function handleReopen(){
-  proxy.$modal.confirm('确认重新打开该工单？').then(async ()=>{
+  proxy.$modal.confirm(t('business.ticket.message.confirmReopen')).then(async ()=>{
     await reopenTicket(ticketId)
-    proxy.$modal.msgSuccess('工单已重新打开')
+    proxy.$modal.msgSuccess(t('business.ticket.message.reopenSuccess'))
     getDetail()
   }).catch(()=>{})
 }

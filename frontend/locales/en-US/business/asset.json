@@ -1,0 +1,43 @@
+{
+  "rack": {
+    "field": {
+      "code": "Rack Code",
+      "roomId": "Room",
+      "uTotal": "Total U",
+      "occupancyRate": "Occupancy Rate",
+      "powerRated": "Rated Power(W)",
+      "powerCurrent": "Current Power(W)",
+      "status": "Status",
+      "uIndex": "U Position"
+    },
+    "status": {
+      "normal": "Normal",
+      "reserved": "Reserved",
+      "fault": "Fault",
+      "offline": "Offline"
+    },
+    "uStatus": {
+      "occupied": "Occupied",
+      "free": "Free"
+    },
+    "action": {
+      "query": "Search",
+      "reset": "Reset",
+      "export": "Export",
+      "detail": "Detail",
+      "refresh": "Refresh",
+      "occupy": "Occupy Selected",
+      "release": "Release Selected"
+    },
+    "placeholder": {
+      "selectRoom": "Please select room",
+      "selectStatus": "Please select status"
+    },
+    "message": {
+      "exportNotImplemented": "Export function is not implemented yet"
+    },
+    "detail": {
+      "title": "Rack U Position Map"
+    }
+  }
+}

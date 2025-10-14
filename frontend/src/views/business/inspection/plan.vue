@@ -2,23 +2,23 @@
   <div class="inspection-plan">
     <!-- 搜索区域 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true">
-      <el-form-item label="计划名称" prop="planName">
-        <el-input v-model="queryParams.planName" placeholder="请输入计划名称" clearable @keyup.enter="handleQuery" />
+      <el-form-item :label="$t('business.inspection.plan.planName')" prop="planName">
+        <el-input v-model="queryParams.planName" :placeholder="$t('business.inspection.placeholder_plan.inputPlanName')" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="楼层" prop="floor">
-        <el-select v-model="queryParams.floor" placeholder="请选择楼层" clearable>
+      <el-form-item :label="$t('business.inspection.plan.floor')" prop="floor">
+        <el-select v-model="queryParams.floor" :placeholder="$t('business.inspection.placeholder_plan.selectFloor')" clearable>
           <el-option v-for="floor in FLOORS" :key="floor.value" :label="floor.label" :value="floor.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="状态" prop="enabled">
-        <el-select v-model="queryParams.enabled" placeholder="请选择状态" clearable>
-          <el-option label="启用" :value="true" />
-          <el-option label="停用" :value="false" />
+      <el-form-item :label="$t('business.inspection.plan.status')" prop="enabled">
+        <el-select v-model="queryParams.enabled" :placeholder="$t('business.inspection.placeholder_plan.selectStatus')" clearable>
+          <el-option :label="$t('business.inspection.plan.enabled')" :value="true" />
+          <el-option :label="$t('business.inspection.plan.disabled')" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('business.inspection.action.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ $t('business.inspection.action.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
@@ -26,41 +26,41 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd"
-          v-hasPermi="['inspection:plan:add']">新建计划</el-button>
+          v-hasPermi="['inspection:plan:add']">{{ $t('business.inspection.plan.addPlan') }}</el-button>
       </el-col>
     </el-row>
 
     <!-- 数据表格 -->
     <el-table v-loading="loading" :data="dataList">
-      <el-table-column label="序号" type="index" width="55" align="center" />
-      <el-table-column label="计划名称" align="center" prop="planName" />
-      <el-table-column label="楼层" align="center" prop="floor" width="80">
+      <el-table-column :label="$t('common.index')" type="index" width="55" align="center" />
+      <el-table-column :label="$t('business.inspection.plan.planName')" align="center" prop="planName" />
+      <el-table-column :label="$t('business.inspection.plan.floor')" align="center" prop="floor" width="80">
         <template #default="scope">
           {{ getFloorLabel(scope.row.floor) }}
         </template>
       </el-table-column>
-      <el-table-column label="执行频率" align="center" prop="frequency" width="100">
+      <el-table-column :label="$t('business.inspection.plan.frequency')" align="center" prop="frequency" width="100">
         <template #default="scope">
           {{ getFrequencyLabel(scope.row.frequency) }}
         </template>
       </el-table-column>
-      <el-table-column label="执行时间" align="center" prop="executionTime" width="100">
+      <el-table-column :label="$t('business.inspection.plan.executionTime')" align="center" prop="executionTime" width="100">
         <template #default="scope">
           <el-tag type="info">{{ scope.row.executionTime }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="执行日期" align="center" prop="executionDays" width="180">
+      <el-table-column :label="$t('business.inspection.plan.executionDays')" align="center" prop="executionDays" width="180">
         <template #default="scope">
           {{ getExecutionDaysLabel(scope.row) }}
         </template>
       </el-table-column>
-      <el-table-column label="负责人" align="center" prop="responsibleName" width="100" />
-      <el-table-column label="提醒时间" align="center" prop="reminderTime" width="100">
+      <el-table-column :label="$t('business.inspection.plan.responsibleName')" align="center" prop="responsibleName" width="100" />
+      <el-table-column :label="$t('business.inspection.plan.reminderTime')" align="center" prop="reminderTime" width="100">
         <template #default="scope">
           {{ getReminderLabel(scope.row.reminderTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="下次执行" align="center" prop="nextExecutionTime" width="160">
+      <el-table-column :label="$t('business.inspection.plan.nextExecutionTime')" align="center" prop="nextExecutionTime" width="160">
         <template #default="scope">
           <span v-if="scope.row.enabled">
             {{ parseTime(scope.row.nextExecutionTime) }}
@@ -68,19 +68,19 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" prop="enabled" width="80">
+      <el-table-column :label="$t('business.inspection.plan.status')" align="center" prop="enabled" width="80">
         <template #default="scope">
           <el-switch v-model="scope.row.enabled" @change="handleStatusChange(scope.row)" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="180">
+      <el-table-column :label="$t('common.action')" align="center" class-name="small-padding fixed-width" width="180">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['inspection:plan:edit']">修改</el-button>
+            v-hasPermi="['inspection:plan:edit']">{{ $t('business.inspection.action.edit') }}</el-button>
           <el-button link type="primary" icon="Timer" @click="handleExecute(scope.row)"
-            v-hasPermi="['inspection:execute']" :disabled="!scope.row.enabled">立即执行</el-button>
+            v-hasPermi="['inspection:execute']" :disabled="!scope.row.enabled">{{ $t('business.inspection.action.executePlan') }}</el-button>
           <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['inspection:plan:delete']">删除</el-button>
+            v-hasPermi="['inspection:plan:delete']">{{ $t('business.inspection.action.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -94,14 +94,14 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="计划名称" prop="planName">
-              <el-input v-model="form.planName" placeholder="请输入计划名称" />
+            <el-form-item :label="$t('business.inspection.plan.planName')" prop="planName">
+              <el-input v-model="form.planName" :placeholder="$t('business.inspection.placeholder_plan.inputPlanName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="巡检楼层" prop="floor">
-              <el-select v-model="form.floor" placeholder="请选择楼层">
-                <el-option v-for="floor in FLOORS" :key="floor.value" :label="`${floor.label} (${floor.itemCount}项)`"
+            <el-form-item :label="$t('business.inspection.plan.floor')" prop="floor">
+              <el-select v-model="form.floor" :placeholder="$t('business.inspection.placeholder_plan.selectFloor')">
+                <el-option v-for="floor in FLOORS" :key="floor.value" :label="t('business.inspection.plan.floorWithCount', { label: floor.label, count: floor.itemCount })"
                   :value="floor.value" />
               </el-select>
             </el-form-item>
@@ -110,40 +110,40 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="执行频率" prop="frequency">
-              <el-select v-model="form.frequency" placeholder="请选择执行频率" @change="handleFrequencyChange">
-                <el-option label="每日" value="daily" />
-                <el-option label="每周" value="weekly" />
-                <el-option label="每月" value="monthly" />
+            <el-form-item :label="$t('business.inspection.plan.frequency')" prop="frequency">
+              <el-select v-model="form.frequency" :placeholder="$t('business.inspection.placeholder_plan.selectFrequency')" @change="handleFrequencyChange">
+                <el-option :label="$t('business.inspection.plan.frequency_daily')" value="daily" />
+                <el-option :label="$t('business.inspection.plan.frequency_weekly')" value="weekly" />
+                <el-option :label="$t('business.inspection.plan.frequency_monthly')" value="monthly" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="执行时间" prop="executionTime">
+            <el-form-item :label="$t('business.inspection.plan.executionTime')" prop="executionTime">
               <el-time-select v-model="form.executionTime" start="00:00" step="00:30" end="23:30"
-                placeholder="选择执行时间" />
+                :placeholder="$t('business.inspection.placeholder_plan.selectExecutionTime')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item v-if="form.frequency === 'weekly'" label="执行星期" prop="weekDays">
+            <el-form-item v-if="form.frequency === 'weekly'" :label="$t('business.inspection.plan.weekDays')" prop="weekDays">
               <el-checkbox-group v-model="form.weekDays">
-                <el-checkbox label="1">周一</el-checkbox>
-                <el-checkbox label="2">周二</el-checkbox>
-                <el-checkbox label="3">周三</el-checkbox>
-                <el-checkbox label="4">周四</el-checkbox>
-                <el-checkbox label="5">周五</el-checkbox>
-                <el-checkbox label="6">周六</el-checkbox>
-                <el-checkbox label="0">周日</el-checkbox>
+                <el-checkbox label="1">{{ $t('business.inspection.plan.weekday_mon') }}</el-checkbox>
+                <el-checkbox label="2">{{ $t('business.inspection.plan.weekday_tue') }}</el-checkbox>
+                <el-checkbox label="3">{{ $t('business.inspection.plan.weekday_wed') }}</el-checkbox>
+                <el-checkbox label="4">{{ $t('business.inspection.plan.weekday_thu') }}</el-checkbox>
+                <el-checkbox label="5">{{ $t('business.inspection.plan.weekday_fri') }}</el-checkbox>
+                <el-checkbox label="6">{{ $t('business.inspection.plan.weekday_sat') }}</el-checkbox>
+                <el-checkbox label="0">{{ $t('business.inspection.plan.weekday_sun') }}</el-checkbox>
               </el-checkbox-group>
             </el-form-item>
 
-            <el-form-item v-if="form.frequency === 'monthly'" label="执行日期" prop="monthDays">
+            <el-form-item v-if="form.frequency === 'monthly'" :label="$t('business.inspection.plan.monthDays')" prop="monthDays">
               <el-checkbox-group v-model="form.monthDays">
                 <el-checkbox v-for="day in 31" :key="day" :label="String(day)">
-                  {{ day }}号
+                  {{ day }}{{ $t('business.inspection.plan.day_suffix') }}
                 </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
@@ -152,20 +152,20 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="负责人" prop="responsibleId">
-              <el-select v-model="form.responsibleId" placeholder="请选择负责人" filterable>
+            <el-form-item :label="$t('business.inspection.plan.responsibleName')" prop="responsibleId">
+              <el-select v-model="form.responsibleId" :placeholder="$t('business.inspection.placeholder_plan.selectResponsible')" filterable>
                 <el-option v-for="user in userList" :key="user.id" :label="user.nickName" :value="user.id" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="提前提醒" prop="reminderTime">
-              <el-select v-model="form.reminderTime" placeholder="请选择提醒时间">
-                <el-option label="不提醒" :value="0" />
-                <el-option label="15分钟前" :value="15" />
-                <el-option label="30分钟前" :value="30" />
-                <el-option label="1小时前" :value="60" />
-                <el-option label="2小时前" :value="120" />
+            <el-form-item :label="$t('business.inspection.plan.reminderTime')" prop="reminderTime">
+              <el-select v-model="form.reminderTime" :placeholder="$t('business.inspection.placeholder_plan.selectReminderTime')">
+                <el-option :label="$t('business.inspection.plan.reminder_none')" :value="0" />
+                <el-option :label="$t('business.inspection.plan.reminder_15min')" :value="15" />
+                <el-option :label="$t('business.inspection.plan.reminder_30min')" :value="30" />
+                <el-option :label="$t('business.inspection.plan.reminder_1hour')" :value="60" />
+                <el-option :label="$t('business.inspection.plan.reminder_2hour')" :value="120" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -173,8 +173,8 @@
 
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="通知人员" prop="notifyUserIds">
-              <el-select v-model="form.notifyUserIds" placeholder="请选择通知人员" multiple filterable>
+            <el-form-item :label="$t('business.inspection.plan.notifyUserIds')" prop="notifyUserIds">
+              <el-select v-model="form.notifyUserIds" :placeholder="$t('business.inspection.placeholder_plan.selectNotifyUsers')" multiple filterable>
                 <el-option v-for="user in userList" :key="user.id" :label="user.nickName" :value="user.id" />
               </el-select>
             </el-form-item>
@@ -183,15 +183,15 @@
 
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="备注" prop="remark">
-              <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注信息" />
+            <el-form-item :label="$t('business.inspection.field.remark')" prop="remark">
+              <el-input v-model="form.remark" type="textarea" :rows="3" :placeholder="$t('business.inspection.placeholder_plan.inputRemark')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="启用状态" prop="enabled">
+            <el-form-item :label="$t('business.inspection.plan.enabled_field')" prop="enabled">
               <el-switch v-model="form.enabled" />
             </el-form-item>
           </el-col>
@@ -199,8 +199,8 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="cancel">取消</el-button>
-        <el-button type="primary" @click="submitForm">确定</el-button>
+        <el-button @click="cancel">{{ $t('business.inspection.action.cancel') }}</el-button>
+        <el-button type="primary" @click="submitForm">{{ $t('business.inspection.action.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -210,10 +210,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 // 修正导入路径，原 '@/api/inspection' 不存在
 import { inspectionPlanApi } from '@/api/business'
 import { FLOORS } from './constants'
 
+const { t } = useI18n()
 const router = useRouter()
 const loading = ref(false)
 const dataList = ref([])
@@ -252,25 +254,25 @@ const form = ref({
 // 表单验证规则
 const rules = {
   planName: [
-    { required: true, message: '计划名称不能为空', trigger: 'blur' }
+    { required: true, message: () => t('business.inspection.validation_plan.planNameRequired'), trigger: 'blur' }
   ],
   floor: [
-    { required: true, message: '请选择巡检楼层', trigger: 'change' }
+    { required: true, message: () => t('business.inspection.validation_plan.floorRequired'), trigger: 'change' }
   ],
   frequency: [
-    { required: true, message: '请选择执行频率', trigger: 'change' }
+    { required: true, message: () => t('business.inspection.validation_plan.frequencyRequired'), trigger: 'change' }
   ],
   executionTime: [
-    { required: true, message: '请选择执行时间', trigger: 'change' }
+    { required: true, message: () => t('business.inspection.validation_plan.executionTimeRequired'), trigger: 'change' }
   ],
   responsibleId: [
-    { required: true, message: '请选择负责人', trigger: 'change' }
+    { required: true, message: () => t('business.inspection.validation_plan.responsibleIdRequired'), trigger: 'change' }
   ],
   weekDays: [
     {
       validator: (rule, value, callback) => {
         if (form.value.frequency === 'weekly' && (!value || value.length === 0)) {
-          callback(new Error('请选择执行星期'))
+          callback(new Error(t('business.inspection.validation_plan.weekDaysRequired')))
         } else {
           callback()
         }
@@ -282,7 +284,7 @@ const rules = {
     {
       validator: (rule, value, callback) => {
         if (form.value.frequency === 'monthly' && (!value || value.length === 0)) {
-          callback(new Error('请选择执行日期'))
+          callback(new Error(t('business.inspection.validation_plan.monthDaysRequired')))
         } else {
           callback()
         }
@@ -332,7 +334,7 @@ const resetQuery = () => {
 const handleAdd = () => {
   reset()
   open.value = true
-  title.value = '新建巡检计划'
+  title.value = t('business.inspection.plan.addPlan')
 }
 
 // 修改
@@ -342,19 +344,19 @@ const handleUpdate = async (row) => {
   // 获取详情
   form.value = { ...row }
   open.value = true
-  title.value = '修改巡检计划'
+  title.value = t('business.inspection.plan.editPlan')
 }
 
 // 删除
 const handleDelete = async (row) => {
-  await ElMessageBox.confirm('是否确认删除该巡检计划？', '系统提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  await ElMessageBox.confirm(t('business.inspection.plan.confirmDelete'), t('business.inspection.plan.systemPrompt'), {
+    confirmButtonText: t('business.inspection.action.confirm'),
+    cancelButtonText: t('business.inspection.action.cancel'),
     type: 'warning'
   })
 
   await inspectionPlanApi.delete(row.id)
-  ElMessage.success('删除成功')
+  ElMessage.success(t('business.inspection.message.deleteSuccess'))
   getList()
 }
 
@@ -362,7 +364,7 @@ const handleDelete = async (row) => {
 const handleStatusChange = async (row) => {
   try {
     await inspectionPlanApi.toggle(row.id, row.enabled)
-    ElMessage.success(row.enabled ? '启用成功' : '停用成功')
+    ElMessage.success(row.enabled ? t('business.inspection.plan.enableSuccess') : t('business.inspection.plan.disableSuccess'))
   } catch {
     row.enabled = !row.enabled
   }
@@ -370,9 +372,9 @@ const handleStatusChange = async (row) => {
 
 // 立即执行
 const handleExecute = (row) => {
-  ElMessageBox.confirm('是否立即执行该巡检计划？', '系统提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('business.inspection.plan.confirmExecute'), t('business.inspection.plan.systemPrompt'), {
+    confirmButtonText: t('business.inspection.action.confirm'),
+    cancelButtonText: t('business.inspection.action.cancel'),
     type: 'warning'
   }).then(() => {
     router.push(`/inspection/create?floor=${row.floor}`)
@@ -391,10 +393,10 @@ const submitForm = async () => {
 
   if (form.value.id) {
     await inspectionPlanApi.update(form.value.id, form.value)
-    ElMessage.success('修改成功')
+    ElMessage.success(t('business.inspection.message.updateSuccess'))
   } else {
     await inspectionPlanApi.create(form.value)
-    ElMessage.success('新增成功')
+    ElMessage.success(t('business.inspection.message.addSuccess'))
   }
 
   open.value = false
@@ -435,30 +437,38 @@ const getFloorLabel = (value) => {
 // 获取频率标签
 const getFrequencyLabel = (value) => {
   const map = {
-    daily: '每日',
-    weekly: '每周',
-    monthly: '每月'
+    daily: t('business.inspection.plan.frequency_daily'),
+    weekly: t('business.inspection.plan.frequency_weekly'),
+    monthly: t('business.inspection.plan.frequency_monthly')
   }
   return map[value] || value
 }
 
 // 获取提醒标签
 const getReminderLabel = (value) => {
-  if (value === 0) return '不提醒'
-  if (value < 60) return `${value}分钟前`
-  return `${value / 60}小时前`
+  if (value === 0) return t('business.inspection.plan.reminder_none')
+  if (value < 60) return t('business.inspection.plan.minutesBefore', { minutes: value })
+  return t('business.inspection.plan.hoursBefore', { hours: value / 60 })
 }
 
 // 获取执行日期标签
 const getExecutionDaysLabel = (row) => {
   if (row.frequency === 'daily') {
-    return '每天'
+    return t('business.inspection.plan.everyday')
   } else if (row.frequency === 'weekly') {
-    const weekMap = { '0': '日', '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六' }
-    const days = (row.weekDays || []).map(d => `周${weekMap[d]}`).join('、')
+    const weekMap = {
+      '0': t('business.inspection.plan.weekday_sun'),
+      '1': t('business.inspection.plan.weekday_mon'),
+      '2': t('business.inspection.plan.weekday_tue'),
+      '3': t('business.inspection.plan.weekday_wed'),
+      '4': t('business.inspection.plan.weekday_thu'),
+      '5': t('business.inspection.plan.weekday_fri'),
+      '6': t('business.inspection.plan.weekday_sat')
+    }
+    const days = (row.weekDays || []).map(d => weekMap[d]).join('、')
     return days || '-'
   } else if (row.frequency === 'monthly') {
-    const days = (row.monthDays || []).map(d => `${d}号`).join('、')
+    const days = (row.monthDays || []).map(d => `${d}${t('business.inspection.plan.day_suffix')}`).join('、')
     return days || '-'
   }
   return '-'

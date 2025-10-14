@@ -3,38 +3,38 @@
     <el-card shadow="never">
       <template #header>
         <div class="header">
-          <span>消息中心</span>
+          <span>{{ $t('business.message.title') }}</span>
           <div class="ops">
             <el-select v-model="filters.readFlag" size="small" style="width:120px;margin-right:8px" @change="reload">
-              <el-option label="未读" value="N" />
-              <el-option label="全部" value="ALL" />
-              <el-option label="已读" value="Y" />
+              <el-option :label="$t('business.message.readStatus.unread')" value="N" />
+              <el-option :label="$t('business.message.readStatus.all')" value="ALL" />
+              <el-option :label="$t('business.message.readStatus.read')" value="Y" />
             </el-select>
-            <el-select v-model="filters.type" size="small" clearable placeholder="类型" style="width:160px;margin-right:8px" @change="reload">
-              <el-option label="SLA预警" value="sla_warn" />
-              <el-option label="已超时" value="sla_overdue" />
-              <el-option label="指派" value="assign" />
-              <el-option label="开始处理" value="start" />
-              <el-option label="完成" value="complete" />
-              <el-option label="关闭" value="close" />
-              <el-option label="重新打开" value="reopen" />
+            <el-select v-model="filters.type" size="small" clearable :placeholder="$t('business.message.placeholder.type')" style="width:160px;margin-right:8px" @change="reload">
+              <el-option :label="$t('business.message.type.slaWarn')" value="sla_warn" />
+              <el-option :label="$t('business.message.type.slaOverdue')" value="sla_overdue" />
+              <el-option :label="$t('business.message.type.assign')" value="assign" />
+              <el-option :label="$t('business.message.type.start')" value="start" />
+              <el-option :label="$t('business.message.type.complete')" value="complete" />
+              <el-option :label="$t('business.message.type.close')" value="close" />
+              <el-option :label="$t('business.message.type.reopen')" value="reopen" />
             </el-select>
-            <el-button size="small" @click="getList">刷新</el-button>
-            <el-button type="primary" size="small" @click="readAll" v-if="filters.readFlag==='N'" >全部标记已读</el-button>
+            <el-button size="small" @click="getList">{{ $t('business.message.action.refresh') }}</el-button>
+            <el-button type="primary" size="small" @click="readAll" v-if="filters.readFlag==='N'" >{{ $t('business.message.action.markAllRead') }}</el-button>
           </div>
         </div>
       </template>
       <el-table :data="list" v-loading="loading">
-        <el-table-column label="类型" prop="type" width="120" />
-        <el-table-column label="标题" prop="title" />
-        <el-table-column label="内容" prop="content" />
-        <el-table-column label="时间" prop="createTime" width="180">
+        <el-table-column :label="$t('business.message.field.type')" prop="type" width="120" />
+        <el-table-column :label="$t('business.message.field.title')" prop="title" />
+        <el-table-column :label="$t('business.message.field.content')" prop="content" />
+        <el-table-column :label="$t('business.message.field.createTime')" prop="createTime" width="180">
           <template #default="scope">{{ parseTime(scope.row.createTime) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column :label="$t('common.action')" width="200">
           <template #default="scope">
-            <el-button type="primary" link @click="read(scope.row.msgId)">标记已读</el-button>
-            <el-button v-if="scope.row.bizType==='ticket'" type="primary" link @click="open(scope.row)">查看</el-button>
+            <el-button type="primary" link @click="read(scope.row.msgId)">{{ $t('business.message.action.markRead') }}</el-button>
+            <el-button v-if="scope.row.bizType==='ticket'" type="primary" link @click="open(scope.row)">{{ $t('business.message.action.view') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -51,9 +51,12 @@
 
 <script setup name="MessageCenter">
 import { ref, onMounted, getCurrentInstance } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { parseTime } from '@/utils/ruoyi'
 import { getUnreadMessages, markRead, getMessages, markAllRead } from '@/api/business/message'
+
+const { t } = useI18n()
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const list = ref([])
@@ -78,10 +81,10 @@ async function getList(){
 }
 async function read(id){
   await markRead(id)
-  proxy.$modal.msgSuccess('已标记已读')
+  proxy.$modal.msgSuccess(t('business.message.message.markedRead'))
   getList()
 }
-async function readAll(){ await markAllRead(); proxy.$modal.msgSuccess('全部已读'); getList() }
+async function readAll(){ await markAllRead(); proxy.$modal.msgSuccess(t('business.message.message.allMarkedRead')); getList() }
 function reload(){ query.value.pageNum = 1; getList() }
 function open(row){ if (row && row.bizType==='ticket' && row.bizId){ router.push(`/business/ticket/detail/${row.bizId}`) } }
 onMounted(getList)
