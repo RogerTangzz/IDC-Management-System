@@ -6,10 +6,10 @@ DC/IDC 运维管理系统（前端 RuoYi-Vue3 + 后端 RuoYi-Boot）。聚焦工
 
 - 前端
   - 进入 `frontend/`
-  - 安装依赖：`npm i`
-  - 开发：`npm run dev`
-  - 测试：`npm test` / `npm run test:run`
-  - 构建：`npm run build:prod`
+  - 安装依赖：`pnpm install`
+  - 开发：`pnpm run dev` 或 `pnpm dev`
+  - 测试：`pnpm test` / `pnpm run test:run`
+  - 构建：`pnpm run build:prod`
 
 - 后端
   - 进入 `backend/`
