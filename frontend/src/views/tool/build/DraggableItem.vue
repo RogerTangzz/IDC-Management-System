@@ -16,10 +16,10 @@
         </template>
       </draggable>
     </el-row>
-    <span class="drawing-item-copy" title="复制" @click.stop="copyItem(element)">
+    <span class="drawing-item-copy" :title="t('tool.build.actions.copy')" @click.stop="copyItem(element)">
       <el-icon><CopyDocument /></el-icon>
     </span>
-    <span class="drawing-item-delete" title="删除" @click.stop="deleteItem(index)">
+    <span class="drawing-item-delete" :title="t('tool.build.actions.delete')" @click.stop="deleteItem(index)">
       <el-icon><Delete /></el-icon>
     </span>
   </el-col>
@@ -27,7 +27,9 @@
 <script setup name="DraggableItem">
 import draggable from "vuedraggable/dist/vuedraggable.common"
 import render from '@/utils/generator/render'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps({
   element: Object,
   index: Number,

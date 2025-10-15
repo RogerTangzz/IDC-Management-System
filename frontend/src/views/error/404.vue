@@ -9,16 +9,16 @@
       </div>
       <div class="bullshit">
         <div class="bullshit__oops">
-          404错误!
+          404{{ t('core.error.404.title') }}
         </div>
         <div class="bullshit__headline">
           {{ message }}
         </div>
         <div class="bullshit__info">
-          对不起，您正在寻找的页面不存在。尝试检查URL的错误，然后按浏览器上的刷新按钮或尝试在我们的应用程序中找到其他内容。
+          {{ t('core.error.404.subtitle') }}
         </div>
         <router-link to="/index" class="bullshit__return-home">
-          返回首页
+          {{ t('core.error.404.backHome') }}
         </router-link>
       </div>
     </div>
@@ -26,8 +26,12 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 let message = computed(() => {
-  return '找不到网页！'
+  return t('core.error.404.title')
 })
 </script>
 

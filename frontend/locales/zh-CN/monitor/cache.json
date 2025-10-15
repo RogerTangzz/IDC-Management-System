@@ -1,0 +1,51 @@
+{
+  "field": {
+    "redisVersion": "Redis版本",
+    "runMode": "运行模式",
+    "port": "端口",
+    "clientCount": "客户端数",
+    "uptime": "运行时间(天)",
+    "usedMemory": "使用内存",
+    "usedCpu": "使用CPU",
+    "memoryConfig": "内存配置",
+    "aofEnabled": "AOF是否开启",
+    "rdbStatus": "RDB是否成功",
+    "keyCount": "Key数量",
+    "networkIO": "网络入口/出口",
+    "cacheName": "缓存名称",
+    "cacheKeyName": "缓存键名",
+    "cacheContent": "缓存内容",
+    "remark": "备注",
+    "serialNumber": "序号"
+  },
+  "title": {
+    "basicInfo": "基本信息",
+    "commandStats": "命令统计",
+    "memoryInfo": "内存信息",
+    "cacheList": "缓存列表",
+    "keyList": "键名列表",
+    "cacheContent": "缓存内容"
+  },
+  "value": {
+    "standalone": "单机",
+    "cluster": "集群",
+    "yes": "是",
+    "no": "否",
+    "command": "命令",
+    "peak": "峰值",
+    "memoryUsage": "内存消耗"
+  },
+  "action": {
+    "refresh": "刷新",
+    "delete": "删除",
+    "cleanAll": "清理全部"
+  },
+  "message": {
+    "loading": "正在加载缓存监控数据，请稍候！",
+    "refreshCacheListSuccess": "刷新缓存列表成功",
+    "refreshKeyListSuccess": "刷新键名列表成功",
+    "cleanCacheNameSuccess": "清理缓存名称[{cacheName}]成功",
+    "cleanCacheKeySuccess": "清理缓存键名[{cacheKey}]成功",
+    "cleanAllSuccess": "清理全部缓存成功"
+  }
+}

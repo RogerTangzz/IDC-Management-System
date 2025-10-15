@@ -9,7 +9,7 @@
       <el-scrollbar class="left-scrollbar">
         <div class="components-list">
           <div class="components-title">
-            <svg-icon icon-class="component" />输入型组件
+            <svg-icon icon-class="component" />{{ t('tool.build.componentGroups.input') }}
           </div>
           <draggable class="components-draggable" :list="inputComponents"
             :group="{ name: 'componentsGroup', pull: 'clone', put: false }" :clone="cloneComponent"
@@ -24,7 +24,7 @@
             </template>
           </draggable>
           <div class="components-title">
-            <svg-icon icon-class="component" />选择型组件
+            <svg-icon icon-class="component" />{{ t('tool.build.componentGroups.select') }}
           </div>
           <draggable class="components-draggable" :list="selectComponents"
             :group="{ name: 'componentsGroup', pull: 'clone', put: false }" :clone="cloneComponent"
@@ -39,7 +39,7 @@
             </template>
           </draggable>
           <div class="components-title">
-            <svg-icon icon-class="component" /> 布局型组件
+            <svg-icon icon-class="component" /> {{ t('tool.build.componentGroups.layout') }}
           </div>
           <draggable class="components-draggable" :list="layoutComponents"
             :group="{ name: 'componentsGroup', pull: 'clone', put: false }" :clone="cloneComponent"
@@ -59,13 +59,13 @@
     <div class="center-board">
       <div class="action-bar">
         <el-button icon="Download" type="primary" text @click="download">
-          导出vue文件
+          {{ t('tool.build.actions.exportVue') }}
         </el-button>
         <el-button class="copy-btn-main" icon="DocumentCopy" type="primary" text @click="copy">
-          复制代码
+          {{ t('tool.build.actions.copyCode') }}
         </el-button>
         <el-button class="delete-btn" icon="Delete" text @click="empty" type="danger">
-          清空
+          {{ t('tool.build.actions.clear') }}
         </el-button>
       </div>
       <el-scrollbar class="center-scrollbar">
@@ -81,7 +81,7 @@
               </template>
             </draggable>
             <div v-show="!drawingList.length" class="empty-info">
-              从左侧拖入或点选组件进行表单设计
+              {{ t('tool.build.emptyTip') }}
             </div>
           </el-form>
         </el-row>
@@ -90,7 +90,7 @@
     <right-panel :active-data="activeData" :form-conf="formConf" :show-field="!!drawingList.length"
       @tag-change="tagChange" />
 
-    <code-type-dialog v-model="dialogVisible" title="选择生成类型" :showFileName="showFileName" @confirm="generate" />
+    <code-type-dialog v-model="dialogVisible" :title="t('tool.build.dialog.selectGenerateType')" :showFileName="showFileName" @confirm="generate" />
     <input id="copyNode" type="hidden">
   </div>
 </template>
@@ -112,6 +112,9 @@ import DraggableItem from './DraggableItem'
 import RightPanel from './RightPanel'
 import CodeTypeDialog from './CodeTypeDialog'
 import { onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const drawingList = ref(drawingDefalut)
 const { proxy } = getCurrentInstance()
@@ -142,7 +145,7 @@ function download() {
   operationType.value = 'download'
 }
 function empty() {
-  proxy.$modal.confirm('确定要清空所有组件吗？', '提示', { type: 'warning' }).then(() => {
+  proxy.$modal.confirm(t('tool.build.message.clearConfirm'), t('tool.build.message.tip'), { type: 'warning' }).then(() => {
     idGlobal.value = 100
     drawingList.value = []
   }
@@ -296,12 +299,12 @@ onMounted(() => {
   const clipboard = new ClipboardJS('#copyNode', {
     text: _trigger => {
       const codeStr = generateCode()
-      ElNotification({ title: '成功', message: '代码已复制到剪切板，可粘贴。', type: 'success' })
+      ElNotification({ title: t('tool.build.message.success'), message: t('tool.build.message.copySuccess'), type: 'success' })
       return codeStr
     }
   })
   clipboard.on('error', _e => {
-    proxy.$modal.msgError('代码复制失败')
+    proxy.$modal.msgError(t('tool.build.message.copyFailed'))
   })
 })
 </script>

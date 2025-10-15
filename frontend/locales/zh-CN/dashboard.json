@@ -1,0 +1,8 @@
+{
+  "todayNew": "今日新增工单",
+  "todayCompleted": "今日完成工单",
+  "open": "进行中(非关闭)工单",
+  "nearDue": "即将超时",
+  "overdue": "已逾期待办",
+  "unread": "未读消息"
+}

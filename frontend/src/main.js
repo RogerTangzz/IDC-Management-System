@@ -16,6 +16,7 @@ import App from './App'
 import store from './store'
 import router from './router'
 import directive from './directive' // directive
+import i18n from './i18n' // i18n
 
 // 注册指令
 import plugins from './plugins' // plugins
@@ -112,6 +113,7 @@ app.component('Editor', Editor)
 app.use(router)
 app.use(store)
 app.use(plugins)
+app.use(i18n)
 app.use(elementIcons)
 app.component('svg-icon', SvgIcon)
 

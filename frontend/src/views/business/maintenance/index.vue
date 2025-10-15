@@ -17,12 +17,12 @@
       <el-form-item :label="$t('business.maintenance.field.mopCategory')" prop="mopCategory">
         <el-select v-model="queryParams.mopCategory" :placeholder="$t('business.maintenance.placeholder.selectCategory')" clearable>
           <el-option :label="$t('business.maintenance.message.all')" value="" />
-          <el-option label="日常维护" value="daily" />
-          <el-option label="定期保养" value="regular" />
-          <el-option label="月度检修" value="monthly" />
-          <el-option label="季度检修" value="quarterly" />
-          <el-option label="年度检修" value="annual" />
-          <el-option label="应急维修" value="emergency" />
+          <el-option :label="$t('business.maintenance.category.daily')" value="daily" />
+          <el-option :label="$t('business.maintenance.category.regular')" value="regular" />
+          <el-option :label="$t('business.maintenance.category.monthly')" value="monthly" />
+          <el-option :label="$t('business.maintenance.category.quarterly')" value="quarterly" />
+          <el-option :label="$t('business.maintenance.category.annual')" value="annual" />
+          <el-option :label="$t('business.maintenance.category.emergency')" value="emergency" />
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('business.maintenance.field.approvalStatus')" prop="approvalStatus">

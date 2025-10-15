@@ -1,0 +1,45 @@
+{
+  "field": {
+    "operId": "Log ID",
+    "title": "System Module",
+    "businessType": "Operation Type",
+    "operName": "Operator",
+    "operIp": "Operation IP",
+    "operLocation": "Operation Location",
+    "operUrl": "Request URL",
+    "requestMethod": "Request Method",
+    "method": "Operation Method",
+    "operParam": "Request Parameters",
+    "jsonResult": "Response Parameters",
+    "costTime": "Cost Time",
+    "operTime": "Operation Time",
+    "operDate": "Operation Date",
+    "errorMsg": "Error Message"
+  },
+  "placeholder": {
+    "inputOperIp": "Please enter operation IP",
+    "inputTitle": "Please enter system module",
+    "inputOperName": "Please enter operator name",
+    "operationType": "Operation Type",
+    "operationStatus": "Operation Status",
+    "startDate": "Start Date",
+    "endDate": "End Date"
+  },
+  "status": {
+    "normal": "Normal",
+    "failed": "Failed"
+  },
+  "message": {
+    "confirmDelete": "Are you sure to delete the log with ID \"{operIds}\"?",
+    "confirmClean": "Are you sure to clear all operation log data?",
+    "cleanSuccess": "Clean successfully"
+  },
+  "dialog": {
+    "operlogDetail": "Operation Log Detail"
+  },
+  "label": {
+    "operModule": "Operation Module",
+    "loginInfo": "Login Info",
+    "milliseconds": "ms"
+  }
+}

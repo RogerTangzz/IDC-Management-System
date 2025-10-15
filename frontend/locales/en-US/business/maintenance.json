@@ -242,5 +242,101 @@
     "rejected": "Rejected",
     "executing": "Executing",
     "completed": "Completed"
+  },
+  "category": {
+    "daily": "Daily Maintenance",
+    "regular": "Regular Maintenance",
+    "monthly": "Monthly Inspection",
+    "quarterly": "Quarterly Inspection",
+    "annual": "Annual Inspection",
+    "emergency": "Emergency Repair"
+  },
+  "section": {
+    "basicInfo": "Basic Information",
+    "mopInfo": "MOP Information",
+    "executionCycle": "Execution Cycle",
+    "toolsAndMaterials": "Tools & Materials",
+    "executionSteps": "Execution Steps",
+    "otherInfo": "Other Information",
+    "approvalRecords": "Approval Records",
+    "checkTable": "Check Table",
+    "createTable": "Create Table"
+  },
+  "label": {
+    "planNo": "Plan No.",
+    "planTitle": "Plan Title",
+    "floorNo": "Floor No.",
+    "versionNo": "Version No.",
+    "mopCategory": "MOP Category",
+    "approvalStatus": "Approval Status",
+    "mopName": "MOP Name",
+    "mopPurpose": "MOP Purpose",
+    "executionFrequency": "Execution Frequency",
+    "frequencyUnit": "Frequency Unit",
+    "approver": "Approver",
+    "executionApprover": "Execution Approver",
+    "notifyPersonnel": "Notify Personnel",
+    "toolsAndInstruments": "Tools & Instruments",
+    "materials": "Materials",
+    "safetyPPE": "Safety (PPE)",
+    "specialTools": "Special Tools",
+    "stepContent": "Step Content",
+    "inspectionResult": "Inspection Result",
+    "remark": "Remark",
+    "operation": "Operation",
+    "columnHeader": "Column Header"
+  },
+  "button": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "submitApproval": "Submit for Approval",
+    "reviseAndResubmit": "Revise & Resubmit",
+    "addStep": "Add Step",
+    "addRow": "Add Row",
+    "generateTable": "Generate Table"
+  },
+  "input": {
+    "rows": "Rows",
+    "columns": "Columns",
+    "multiplySign": "×"
+  },
+  "approvalStatus": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "executionStatus": {
+    "pending": "Pending",
+    "executing": "Executing",
+    "completed": "Completed"
+  },
+  "placeholder": {
+    "defaultVersion": "Default V1.0",
+    "inputPlanTitle": "Please enter plan title",
+    "selectFloor": "Please select floor",
+    "selectMopCategory": "Please select MOP category",
+    "inputMopName": "Please enter MOP name",
+    "inputMopPurpose": "Please enter MOP purpose",
+    "selectUnit": "Please select unit",
+    "selectApprover": "Please select approver",
+    "selectExecutionApprover": "Please select execution approver",
+    "selectNotifyPersonnel": "Please select notify personnel",
+    "inputRequiredTools": "Please enter required tools and instruments",
+    "inputRequiredMaterials": "Please enter required materials",
+    "inputPPERequirements": "Please enter personal protective equipment requirements",
+    "inputSpecialTools": "Please enter required special tools or accessories",
+    "inputStepContent": "Please enter step content",
+    "inputInspectionResult": "Please enter inspection result",
+    "inputRemark": "Please enter remark",
+    "columnTitle": "Column Title",
+    "rows": "Rows",
+    "columns": "Columns"
+  },
+  "print": {
+    "maintenancePlan": "Maintenance Plan",
+    "printTime": "Print Time",
+    "time": "Time",
+    "action": "Action",
+    "operator": "Operator"
   }
 }

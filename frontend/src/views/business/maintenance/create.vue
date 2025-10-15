@@ -35,12 +35,12 @@
           <el-col :span="12">
             <el-form-item :label="$t('business.maintenance.field.mopCategory')" prop="mopCategory">
               <el-select v-model="form.mopCategory" :placeholder="$t('business.maintenance.placeholder.selectCategory')">
-                <el-option label="Daily" value="daily" />
-                <el-option label="Regular" value="regular" />
-                <el-option label="Monthly" value="monthly" />
-                <el-option label="Quarterly" value="quarterly" />
-                <el-option label="Annual" value="annual" />
-                <el-option label="Emergency" value="emergency" />
+                <el-option :label="$t('business.maintenance.category.daily')" value="daily" />
+                <el-option :label="$t('business.maintenance.category.regular')" value="regular" />
+                <el-option :label="$t('business.maintenance.category.monthly')" value="monthly" />
+                <el-option :label="$t('business.maintenance.category.quarterly')" value="quarterly" />
+                <el-option :label="$t('business.maintenance.category.annual')" value="annual" />
+                <el-option :label="$t('business.maintenance.category.emergency')" value="emergency" />
               </el-select>
             </el-form-item>
           </el-col>

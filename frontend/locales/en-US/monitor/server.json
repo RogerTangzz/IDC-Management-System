@@ -1,0 +1,44 @@
+{
+  "title": {
+    "cpu": "CPU",
+    "memory": "Memory",
+    "serverInfo": "Server Information",
+    "jvmInfo": "Java Virtual Machine Information",
+    "diskStatus": "Disk Status"
+  },
+  "field": {
+    "property": "Property",
+    "value": "Value",
+    "cores": "Cores",
+    "userUsage": "User Usage",
+    "systemUsage": "System Usage",
+    "idleRate": "Idle Rate",
+    "memoryColumn": "Memory",
+    "jvmColumn": "JVM",
+    "totalMemory": "Total Memory",
+    "usedMemory": "Used Memory",
+    "freeMemory": "Free Memory",
+    "usageRate": "Usage",
+    "serverName": "Server Name",
+    "operatingSystem": "Operating System",
+    "serverIp": "Server IP",
+    "systemArchitecture": "Architecture",
+    "javaName": "Java Name",
+    "javaVersion": "Java Version",
+    "startTime": "Start Time",
+    "runDuration": "Run Duration",
+    "installPath": "Install Path",
+    "projectPath": "Project Path",
+    "runParameters": "Run Parameters",
+    "diskPath": "Disk Path",
+    "fileSystem": "File System",
+    "diskType": "Disk Type",
+    "totalSize": "Total Size",
+    "availableSize": "Available Size",
+    "usedSize": "Used Size",
+    "usedPercentage": "Used Percentage"
+  },
+  "message": {
+    "loading": "Loading server monitoring data, please wait..."
+  }
+}

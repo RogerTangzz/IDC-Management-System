@@ -1,0 +1,28 @@
+{
+  "field": {
+    "ipaddr": "Login IP",
+    "userName": "User Name",
+    "serialNumber": "No.",
+    "tokenId": "Session ID",
+    "loginName": "Login Name",
+    "deptName": "Department",
+    "host": "Host",
+    "loginLocation": "Login Location",
+    "os": "Operating System",
+    "browser": "Browser",
+    "loginTime": "Login Time"
+  },
+  "action": {
+    "search": "Search",
+    "reset": "Reset",
+    "forceLogout": "Force Logout"
+  },
+  "placeholder": {
+    "ipaddr": "Please enter login IP",
+    "userName": "Please enter user name"
+  },
+  "message": {
+    "confirmForceLogout": "Are you sure to force logout user \"{userName}\"?",
+    "deleteSuccess": "Deleted successfully"
+  }
+}

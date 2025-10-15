@@ -485,7 +485,7 @@ const handleExport = () => {
   const blob = new Blob([jsonStr], { type: 'application/json' })
   const link = document.createElement('a')
   link.href = window.URL.createObjectURL(blob)
-  link.download = `巡检配置_${FLOORS.find(f => f.value === activeFloor.value)?.label}_${new Date().getTime()}.json`
+  link.download = `${t('business.inspection.config.exportFileName')}_${FLOORS.find(f => f.value === activeFloor.value)?.label}_${new Date().getTime()}.json`
   link.click()
   ElMessage.success(t('business.inspection.config.exportSuccess'))
 }

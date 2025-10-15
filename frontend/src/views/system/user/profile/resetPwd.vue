@@ -1,24 +1,26 @@
 <template>
   <el-form ref="pwdRef" :model="user" :rules="rules" label-width="80px">
-    <el-form-item label="旧密码" prop="oldPassword">
-      <el-input v-model="user.oldPassword" placeholder="请输入旧密码" type="password" show-password />
+    <el-form-item :label="t('system.user.profile.oldPassword')" prop="oldPassword">
+      <el-input v-model="user.oldPassword" :placeholder="t('system.user.profile.placeholder.oldPassword')" type="password" show-password />
     </el-form-item>
-    <el-form-item label="新密码" prop="newPassword">
-      <el-input v-model="user.newPassword" placeholder="请输入新密码" type="password" show-password />
+    <el-form-item :label="t('system.user.profile.newPassword')" prop="newPassword">
+      <el-input v-model="user.newPassword" :placeholder="t('system.user.profile.placeholder.newPassword')" type="password" show-password />
     </el-form-item>
-    <el-form-item label="确认密码" prop="confirmPassword">
-      <el-input v-model="user.confirmPassword" placeholder="请确认新密码" type="password" show-password />
+    <el-form-item :label="t('system.user.profile.confirmPassword')" prop="confirmPassword">
+      <el-input v-model="user.confirmPassword" :placeholder="t('system.user.profile.placeholder.confirmPassword')" type="password" show-password />
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="submit">保存</el-button>
-      <el-button type="danger" @click="close">关闭</el-button>
+      <el-button type="primary" @click="submit">{{ t('system.common.submit') }}</el-button>
+      <el-button type="danger" @click="close">{{ t('system.common.close') }}</el-button>
     </el-form-item>
   </el-form>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { updateUserPwd } from "@/api/system/user"
 
+const { t } = useI18n()
 const { proxy } = getCurrentInstance()
 
 const user = reactive({
@@ -29,16 +31,23 @@ const user = reactive({
 
 const equalToPassword = (rule, value, callback) => {
   if (user.newPassword !== value) {
-    callback(new Error("两次输入的密码不一致"))
+    callback(new Error(t('system.user.profile.validation.passwordMismatch')))
   } else {
     callback()
   }
 }
 
 const rules = ref({
-  oldPassword: [{ required: true, message: "旧密码不能为空", trigger: "blur" }],
-  newPassword: [{ required: true, message: "新密码不能为空", trigger: "blur" }, { min: 6, max: 20, message: "长度在 6 到 20 个字符", trigger: "blur" }, { pattern: /^[^<>"'|\\]+$/, message: "不能包含非法字符：< > \" ' \\ |", trigger: "blur" }],
-  confirmPassword: [{ required: true, message: "确认密码不能为空", trigger: "blur" }, { required: true, validator: equalToPassword, trigger: "blur" }]
+  oldPassword: [{ required: true, message: t('system.user.profile.validation.oldPasswordRequired'), trigger: "blur" }],
+  newPassword: [
+    { required: true, message: t('system.user.profile.validation.newPasswordRequired'), trigger: "blur" },
+    { min: 6, max: 20, message: t('system.user.profile.validation.newPasswordLength'), trigger: "blur" },
+    { pattern: /^[^<>"'|\\]+$/, message: t('system.user.profile.validation.newPasswordIllegal'), trigger: "blur" }
+  ],
+  confirmPassword: [
+    { required: true, message: t('system.user.profile.validation.confirmPasswordRequired'), trigger: "blur" },
+    { required: true, validator: equalToPassword, trigger: "blur" }
+  ]
 })
 
 /** 提交按钮 */
@@ -46,7 +55,7 @@ function submit() {
   proxy.$refs.pwdRef.validate(valid => {
     if (valid) {
       updateUserPwd(user.oldPassword, user.newPassword).then(_response => {
-        proxy.$modal.msgSuccess("修改成功")
+        proxy.$modal.msgSuccess(t('system.user.profile.message.updateSuccess'))
       })
     }
   })

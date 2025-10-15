@@ -122,7 +122,15 @@
     "anomalyFoundCanGenerateTickets": "Found {count} anomalies, tickets can be generated after saving",
     "otherInfo": "Other Information",
     "noInspectionIdForTicket": "Unable to get inspection ID, cannot generate tickets",
-    "confirmCancelEdit": "Are you sure to cancel? Unsaved data will be lost"
+    "confirmCancelEdit": "Are you sure to cancel? Unsaved data will be lost",
+    "copiedFrom": "Copied from Inspection",
+    "inspectionItem": "Inspection Item {index}",
+    "loadDetailFailed": "Failed to load inspection details",
+    "basicInfrastructure": "Basic Infrastructure",
+    "pumpSystem": "Pump System",
+    "coolingSystem": "Cooling System",
+    "invalidInspectionId": "Invalid inspection ID",
+    "loadFailed": "Load failed"
   },
   "validation": {
     "inspectionDateRequired": "Please select inspection date",
@@ -208,7 +216,8 @@
     "hoursBefore": "{hours} hours before",
     "minutesBefore": "{minutes} mins before",
     "weekPrefix": "",
-    "floorWithCount": "{label} ({count} items)"
+    "floorWithCount": "{label} ({count} items)",
+    "samplePlanName": "Floor 1 Daily Inspection"
   },
   "validation_plan": {
     "planNameRequired": "Plan name is required",
@@ -305,7 +314,8 @@
     "validationDataTypeRequired": "Please select data type",
     "validationMinValueRequired": "Please enter min value",
     "validationMaxValueRequired": "Please enter max value",
-    "validationMaxGreaterThanMin": "Max value must be greater than min value"
+    "validationMaxGreaterThanMin": "Max value must be greater than min value",
+    "exportFileName": "Inspection_Config"
   },
   "statistics": {
     "title": "Inspection Statistics",
@@ -379,6 +389,9 @@
     "suggestionOilTank": "Recommend increasing daily maintenance frequency and regularly checking pipeline connections",
     "suggestionCoolingTower": "Recommend monthly cleaning of cooling tower and checking fan operation status",
     "suggestionUPS": "Recommend regular UPS battery testing and maintenance",
-    "inspectionWorkload": "Inspection Workload"
+    "inspectionWorkload": "Inspection Workload",
+    "oilTankItem": "Underground Oil Tank and Cold Storage Tank Status",
+    "coolingTowerItem": "Cooling Tower Status",
+    "upsItem": "UPS Equipment Status"
   }
 }

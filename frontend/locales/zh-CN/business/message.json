@@ -1,23 +1,24 @@
 {
-  "field": {
-    "type": "类型",
-    "title": "标题",
-    "content": "内容",
-    "createTime": "时间"
-  },
+  "title": "消息通知",
   "readStatus": {
-    "unread": "未读",
     "all": "全部",
-    "read": "已读"
+    "read": "已读",
+    "unread": "未读"
   },
   "type": {
     "slaWarn": "SLA预警",
-    "slaOverdue": "已超时",
-    "assign": "指派",
+    "slaOverdue": "SLA超时",
+    "assign": "工单指派",
     "start": "开始处理",
-    "complete": "完成",
-    "close": "关闭",
-    "reopen": "重新打开"
+    "complete": "工单完成",
+    "close": "工单关闭",
+    "reopen": "工单重开"
+  },
+  "field": {
+    "type": "消息类型",
+    "title": "标题",
+    "content": "内容",
+    "createTime": "创建时间"
   },
   "action": {
     "refresh": "刷新",
@@ -26,11 +27,10 @@
     "view": "查看"
   },
   "placeholder": {
-    "type": "类型"
+    "type": "请选择消息类型"
   },
   "message": {
-    "markedRead": "已标记已读",
-    "allMarkedRead": "全部已读"
-  },
-  "title": "消息中心"
+    "markedRead": "已标记为已读",
+    "allMarkedRead": "已全部标记为已读"
+  }
 }

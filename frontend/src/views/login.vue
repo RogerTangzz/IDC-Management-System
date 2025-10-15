@@ -8,7 +8,7 @@
           type="text"
           size="large"
           auto-complete="off"
-          placeholder="账号"
+          :placeholder="t('core.login.account')"
         >
           <template #prefix><svg-icon icon-class="user" class="el-input__icon input-icon" /></template>
         </el-input>
@@ -19,7 +19,7 @@
           type="password"
           size="large"
           auto-complete="off"
-          placeholder="密码"
+          :placeholder="t('core.login.password')"
           @keyup.enter="handleLogin"
         >
           <template #prefix><svg-icon icon-class="password" class="el-input__icon input-icon" /></template>
@@ -30,7 +30,7 @@
           v-model="loginForm.code"
           size="large"
           auto-complete="off"
-          placeholder="验证码"
+          :placeholder="t('core.login.code')"
           style="width: 63%"
           @keyup.enter="handleLogin"
         >
@@ -40,7 +40,7 @@
           <img :src="codeUrl" @click="getCode" class="login-code-img"/>
         </div>
       </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>
+      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">{{ t('core.login.rememberMe') }}</el-checkbox>
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
@@ -49,17 +49,17 @@
           style="width:100%;"
           @click.prevent="handleLogin"
         >
-          <span v-if="!loading">登 录</span>
-          <span v-else>登 录 中...</span>
+          <span v-if="!loading">{{ t('core.login.loginBtn') }}</span>
+          <span v-else>{{ t('core.login.loggingIn') }}</span>
         </el-button>
         <div style="float: right;" v-if="register">
-          <router-link class="link-type" :to="'/register'">立即注册</router-link>
+          <router-link class="link-type" :to="'/register'">{{ t('core.login.register') }}</router-link>
         </div>
       </el-form-item>
     </el-form>
     <!--  底部  -->
     <div class="el-login-footer">
-      <span>Copyright © 2018-2025 ruoyi.vip All Rights Reserved.</span>
+      <span>{{ t('core.login.footer') }}</span>
     </div>
   </div>
 </template>
@@ -72,6 +72,9 @@ import useUserStore from '@/store/modules/user'
 import { getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const title = import.meta.env.VITE_APP_TITLE
 const userStore = useUserStore()
@@ -88,9 +91,9 @@ const loginForm = ref({
 })
 
 const loginRules = {
-  username: [{ required: true, trigger: "blur", message: "请输入您的账号" }],
-  password: [{ required: true, trigger: "blur", message: "请输入您的密码" }],
-  code: [{ required: true, trigger: "change", message: "请输入验证码" }]
+  username: [{ required: true, trigger: "blur", message: t('core.login.validation.accountRequired') }],
+  password: [{ required: true, trigger: "blur", message: t('core.login.validation.passwordRequired') }],
+  code: [{ required: true, trigger: "change", message: t('core.login.validation.codeRequired') }]
 }
 
 const codeUrl = ref("")

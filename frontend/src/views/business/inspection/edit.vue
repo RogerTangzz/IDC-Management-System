@@ -193,10 +193,10 @@ const currentItems = computed(() => {
 
 // 分类
 const categories = computed(() => {
-  const cats = [{ value: 'basic', label: '基础设施' }]
+  const cats = [{ value: 'basic', label: t('business.inspection.message.basicInfrastructure') }]
   if (form.value.floor === 'floor1') {
-    cats.push({ value: 'pump', label: '水泵系统' })
-    cats.push({ value: 'cold', label: '冷冻系统' })
+    cats.push({ value: 'pump', label: t('business.inspection.message.pumpSystem') })
+    cats.push({ value: 'cold', label: t('business.inspection.message.coolingSystem') })
   }
   return cats
 })

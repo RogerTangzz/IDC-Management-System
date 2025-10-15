@@ -242,5 +242,101 @@
     "rejected": "已拒绝",
     "executing": "执行中",
     "completed": "已完成"
+  },
+  "category": {
+    "daily": "日常维护",
+    "regular": "定期保养",
+    "monthly": "月度检修",
+    "quarterly": "季度检修",
+    "annual": "年度检修",
+    "emergency": "应急维修"
+  },
+  "section": {
+    "basicInfo": "基础信息",
+    "mopInfo": "MOP信息",
+    "executionCycle": "执行周期",
+    "toolsAndMaterials": "工具材料",
+    "executionSteps": "执行步骤",
+    "otherInfo": "其他信息",
+    "approvalRecords": "审核记录",
+    "checkTable": "检查表格",
+    "createTable": "创建表格"
+  },
+  "label": {
+    "planNo": "计划编号",
+    "planTitle": "计划标题",
+    "floorNo": "楼层编号",
+    "versionNo": "版本号",
+    "mopCategory": "MOP类别",
+    "approvalStatus": "审核状态",
+    "mopName": "MOP名称",
+    "mopPurpose": "MOP目的",
+    "executionFrequency": "执行频次",
+    "frequencyUnit": "频次单位",
+    "approver": "审核人",
+    "executionApprover": "执行审核人",
+    "notifyPersonnel": "通知人员",
+    "toolsAndInstruments": "工具仪表",
+    "materials": "材料",
+    "safetyPPE": "安全(PPE)",
+    "specialTools": "特殊工具",
+    "stepContent": "步骤内容",
+    "inspectionResult": "巡检结果",
+    "remark": "备注",
+    "operation": "操作",
+    "columnHeader": "列标题"
+  },
+  "button": {
+    "cancel": "取 消",
+    "save": "保 存",
+    "submitApproval": "提交审核",
+    "reviseAndResubmit": "修改重提",
+    "addStep": "添加步骤",
+    "addRow": "添加行",
+    "generateTable": "生成表格"
+  },
+  "input": {
+    "rows": "行数",
+    "columns": "列数",
+    "multiplySign": "×"
+  },
+  "approvalStatus": {
+    "pending": "待审核",
+    "approved": "已批准",
+    "rejected": "已拒绝"
+  },
+  "executionStatus": {
+    "pending": "待执行",
+    "executing": "执行中",
+    "completed": "已完成"
+  },
+  "placeholder": {
+    "defaultVersion": "默认V1.0",
+    "inputPlanTitle": "请输入计划标题",
+    "selectFloor": "请选择楼层",
+    "selectMopCategory": "请选择MOP类别",
+    "inputMopName": "请输入MOP名称",
+    "inputMopPurpose": "请输入MOP目的",
+    "selectUnit": "请选择单位",
+    "selectApprover": "请选择审核人",
+    "selectExecutionApprover": "请选择执行审核人",
+    "selectNotifyPersonnel": "请选择通知人员",
+    "inputRequiredTools": "请输入所需工具仪表",
+    "inputRequiredMaterials": "请输入所需材料",
+    "inputPPERequirements": "请输入个人防护装备要求",
+    "inputSpecialTools": "请输入所需特殊工具或配件",
+    "inputStepContent": "请输入步骤内容",
+    "inputInspectionResult": "请输入巡检结果",
+    "inputRemark": "请输入备注",
+    "columnTitle": "列标题",
+    "rows": "行数",
+    "columns": "列数"
+  },
+  "print": {
+    "maintenancePlan": "维保计划",
+    "printTime": "打印时间",
+    "time": "时间",
+    "action": "操作",
+    "operator": "操作人"
   }
 }

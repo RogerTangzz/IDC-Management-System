@@ -1,43 +1,43 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="表名称" prop="tableName">
-        <el-input v-model="queryParams.tableName" placeholder="请输入表名称" clearable style="width: 200px"
+      <el-form-item :label="t('tool.gen.field.tableName')" prop="tableName">
+        <el-input v-model="queryParams.tableName" :placeholder="t('tool.gen.placeholder.tableName')" clearable style="width: 200px"
           @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="表描述" prop="tableComment">
-        <el-input v-model="queryParams.tableComment" placeholder="请输入表描述" clearable style="width: 200px"
+      <el-form-item :label="t('tool.gen.field.tableComment')" prop="tableComment">
+        <el-input v-model="queryParams.tableComment" :placeholder="t('tool.gen.placeholder.tableComment')" clearable style="width: 200px"
           @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间" style="width: 308px">
+      <el-form-item :label="t('tool.gen.field.createTime')" style="width: 308px">
         <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD" type="daterange" range-separator="-"
-          start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
+          :start-placeholder="t('tool.gen.placeholder.startDate')" :end-placeholder="t('tool.gen.placeholder.endDate')"></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ t('tool.gen.action.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ t('tool.gen.action.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Download" :disabled="multiple" @click="handleGenTable"
-          v-hasPermi="['tool:gen:code']">生成</el-button>
+          v-hasPermi="['tool:gen:code']">{{ t('tool.gen.action.generate') }}</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="openCreateTable" v-hasRole="['admin']">创建</el-button>
+        <el-button type="primary" plain icon="Plus" @click="openCreateTable" v-hasRole="['admin']">{{ t('tool.gen.action.create') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="info" plain icon="Upload" @click="openImportTable"
-          v-hasPermi="['tool:gen:import']">导入</el-button>
+          v-hasPermi="['tool:gen:import']">{{ t('tool.gen.action.import') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="success" plain icon="Edit" :disabled="single" @click="handleEditTable"
-          v-hasPermi="['tool:gen:edit']">修改</el-button>
+          v-hasPermi="['tool:gen:edit']">{{ t('tool.gen.action.edit') }}</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['tool:gen:remove']">删除</el-button>
+          v-hasPermi="['tool:gen:remove']">{{ t('tool.gen.action.delete') }}</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -45,37 +45,37 @@
     <el-table ref="genRef" v-loading="loading" :data="tableList" @selection-change="handleSelectionChange"
       :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column type="selection" align="center" width="55"></el-table-column>
-      <el-table-column label="序号" type="index" width="50" align="center">
+      <el-table-column :label="t('tool.gen.field.index')" type="index" width="50" align="center">
         <template #default="scope">
           <span>{{ (queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1 }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="表名称" align="center" prop="tableName" :show-overflow-tooltip="true" />
-      <el-table-column label="表描述" align="center" prop="tableComment" :show-overflow-tooltip="true" />
-      <el-table-column label="实体" align="center" prop="className" :show-overflow-tooltip="true" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160" sortable="custom"
+      <el-table-column :label="t('tool.gen.field.tableName')" align="center" prop="tableName" :show-overflow-tooltip="true" />
+      <el-table-column :label="t('tool.gen.field.tableComment')" align="center" prop="tableComment" :show-overflow-tooltip="true" />
+      <el-table-column :label="t('tool.gen.field.className')" align="center" prop="className" :show-overflow-tooltip="true" />
+      <el-table-column :label="t('tool.gen.field.createTime')" align="center" prop="createTime" width="160" sortable="custom"
         :sort-orders="['descending', 'ascending']" />
-      <el-table-column label="更新时间" align="center" prop="updateTime" width="160" sortable="custom"
+      <el-table-column :label="t('tool.gen.field.updateTime')" align="center" prop="updateTime" width="160" sortable="custom"
         :sort-orders="['descending', 'ascending']" />
-      <el-table-column label="操作" align="center" width="330" class-name="small-padding fixed-width">
+      <el-table-column :label="t('common.action.operate')" align="center" width="330" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-tooltip content="预览" placement="top">
+          <el-tooltip :content="t('tool.gen.action.preview')" placement="top">
             <el-button link type="primary" icon="View" @click="handlePreview(scope.row)"
               v-hasPermi="['tool:gen:preview']"></el-button>
           </el-tooltip>
-          <el-tooltip content="编辑" placement="top">
+          <el-tooltip :content="t('tool.gen.action.edit')" placement="top">
             <el-button link type="primary" icon="Edit" @click="handleEditTable(scope.row)"
               v-hasPermi="['tool:gen:edit']"></el-button>
           </el-tooltip>
-          <el-tooltip content="删除" placement="top">
+          <el-tooltip :content="t('tool.gen.action.delete')" placement="top">
             <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
               v-hasPermi="['tool:gen:remove']"></el-button>
           </el-tooltip>
-          <el-tooltip content="同步" placement="top">
+          <el-tooltip :content="t('tool.gen.action.sync')" placement="top">
             <el-button link type="primary" icon="Refresh" @click="handleSynchDb(scope.row)"
               v-hasPermi="['tool:gen:edit']"></el-button>
           </el-tooltip>
-          <el-tooltip content="生成代码" placement="top">
+          <el-tooltip :content="t('tool.gen.action.generateCode')" placement="top">
             <el-button link type="primary" icon="Download" @click="handleGenTable(scope.row)"
               v-hasPermi="['tool:gen:code']"></el-button>
           </el-tooltip>
@@ -91,7 +91,7 @@
           :label="key.substring(key.lastIndexOf('/') + 1, key.indexOf('.vm'))"
           :name="key.substring(key.lastIndexOf('/') + 1, key.indexOf('.vm'))" :key="value">
           <el-link :underline="false" icon="DocumentCopy" v-copyText="value" v-copyText:callback="copyTextSuccess"
-            style="float:right">&nbsp;复制</el-link>
+            style="float:right">&nbsp;{{ t('tool.gen.action.copy') }}</el-link>
           <pre>{{ value }}</pre>
         </el-tab-pane>
       </el-tabs>
@@ -108,6 +108,7 @@ import createTable from "./createTable"
 
 const route = useRoute()
 const { proxy } = getCurrentInstance()
+const { t } = useI18n()
 
 const tableList = ref([])
 const loading = ref(true)
@@ -132,7 +133,7 @@ const data = reactive({
   },
   preview: {
     open: false,
-    title: "代码预览",
+    title: t('tool.gen.dialog.preview'),
     data: {},
     activeName: "domain.java"
   }
@@ -171,12 +172,12 @@ function handleQuery() {
 function handleGenTable(row) {
   const tbNames = row.tableName || tableNames.value
   if (tbNames == "") {
-    proxy.$modal.msgError("请选择要生成的数据")
+    proxy.$modal.msgError(t('tool.gen.message.selectData'))
     return
   }
   if (row.genType === "1") {
     genCode(row.tableName).then(_response => {
-      proxy.$modal.msgSuccess("成功生成到自定义路径：" + row.genPath)
+      proxy.$modal.msgSuccess(t('tool.gen.message.generateSuccess', { path: row.genPath }))
     })
   } else {
     proxy.$download.zip("/tool/gen/batchGenCode?tables=" + tbNames, "ruoyi.zip")
@@ -186,10 +187,10 @@ function handleGenTable(row) {
 /** 同步数据库操作 */
 function handleSynchDb(row) {
   const tableName = row.tableName
-  proxy.$modal.confirm('确认要强制同步"' + tableName + '"表结构吗？').then(function () {
+  proxy.$modal.confirm(t('tool.gen.message.syncConfirm', { tableName })).then(function () {
     return synchDb(tableName)
   }).then(() => {
-    proxy.$modal.msgSuccess("同步成功")
+    proxy.$modal.msgSuccess(t('tool.gen.message.syncSuccess'))
   }).catch(() => { })
 }
 
@@ -222,7 +223,7 @@ function handlePreview(row) {
 
 /** 复制代码成功 */
 function copyTextSuccess() {
-  proxy.$modal.msgSuccess("复制成功")
+  proxy.$modal.msgSuccess(t('tool.gen.message.copySuccess'))
 }
 
 // 多选框选中数据
@@ -245,17 +246,17 @@ function handleEditTable(row) {
   const tableId = row.tableId || ids.value[0]
   const tableName = row.tableName || tableNames.value[0]
   const params = { pageNum: queryParams.value.pageNum }
-  proxy.$tab.openPage("修改[" + tableName + "]生成配置", '/tool/gen-edit/index/' + tableId, params)
+  proxy.$tab.openPage(t('tool.gen.dialog.editConfig', { tableName }), '/tool/gen-edit/index/' + tableId, params)
 }
 
 /** 删除按钮操作 */
 function handleDelete(row) {
   const tableIds = row.tableId || ids.value
-  proxy.$modal.confirm('是否确认删除表编号为"' + tableIds + '"的数据项？').then(function () {
+  proxy.$modal.confirm(t('tool.gen.message.deleteConfirm', { tableIds })).then(function () {
     return delTable(tableIds)
   }).then(() => {
     getList()
-    proxy.$modal.msgSuccess("删除成功")
+    proxy.$modal.msgSuccess(t('tool.gen.message.deleteSuccess'))
   }).catch(() => { })
 }
 

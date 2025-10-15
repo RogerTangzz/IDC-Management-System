@@ -302,11 +302,11 @@ const getList = async () => {
     dataList.value = [
       {
         id: 1,
-        planName: '1楼每日巡检',
+        planName: t('business.inspection.plan.samplePlanName'),
         floor: 'floor1',
         frequency: 'daily',
         executionTime: '09:00',
-        responsibleName: '张三',
+        responsibleName: t('business.inspection.statistics.zhang'),
         reminderTime: 30,
         nextExecutionTime: new Date(),
         enabled: true
@@ -483,9 +483,9 @@ onMounted(async () => {
 
   // 模拟数据
   userList.value = [
-    { id: 1, nickName: '张三' },
-    { id: 2, nickName: '李四' },
-    { id: 3, nickName: '王五' }
+    { id: 1, nickName: t('business.inspection.statistics.zhang') },
+    { id: 2, nickName: t('business.inspection.statistics.li') },
+    { id: 3, nickName: t('business.inspection.statistics.wang') }
   ]
 })
 </script>

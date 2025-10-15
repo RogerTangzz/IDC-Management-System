@@ -45,8 +45,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectBizTicketList" parameterType="BizTicket" resultMap="BizTicketResult">
         <include refid="selectBizTicketVo"/>
-        <where>  
-            <if test="ticketNo != null  and ticketNo != ''"> and ticket_no = #{ticketNo}</if>
+        <where>
+            <!-- 综合关键词搜索：支持工单编号、标题、设备、报修人、处理人、专业多字段模糊匹配 -->
+            <if test="params != null and params.keyword != null and params.keyword != ''">
+                and (
+                    ticket_no like concat('%', #{params.keyword}, '%')
+                    or title like concat('%', #{params.keyword}, '%')
+                    or equipment like concat('%', #{params.keyword}, '%')
+                    or reporter_name like concat('%', #{params.keyword}, '%')
+                    or assignee_name like concat('%', #{params.keyword}, '%')
+                    or priority like concat('%', #{params.keyword}, '%')
+                    or specialty like concat('%', #{params.keyword}, '%')
+                )
+            </if>
+            <if test="ticketNo != null  and ticketNo != ''"> and ticket_no like concat('%', #{ticketNo}, '%')</if>
             <if test="title != null  and title != ''"> and title like concat('%', #{title}, '%')</if>
             <if test="description != null  and description != ''"> and description = #{description}</if>
             <if test="priority != null  and priority != ''"> and priority = #{priority}</if>

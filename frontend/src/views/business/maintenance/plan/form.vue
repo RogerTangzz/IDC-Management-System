@@ -287,11 +287,11 @@ function copyPlan(id) {
     delete data.planId;
     form.value = {
       ...data,
-      title: data.title + '(复制)',
+      title: data.title + '(' + t('business.maintenance.action.copy') + ')',
       version: incrementVersion(data.version),
       approvalStatus: 'draft',
       executionStatus: 'pending',
-      remark: `[复制自计划#${id}，复制时间：${proxy.parseTime(new Date())}]\n${data.remark || ''}`
+      remark: `[${t('business.maintenance.message.copyPlan')} #${id}, ${proxy.parseTime(new Date())}]\n${data.remark || ''}`
     };
     isCopy.value = true;
     loading.value = false;

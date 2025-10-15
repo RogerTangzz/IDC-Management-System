@@ -1,0 +1,66 @@
+{
+  "field": {
+    "jobId": "任务编号",
+    "jobName": "任务名称",
+    "jobGroup": "任务组名",
+    "jobGroupLabel": "任务分组",
+    "invokeTarget": "调用目标字符串",
+    "invokeMethod": "调用方法",
+    "invokeTargetMethod": "调用目标方法",
+    "cronExpression": "cron表达式",
+    "cronExecutionExpression": "cron执行表达式",
+    "misfirePolicy": "执行策略",
+    "concurrent": "是否并发",
+    "nextValidTime": "下次执行时间"
+  },
+  "action": {
+    "log": "日志",
+    "scheduleLog": "调度日志",
+    "executeOnce": "执行一次",
+    "jobDetail": "任务详细",
+    "generateExpression": "生成表达式"
+  },
+  "placeholder": {
+    "inputJobName": "请输入任务名称",
+    "selectJobGroup": "请选择任务组名",
+    "selectTaskStatus": "请选择任务状态",
+    "inputInvokeTarget": "请输入调用目标字符串",
+    "inputCronExpression": "请输入cron执行表达式",
+    "select": "请选择"
+  },
+  "validation": {
+    "jobNameRequired": "任务名称不能为空",
+    "invokeTargetRequired": "调用目标字符串不能为空",
+    "cronExpressionRequired": "cron执行表达式不能为空"
+  },
+  "status": {
+    "normal": "正常",
+    "paused": "暂停"
+  },
+  "misfirePolicy": {
+    "default": "默认策略",
+    "executeImmediately": "立即执行",
+    "executeOnce": "执行一次",
+    "abandonExecution": "放弃执行"
+  },
+  "concurrent": {
+    "allow": "允许",
+    "forbid": "禁止"
+  },
+  "message": {
+    "confirmStatusChange": "确认要\"{action}\"\"{jobName}\"任务吗?",
+    "statusChangeSuccess": "{action}成功",
+    "confirmExecute": "确认要立即执行一次\"{jobName}\"任务吗?",
+    "executeSuccess": "执行成功",
+    "confirmDelete": "是否确认删除定时任务编号为\"{jobIds}\"的数据项?"
+  },
+  "dialog": {
+    "addTask": "添加任务",
+    "editTask": "修改任务",
+    "taskDetail": "任务详细",
+    "cronGeneratorTitle": "Cron表达式生成器"
+  },
+  "tooltip": {
+    "invokeMethodHelp": "Bean调用示例：ryTask.ryParams('ry')\nClass类调用示例：com.ruoyi.quartz.task.RyTask.ryParams('ry')\n参数说明：支持字符串，布尔类型，长整型，浮点型，整型"
+  }
+}

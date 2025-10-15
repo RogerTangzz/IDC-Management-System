@@ -1,36 +1,36 @@
 {
-  "field": {
-    "type": "Type",
-    "title": "Title",
-    "content": "Content",
-    "createTime": "Time"
-  },
+  "title": "Messages",
   "readStatus": {
-    "unread": "Unread",
     "all": "All",
-    "read": "Read"
+    "read": "Read",
+    "unread": "Unread"
   },
   "type": {
     "slaWarn": "SLA Warning",
-    "slaOverdue": "Overdue",
-    "assign": "Assign",
-    "start": "Start",
-    "complete": "Complete",
-    "close": "Close",
-    "reopen": "Reopen"
+    "slaOverdue": "SLA Overdue",
+    "assign": "Ticket Assigned",
+    "start": "Processing Started",
+    "complete": "Ticket Completed",
+    "close": "Ticket Closed",
+    "reopen": "Ticket Reopened"
+  },
+  "field": {
+    "type": "Message Type",
+    "title": "Title",
+    "content": "Content",
+    "createTime": "Create Time"
   },
   "action": {
     "refresh": "Refresh",
-    "markAllRead": "Mark All Read",
-    "markRead": "Mark Read",
+    "markAllRead": "Mark All as Read",
+    "markRead": "Mark as Read",
     "view": "View"
   },
   "placeholder": {
-    "type": "Type"
+    "type": "Select message type"
   },
   "message": {
     "markedRead": "Marked as read",
     "allMarkedRead": "All marked as read"
-  },
-  "title": "Message Center"
+  }
 }

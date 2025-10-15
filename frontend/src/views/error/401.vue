@@ -1,19 +1,19 @@
 <template>
   <div class="errPage-container">
     <el-button icon="arrow-left" class="pan-back-btn" @click="back">
-      返回
+      {{ t('core.error.404.backHome') }}
     </el-button>
     <el-row>
       <el-col :span="12">
         <h1 class="text-jumbo text-ginormous">
-          401错误!
+          401{{ t('core.error.401.title') }}
         </h1>
-        <h2>您没有访问权限！</h2>
-        <h6>对不起，您没有访问权限，请不要进行非法操作！您可以返回主页面</h6>
+        <h2>{{ t('core.error.401.title') }}</h2>
+        <h6>{{ t('core.error.401.subtitle') }}</h6>
         <ul class="list-unstyled">
           <li class="link-type">
             <router-link to="/">
-              回首页
+              {{ t('core.error.401.backHome') }}
             </router-link>
           </li>
         </ul>
@@ -27,7 +27,9 @@
 
 <script setup>
 import errImage from "@/assets/401_images/401.gif"
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 let { proxy } = getCurrentInstance()
 
 const errGif = ref(errImage + "?" + +new Date())

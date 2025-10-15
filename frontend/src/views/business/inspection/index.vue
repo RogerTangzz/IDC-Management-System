@@ -266,17 +266,17 @@ function handleCopy(row) {
 
 /** 生成工单按钮操作（废弃方法） */
 function handleGenerateTicketsObsolete(row) {
-  proxy.$modal.confirm('确认为该巡检生成 ' + row.anomalyCount + ' 个异常工单吗？').then(function () {
+  proxy.$modal.confirm(t('business.inspection.message.confirmGenerateTickets', { count: row.anomalyCount })).then(function () {
     const __count = Number(row.anomalyCount || 0);
     const __anomalies = Array.isArray(row.anomalies) && row.anomalies.length
       ? row.anomalies
-      : Array.from({ length: __count }).map((_, i) => ({ itemName: `巡检项目${i + 1}`, value: '-', priority: 'low' }));
+      : Array.from({ length: __count }).map((_, i) => ({ itemName: t('business.inspection.message.inspectionItem', { index: i + 1 }), value: '-', priority: 'low' }));
     return generateTickets(row.inspectionId, __anomalies);
   }).then((resp) => {
     const created = (resp && (resp.data || resp.rows)) || []
     const n = Array.isArray(created) ? created.length : (created ? 1 : 0)
     row.ticketCount = (row.ticketCount || 0) + n
-    proxy.$modal.msgSuccess(`成功生成 ${n} 个工单`)
+    proxy.$modal.msgSuccess(t('business.inspection.message.generateTicketsSuccess', { count: n }))
   }).catch(() => { });
 }
 
@@ -323,9 +323,9 @@ async function handleGenerateTickets(row) {
     const detail = await getInspection(row.inspectionId)
     const data = detail?.data || row
     anomalies = anomalyService.detectAnomalies({ floor: data.floor, items: data.items })
-  } catch (e) { console.warn('获取巡检详情失败', e) }
+  } catch (e) { console.warn(t('business.inspection.message.loadDetailFailed'), e) }
   if (!Array.isArray(anomalies) || anomalies.length === 0) {
-    anomalies = Array.from({ length: count }).map((_, i) => ({ itemName: `巡检项目${i + 1}`, value: '-', priority: 'low' }))
+    anomalies = Array.from({ length: count }).map((_, i) => ({ itemName: t('business.inspection.message.inspectionItem', { index: i + 1 }), value: '-', priority: 'low' }))
   }
   try {
     const resp = await generateTickets(row.inspectionId, anomalies)

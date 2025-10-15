@@ -1,0 +1,8 @@
+{
+  "todayNew": "Today's New Tickets",
+  "todayCompleted": "Today's Completed",
+  "open": "Open (Non-Closed) Tickets",
+  "nearDue": "Near Due",
+  "overdue": "Overdue",
+  "unread": "Unread Messages"
+}

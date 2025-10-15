@@ -122,7 +122,15 @@
     "anomalyFoundCanGenerateTickets": "发现{count}个异常项，保存后可生成工单",
     "otherInfo": "其他信息",
     "noInspectionIdForTicket": "未获取到巡检ID，无法生成工单",
-    "confirmCancelEdit": "确定要取消吗？未保存的数据将丢失"
+    "confirmCancelEdit": "确定要取消吗？未保存的数据将丢失",
+    "copiedFrom": "复制自巡检",
+    "inspectionItem": "巡检项目{index}",
+    "loadDetailFailed": "获取巡检详情失败",
+    "basicInfrastructure": "基础设施",
+    "pumpSystem": "水泵系统",
+    "coolingSystem": "冷冻系统",
+    "invalidInspectionId": "无效的巡检ID",
+    "loadFailed": "加载失败"
   },
   "validation": {
     "inspectionDateRequired": "请选择巡检日期",
@@ -208,7 +216,8 @@
     "hoursBefore": "{hours}小时前",
     "minutesBefore": "{minutes}分钟前",
     "weekPrefix": "周",
-    "floorWithCount": "{label} ({count}项)"
+    "floorWithCount": "{label} ({count}项)",
+    "samplePlanName": "1楼每日巡检"
   },
   "validation_plan": {
     "planNameRequired": "计划名称不能为空",
@@ -305,7 +314,8 @@
     "validationDataTypeRequired": "请选择数据类型",
     "validationMinValueRequired": "请输入最小值",
     "validationMaxValueRequired": "请输入最大值",
-    "validationMaxGreaterThanMin": "最大值必须大于最小值"
+    "validationMaxGreaterThanMin": "最大值必须大于最小值",
+    "exportFileName": "巡检配置"
   },
   "statistics": {
     "title": "巡检统计分析",
@@ -379,6 +389,9 @@
     "suggestionOilTank": "建议增加日常维护频次，定期检查管道连接",
     "suggestionCoolingTower": "建议每月清洗冷却塔，检查风扇运行状态",
     "suggestionUPS": "建议定期进行UPS电池测试和维护",
-    "inspectionWorkload": "巡检工作量"
+    "inspectionWorkload": "巡检工作量",
+    "oilTankItem": "地埋油罐及蓄冷罐是否正常",
+    "coolingTowerItem": "冷却塔是否正常",
+    "upsItem": "UPS设备运行状态"
   }
 }

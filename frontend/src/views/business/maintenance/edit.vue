@@ -2,58 +2,58 @@
   <div class="app-container">
     <el-card>
       <template #header>
-        <span>编辑维保计划</span>
+        <span>{{ t('business.maintenance.message.editPlan') }}</span>
       </template>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <!-- 基础信息 -->
         <el-row>
           <el-col :span="12">
-            <el-form-item label="计划编号">
+            <el-form-item :label="t('business.maintenance.label.planNo')">
               <el-input v-model="form.planNo" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="计划标题" prop="title">
-              <el-input v-model="form.title" placeholder="请输入计划标题" />
+            <el-form-item :label="t('business.maintenance.label.planTitle')" prop="title">
+              <el-input v-model="form.title" :placeholder="t('business.maintenance.placeholder.inputPlanTitle')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="楼层编号" prop="floor">
-              <el-select v-model="form.floor" placeholder="请选择楼层">
-                <el-option label="1楼" value="1" />
-                <el-option label="2楼" value="2" />
-                <el-option label="3楼" value="3" />
-                <el-option label="4楼" value="4" />
-                <el-option label="全部楼层" value="all" />
+            <el-form-item :label="t('business.maintenance.label.floorNo')" prop="floor">
+              <el-select v-model="form.floor" :placeholder="t('business.maintenance.placeholder.selectFloor')">
+                <el-option :label="t('business.maintenance.floor.floor1')" value="1" />
+                <el-option :label="t('business.maintenance.floor.floor2')" value="2" />
+                <el-option :label="t('business.maintenance.floor.floor3')" value="3" />
+                <el-option :label="t('business.maintenance.floor.floor4')" value="4" />
+                <el-option :label="t('business.maintenance.floor.allFloors')" value="all" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="版本号" prop="version">
-              <el-input v-model="form.version" placeholder="默认V1.0" />
+            <el-form-item :label="t('business.maintenance.label.versionNo')" prop="version">
+              <el-input v-model="form.version" :placeholder="t('business.maintenance.placeholder.defaultVersion')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="MOP类别" prop="mopCategory">
-              <el-select v-model="form.mopCategory" placeholder="请选择MOP类别">
-                <el-option label="日常维护" value="daily" />
-                <el-option label="定期保养" value="regular" />
-                <el-option label="月度检修" value="monthly" />
-                <el-option label="季度检修" value="quarterly" />
-                <el-option label="年度检修" value="annual" />
-                <el-option label="应急维修" value="emergency" />
+            <el-form-item :label="t('business.maintenance.label.mopCategory')" prop="mopCategory">
+              <el-select v-model="form.mopCategory" :placeholder="t('business.maintenance.placeholder.selectMopCategory')">
+                <el-option :label="t('business.maintenance.category.daily')" value="daily" />
+                <el-option :label="t('business.maintenance.category.regular')" value="regular" />
+                <el-option :label="t('business.maintenance.category.monthly')" value="monthly" />
+                <el-option :label="t('business.maintenance.category.quarterly')" value="quarterly" />
+                <el-option :label="t('business.maintenance.category.annual')" value="annual" />
+                <el-option :label="t('business.maintenance.category.emergency')" value="emergency" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="审核状态">
+            <el-form-item :label="t('business.maintenance.label.approvalStatus')">
               <el-tag :type="getApprovalType(form.approvalStatus)">
                 {{ getApprovalLabel(form.approvalStatus) }}
               </el-tag>
@@ -66,31 +66,31 @@
         </el-row>
 
         <!-- MOP信息 -->
-        <el-divider content-position="left">MOP信息</el-divider>
+        <el-divider content-position="left">{{ t('business.maintenance.section.mopInfo') }}</el-divider>
 
-        <el-form-item label="MOP名称" prop="mopName">
-          <el-input v-model="form.mopName" placeholder="请输入MOP名称" />
+        <el-form-item :label="t('business.maintenance.label.mopName')" prop="mopName">
+          <el-input v-model="form.mopName" :placeholder="t('business.maintenance.placeholder.inputMopName')" />
         </el-form-item>
 
-        <el-form-item label="MOP目的" prop="mopPurpose">
-          <el-input v-model="form.mopPurpose" type="textarea" :rows="3" placeholder="请输入MOP目的" />
+        <el-form-item :label="t('business.maintenance.label.mopPurpose')" prop="mopPurpose">
+          <el-input v-model="form.mopPurpose" type="textarea" :rows="3" :placeholder="t('business.maintenance.placeholder.inputMopPurpose')" />
         </el-form-item>
 
         <!-- 执行周期 -->
-        <el-divider content-position="left">执行周期</el-divider>
+        <el-divider content-position="left">{{ t('business.maintenance.section.executionCycle') }}</el-divider>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="执行频次" prop="executionFrequency">
+            <el-form-item :label="t('business.maintenance.label.executionFrequency')" prop="executionFrequency">
               <el-input-number v-model="form.executionFrequency" :min="1" :max="100" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="频次单位" prop="executionUnit">
-              <el-select v-model="form.executionUnit" placeholder="请选择单位">
-                <el-option label="次/月" value="month" />
-                <el-option label="次/季" value="quarter" />
-                <el-option label="次/年" value="year" />
+            <el-form-item :label="t('business.maintenance.label.frequencyUnit')" prop="executionUnit">
+              <el-select v-model="form.executionUnit" :placeholder="t('business.maintenance.placeholder.selectUnit')">
+                <el-option :label="t('business.maintenance.unit.monthly')" value="month" />
+                <el-option :label="t('business.maintenance.unit.quarterly')" value="quarter" />
+                <el-option :label="t('business.maintenance.unit.yearly')" value="year" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -98,16 +98,16 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="审核人" prop="approverId">
-              <el-select v-model="form.approverId" placeholder="请选择审核人" :disabled="form.approvalStatus !== 'draft'">
+            <el-form-item :label="t('business.maintenance.label.approver')" prop="approverId">
+              <el-select v-model="form.approverId" :placeholder="t('business.maintenance.placeholder.selectApprover')" :disabled="form.approvalStatus !== 'draft'">
                 <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName"
                   :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="执行审核人" prop="executorId">
-              <el-select v-model="form.executorId" placeholder="请选择执行审核人">
+            <el-form-item :label="t('business.maintenance.label.executionApprover')" prop="executorId">
+              <el-select v-model="form.executorId" :placeholder="t('business.maintenance.placeholder.selectExecutionApprover')">
                 <el-option v-for="user in approverList" :key="user.userId" :label="user.nickName"
                   :value="user.userId" />
               </el-select>
@@ -115,37 +115,37 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="通知人员" prop="notifyUsers">
-          <el-select v-model="form.notifyUsers" multiple placeholder="请选择通知人员">
+        <el-form-item :label="t('business.maintenance.label.notifyPersonnel')" prop="notifyUsers">
+          <el-select v-model="form.notifyUsers" multiple :placeholder="t('business.maintenance.placeholder.selectNotifyPersonnel')">
             <el-option v-for="user in userList" :key="user.userId" :label="user.nickName" :value="user.userId" />
           </el-select>
         </el-form-item>
 
         <!-- 工具材料 -->
-        <el-divider content-position="left">工具材料</el-divider>
+        <el-divider content-position="left">{{ t('business.maintenance.section.toolsAndMaterials') }}</el-divider>
 
-        <el-form-item label="工具仪表" prop="tools">
-          <el-input v-model="form.tools" type="textarea" :rows="2" placeholder="请输入所需工具仪表" />
+        <el-form-item :label="t('business.maintenance.label.toolsAndInstruments')" prop="tools">
+          <el-input v-model="form.tools" type="textarea" :rows="2" :placeholder="t('business.maintenance.placeholder.inputRequiredTools')" />
         </el-form-item>
 
-        <el-form-item label="材料" prop="materials">
-          <el-input v-model="form.materials" type="textarea" :rows="2" placeholder="请输入所需材料" />
+        <el-form-item :label="t('business.maintenance.label.materials')" prop="materials">
+          <el-input v-model="form.materials" type="textarea" :rows="2" :placeholder="t('business.maintenance.placeholder.inputRequiredMaterials')" />
         </el-form-item>
 
-        <el-form-item label="安全(PPE)" prop="safety">
-          <el-input v-model="form.safety" type="textarea" :rows="2" placeholder="请输入个人防护装备要求" />
+        <el-form-item :label="t('business.maintenance.label.safetyPPE')" prop="safety">
+          <el-input v-model="form.safety" type="textarea" :rows="2" :placeholder="t('business.maintenance.placeholder.inputPPERequirements')" />
         </el-form-item>
 
-        <el-form-item label="特殊工具" prop="specialTools">
-          <el-input v-model="form.specialTools" type="textarea" :rows="2" placeholder="请输入所需特殊工具或配件" />
+        <el-form-item :label="t('business.maintenance.label.specialTools')" prop="specialTools">
+          <el-input v-model="form.specialTools" type="textarea" :rows="2" :placeholder="t('business.maintenance.placeholder.inputSpecialTools')" />
         </el-form-item>
 
         <!-- 执行步骤 -->
-        <el-divider content-position="left">执行步骤</el-divider>
+        <el-divider content-position="left">{{ t('business.maintenance.section.executionSteps') }}</el-divider>
 
-        <el-form-item label="步骤内容" prop="steps">
+        <el-form-item :label="t('business.maintenance.label.stepContent')" prop="steps">
           <div class="steps-editor">
-            <el-button type="primary" size="small" @click="addStep" style="margin-bottom: 10px">添加步骤</el-button>
+            <el-button type="primary" size="small" @click="addStep" style="margin-bottom: 10px">{{ t('business.maintenance.button.addStep') }}</el-button>
             <draggable v-model="stepsList" item-key="id" handle=".handle">
               <template #item="{ element, index }">
                 <div class="step-item">
@@ -153,7 +153,7 @@
                     <Rank />
                   </el-icon>
                   <span class="step-number">{{ index + 1 }}.</span>
-                  <el-input v-model="element.content" placeholder="请输入步骤内容" style="flex: 1" />
+                  <el-input v-model="element.content" :placeholder="t('business.maintenance.placeholder.inputStepContent')" style="flex: 1" />
                   <el-button type="danger" size="small" icon="Delete" @click="removeStep(index)" />
                 </div>
               </template>
@@ -162,55 +162,55 @@
         </el-form-item>
 
         <!-- 表格编辑 -->
-        <el-form-item label="检查表格" v-if="tableData.length > 0">
+        <el-form-item :label="t('business.maintenance.section.checkTable')" v-if="tableData.length > 0">
           <el-table :data="tableData" border>
             <el-table-column v-for="(col, index) in tableCols" :key="index"
-              :label="tableHeaders[index] || `列${index + 1}`" :prop="`col${index}`">
+              :label="tableHeaders[index] || `${t('business.maintenance.message.column')}${index + 1}`" :prop="`col${index}`">
               <template #header>
-                <el-input v-model="tableHeaders[index]" placeholder="列标题" size="small" />
+                <el-input v-model="tableHeaders[index]" :placeholder="t('business.maintenance.placeholder.columnTitle')" size="small" />
               </template>
               <template #default="scope">
                 <el-input v-model="scope.row[`col${index}`]" />
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80" fixed="right">
+            <el-table-column :label="t('business.maintenance.label.operation')" width="80" fixed="right">
               <template #default="scope">
                 <el-button type="danger" size="small" icon="Delete" @click="removeTableRow(scope.$index)" />
               </template>
             </el-table-column>
           </el-table>
-          <el-button type="primary" size="small" @click="addTableRow" style="margin-top: 10px">添加行</el-button>
+          <el-button type="primary" size="small" @click="addTableRow" style="margin-top: 10px">{{ t('business.maintenance.button.addRow') }}</el-button>
         </el-form-item>
 
-        <el-form-item label="创建表格" v-else>
+        <el-form-item :label="t('business.maintenance.section.createTable')" v-else>
           <el-row :gutter="10">
             <el-col :span="4">
-              <el-input v-model="tableRows" placeholder="行数" />
+              <el-input v-model="tableRows" :placeholder="t('business.maintenance.placeholder.rows')" />
             </el-col>
-            <el-col :span="1" style="text-align: center">×</el-col>
+            <el-col :span="1" style="text-align: center">{{ t('business.maintenance.input.multiplySign') }}</el-col>
             <el-col :span="4">
-              <el-input v-model="tableCols" placeholder="列数" />
+              <el-input v-model="tableCols" :placeholder="t('business.maintenance.placeholder.columns')" />
             </el-col>
             <el-col :span="4">
-              <el-button @click="generateTable">生成表格</el-button>
+              <el-button @click="generateTable">{{ t('business.maintenance.button.generateTable') }}</el-button>
             </el-col>
           </el-row>
         </el-form-item>
 
         <!-- 其他信息 -->
-        <el-divider content-position="left">其他信息</el-divider>
+        <el-divider content-position="left">{{ t('business.maintenance.section.otherInfo') }}</el-divider>
 
-        <el-form-item label="巡检结果" prop="inspectionResult">
-          <el-input v-model="form.inspectionResult" type="textarea" :rows="3" placeholder="请输入巡检结果" />
+        <el-form-item :label="t('business.maintenance.label.inspectionResult')" prop="inspectionResult">
+          <el-input v-model="form.inspectionResult" type="textarea" :rows="3" :placeholder="t('business.maintenance.placeholder.inputInspectionResult')" />
         </el-form-item>
 
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        <el-form-item :label="t('business.maintenance.label.remark')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :rows="3" :placeholder="t('business.maintenance.placeholder.inputRemark')" />
         </el-form-item>
 
         <!-- 审核记录 -->
         <el-divider content-position="left"
-          v-if="form.approvalHistory && form.approvalHistory.length > 0">审核记录</el-divider>
+          v-if="form.approvalHistory && form.approvalHistory.length > 0">{{ t('business.maintenance.section.approvalRecords') }}</el-divider>
 
         <el-timeline v-if="form.approvalHistory && form.approvalHistory.length > 0">
           <el-timeline-item v-for="(record, index) in form.approvalHistory" :key="index"
@@ -228,10 +228,10 @@
 
       <!-- 操作按钮 -->
       <div class="form-footer">
-        <el-button @click="handleCancel">取 消</el-button>
-        <el-button type="primary" @click="handleSave" v-if="form.approvalStatus === 'draft'">保 存</el-button>
-        <el-button type="success" @click="handleSubmitApproval" v-if="form.approvalStatus === 'draft'">提交审核</el-button>
-        <el-button type="warning" @click="handleRevise" v-if="form.approvalStatus === 'rejected'">修改重提</el-button>
+        <el-button @click="handleCancel">{{ t('business.maintenance.button.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSave" v-if="form.approvalStatus === 'draft'">{{ t('business.maintenance.button.save') }}</el-button>
+        <el-button type="success" @click="handleSubmitApproval" v-if="form.approvalStatus === 'draft'">{{ t('business.maintenance.button.submitApproval') }}</el-button>
+        <el-button type="warning" @click="handleRevise" v-if="form.approvalStatus === 'rejected'">{{ t('business.maintenance.button.reviseAndResubmit') }}</el-button>
       </div>
     </el-card>
   </div>

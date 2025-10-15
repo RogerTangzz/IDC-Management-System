@@ -1,0 +1,35 @@
+{
+  "field": {
+    "jobLogId": "日志编号",
+    "logId": "日志序号",
+    "jobName": "任务名称",
+    "jobGroup": "任务组名",
+    "jobGroupLabel": "任务分组",
+    "invokeTarget": "调用目标字符串",
+    "invokeMethod": "调用方法",
+    "jobMessage": "日志信息",
+    "executionStatus": "执行状态",
+    "executionTime": "执行时间",
+    "createTime": "执行时间",
+    "exceptionInfo": "异常信息"
+  },
+  "placeholder": {
+    "inputJobName": "请输入任务名称",
+    "selectJobGroup": "请选择任务组名",
+    "selectExecutionStatus": "请选择执行状态",
+    "startDate": "开始日期",
+    "endDate": "结束日期"
+  },
+  "status": {
+    "normal": "正常",
+    "failed": "失败"
+  },
+  "message": {
+    "confirmDelete": "是否确认删除调度日志编号为\"{jobLogIds}\"的数据项?",
+    "confirmClean": "是否确认清空所有调度日志数据项?",
+    "cleanSuccess": "清空成功"
+  },
+  "dialog": {
+    "scheduleLogDetail": "调度日志详细"
+  }
+}

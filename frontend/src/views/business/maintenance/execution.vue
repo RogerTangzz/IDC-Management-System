@@ -352,7 +352,7 @@ function handleExecute(row) {
   executeForm.value.planId = row.planId;
   executeForm.value.executionId = row.executionId;
   executeForm.value.executionTime = new Date();
-  dialogTitle.value = `执行维保计划：${row.title}`;
+  dialogTitle.value = t('business.maintenance.action.execute') + '：' + row.title;
   executeOpen.value = true;
 }
 
@@ -361,7 +361,7 @@ function handleComplete(row) {
   reset();
   getExecution(row.executionId).then(_response => {
     executeForm.value = _response.data;
-    dialogTitle.value = `完成维保计划：${row.title}`;
+    dialogTitle.value = t('business.maintenance.action.completeExecution') + '：' + row.title;
     executeOpen.value = true;
   });
 }
@@ -415,7 +415,7 @@ function handleCreateTicket(row) {
 /** 生成报告 */
 function handleReport() {
   const params = proxy.addDateRange(queryParams.value, dateRange.value);
-  proxy.download('business/maintenance/execution/report', params, `维保执行报告_${new Date().getTime()}.pdf`);
+  proxy.download('business/maintenance/execution/report', params, `execution_report_${new Date().getTime()}.pdf`);
 }
 
 /** 导出按钮操作 */

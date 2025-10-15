@@ -1,0 +1,81 @@
+{
+  "login": {
+    "title": "User Login",
+    "account": "Account",
+    "password": "Password",
+    "code": "Captcha",
+    "rememberMe": "Remember Me",
+    "loginBtn": "Sign In",
+    "loggingIn": "Signing In...",
+    "register": "Sign Up Now",
+    "validation": {
+      "accountRequired": "Please enter your account",
+      "passwordRequired": "Please enter your password",
+      "codeRequired": "Please enter captcha code"
+    },
+    "confirm": {
+      "logout": "Are you sure you want to log out?",
+      "logoutTitle": "Confirm"
+    },
+    "footer": "Copyright © 2018-2025 ruoyi.vip All Rights Reserved."
+  },
+  "navbar": {
+    "message": {
+      "unread": "Unread Messages",
+      "more": "More",
+      "markAllRead": "Mark All as Read",
+      "noUnread": "No Unread Messages",
+      "markRead": "Mark as Read"
+    },
+    "tooltip": {
+      "sourceCode": "Source Code",
+      "docs": "Documentation",
+      "theme": "Theme Mode",
+      "size": "Layout Size"
+    },
+    "user": {
+      "profile": "User Profile",
+      "layout": "Layout Settings",
+      "logout": "Sign Out"
+    },
+    "confirm": {
+      "ok": "OK",
+      "cancel": "Cancel"
+    }
+  },
+  "dashboard": {
+    "title": "RuoYi Management Framework",
+    "description": "RuoYi is a comprehensive background management system that can be used for all Web applications such as website backend, member center, CMS, CRM, OA, etc. Of course, you can also customize it for more powerful systems. All front-end and back-end code is very concise and easy to use after encapsulation, with low error probability. It also supports mobile client access. The system will continue to update some practical functions.",
+    "version": "Current Version",
+    "free": "Free & Open Source",
+    "visitGitee": "Visit Gitee",
+    "visitHome": "Visit Homepage",
+    "techStack": "Technology Stack",
+    "backend": "Backend Technologies",
+    "frontend": "Frontend Technologies",
+    "contact": "Contact Information",
+    "updateLog": "Update Log",
+    "donate": "Donate & Support",
+    "donateText": "You can buy the author a coffee to show your encouragement",
+    "summary": {
+      "todayNew": "Today's New Tickets",
+      "todayCompleted": "Today's Completed",
+      "open": "Open (Non-Closed) Tickets",
+      "nearDue": "Near Due",
+      "overdue": "Overdue Tasks",
+      "unread": "Unread Messages"
+    }
+  },
+  "error": {
+    "401": {
+      "title": "You don't have permission to access this page",
+      "subtitle": "You don't have permission to access this resource. Please contact the administrator for authorization",
+      "backHome": "Back to Home"
+    },
+    "404": {
+      "title": "Page Not Found",
+      "subtitle": "Sorry, the page you are looking for does not exist. Try checking the URL for errors, then press the refresh button on your browser or try to find something else in our application.",
+      "backHome": "Back to Home"
+    }
+  }
+}

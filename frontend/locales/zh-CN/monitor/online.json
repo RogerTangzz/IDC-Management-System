@@ -1,0 +1,28 @@
+{
+  "field": {
+    "ipaddr": "登录地址",
+    "userName": "用户名称",
+    "serialNumber": "序号",
+    "tokenId": "会话编号",
+    "loginName": "登录名称",
+    "deptName": "所属部门",
+    "host": "主机",
+    "loginLocation": "登录地点",
+    "os": "操作系统",
+    "browser": "浏览器",
+    "loginTime": "登录时间"
+  },
+  "action": {
+    "search": "搜索",
+    "reset": "重置",
+    "forceLogout": "强退"
+  },
+  "placeholder": {
+    "ipaddr": "请输入登录地址",
+    "userName": "请输入用户名称"
+  },
+  "message": {
+    "confirmForceLogout": "是否确认强退名称为\"{userName}\"的用户?",
+    "deleteSuccess": "删除成功"
+  }
+}

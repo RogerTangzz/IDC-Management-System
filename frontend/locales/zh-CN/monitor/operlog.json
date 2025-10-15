@@ -1,0 +1,45 @@
+{
+  "field": {
+    "operId": "日志编号",
+    "title": "系统模块",
+    "businessType": "操作类型",
+    "operName": "操作人员",
+    "operIp": "操作地址",
+    "operLocation": "操作地点",
+    "operUrl": "请求地址",
+    "requestMethod": "请求方式",
+    "method": "操作方法",
+    "operParam": "请求参数",
+    "jsonResult": "返回参数",
+    "costTime": "消耗时间",
+    "operTime": "操作时间",
+    "operDate": "操作日期",
+    "errorMsg": "异常信息"
+  },
+  "placeholder": {
+    "inputOperIp": "请输入操作地址",
+    "inputTitle": "请输入系统模块",
+    "inputOperName": "请输入操作人员",
+    "operationType": "操作类型",
+    "operationStatus": "操作状态",
+    "startDate": "开始日期",
+    "endDate": "结束日期"
+  },
+  "status": {
+    "normal": "正常",
+    "failed": "失败"
+  },
+  "message": {
+    "confirmDelete": "是否确认删除日志编号为\"{operIds}\"的数据项?",
+    "confirmClean": "是否确认清空所有操作日志数据项?",
+    "cleanSuccess": "清空成功"
+  },
+  "dialog": {
+    "operlogDetail": "操作日志详细"
+  },
+  "label": {
+    "operModule": "操作模块",
+    "loginInfo": "登录信息",
+    "milliseconds": "毫秒"
+  }
+}

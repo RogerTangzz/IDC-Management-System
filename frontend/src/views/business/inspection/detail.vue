@@ -41,9 +41,9 @@
 </template>
 
 <script setup name="InspectionDetail">
-import { ref, computed, getCurrentInstance } from 'vue'
+import { ref, computed, getCurrentInstance, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { generateTickets } from '@/api/business/inspection'
+import { getInspection, generateTickets } from '@/api/business/inspection'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -60,6 +60,33 @@ const selectedAnomalyIds = ref([])
 
 // 计算：异常项
 const anomalyItems = computed(() => (inspectionItems.value || []).filter(i => i.isAnomaly || i.value === false))
+
+// 加载巡检详情数据
+async function loadInspectionDetail() {
+  const inspectionId = route.params.inspectionId || route.params.id
+  if (!inspectionId) {
+    proxy?.$modal?.msgError?.(t('business.inspection.message.invalidInspectionId'))
+    router.back()
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await getInspection(inspectionId)
+    const data = res?.data || res
+    form.value = data || {}
+    inspectionItems.value = data?.items || []
+  } catch (error) {
+    console.error('Failed to load inspection detail:', error)
+    proxy?.$modal?.msgError?.(t('business.inspection.message.loadFailed'))
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadInspectionDetail()
+})
 
 function selectAllAnomalies(){ selectedAnomalyIds.value = anomalyItems.value.map(i => i.id) }
 function clearSelectedAnomalies(){ selectedAnomalyIds.value = [] }

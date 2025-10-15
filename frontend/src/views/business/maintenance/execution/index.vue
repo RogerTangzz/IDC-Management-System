@@ -232,7 +232,7 @@ const handleDateChange = (value) => {
 
 // 查看详情
 const handleDetail = (row) => {
-  ElMessage.info('查看执行详情：' + row.executionNo)
+  ElMessage.info(t('business.maintenance.action.view') + '：' + row.executionNo)
 }
 
 // 完成执行
@@ -251,7 +251,7 @@ const submitComplete = async () => {
 
   try {
     // await maintenancePlanApi.completeExecution(currentExecution.value.id, completeForm)
-    ElMessage.success('执行完成')
+    ElMessage.success(t('business.maintenance.message.submitResultSuccess'))
     completeDialogVisible.value = false
     getList()
   } catch {
@@ -261,11 +261,11 @@ const submitComplete = async () => {
 
 // 中止执行
 const handleAbort = async (_row) => {
-  await ElMessageBox.confirm('确定中止此次执行？', '警告', { type: 'warning' })
+  await ElMessageBox.confirm(t('business.maintenance.message.confirmCancel'), { type: 'warning' })
 
   try {
     // await maintenancePlanApi.abortExecution(row.id)
-    ElMessage.success('已中止执行')
+    ElMessage.success(t('business.maintenance.message.deleteSuccess'))
     getList()
   } catch {
     // 中止失败
@@ -274,13 +274,13 @@ const handleAbort = async (_row) => {
 
 // 导出
 const handleExport = async () => {
-  await ElMessageBox.confirm('确定导出执行记录？', '确认', { type: 'info' })
+  await ElMessageBox.confirm(t('business.maintenance.message.confirmCancel'), t('business.maintenance.message.confirm'), { type: 'info' })
 
   try {
     // const res = await maintenancePlanApi.exportExecution(queryParams)
-    ElMessage.success('导出成功')
+    ElMessage.success(t('business.maintenance.message.importSuccess'))
   } catch (error) {
-    console.error('导出失败:', error)
+    console.error(t('business.maintenance.message.importFailed'), error)
   }
 }
 
@@ -289,7 +289,7 @@ const formatDuration = (minutes) => {
   if (!minutes) return '-'
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
-  return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
+  return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`
 }
 
 // 状态标签

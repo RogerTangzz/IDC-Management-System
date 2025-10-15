@@ -1,0 +1,35 @@
+{
+  "field": {
+    "jobLogId": "Log ID",
+    "logId": "Log Sequence",
+    "jobName": "Job Name",
+    "jobGroup": "Job Group",
+    "jobGroupLabel": "Job Group",
+    "invokeTarget": "Invoke Target",
+    "invokeMethod": "Invoke Method",
+    "jobMessage": "Log Message",
+    "executionStatus": "Execution Status",
+    "executionTime": "Execution Time",
+    "createTime": "Execution Time",
+    "exceptionInfo": "Exception Info"
+  },
+  "placeholder": {
+    "inputJobName": "Please enter job name",
+    "selectJobGroup": "Please select job group",
+    "selectExecutionStatus": "Please select execution status",
+    "startDate": "Start Date",
+    "endDate": "End Date"
+  },
+  "status": {
+    "normal": "Normal",
+    "failed": "Failed"
+  },
+  "message": {
+    "confirmDelete": "Are you sure to delete the schedule log with ID \"{jobLogIds}\"?",
+    "confirmClean": "Are you sure to clear all schedule log data?",
+    "cleanSuccess": "Clean successfully"
+  },
+  "dialog": {
+    "scheduleLogDetail": "Schedule Log Detail"
+  }
+}

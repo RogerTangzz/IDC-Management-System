@@ -1,16 +1,16 @@
 <template>
   <div>
-    <el-dialog title="添加选项" v-model="open" width="800px" :close-on-click-modal="false" :modal-append-to-body="false"
+    <el-dialog :title="t('tool.build.dialog.addOption')" v-model="open" width="800px" :close-on-click-modal="false" :modal-append-to-body="false"
       @open="onOpen" @close="onClose">
       <el-form ref="treeNodeForm" :model="formData" :rules="rules" label-width="100px">
         <el-col :span="24">
-          <el-form-item label="选项名" prop="label">
-            <el-input v-model="formData.label" placeholder="请输入选项名" clearable />
+          <el-form-item :label="t('tool.build.options.optionName')" prop="label">
+            <el-input v-model="formData.label" :placeholder="t('tool.build.options.optionNamePlaceholder')" clearable />
           </el-form-item>
         </el-col>
         <el-col :span="24">
-          <el-form-item label="选项值" prop="value">
-            <el-input v-model="formData.value" placeholder="请输入选项值" clearable>
+          <el-form-item :label="t('tool.build.options.optionValue')" prop="value">
+            <el-input v-model="formData.value" :placeholder="t('tool.build.options.optionValuePlaceholder')" clearable>
               <template #append>
                 <el-select v-model="dataType" :style="{ width: '100px' }">
                   <el-option v-for="(item, index) in dataTypeOptions" :key="index" :label="item.label" :value="item.value"
@@ -24,44 +24,47 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handelConfirm">确 定</el-button>
-          <el-button @click="onClose">取 消</el-button>
+          <el-button type="primary" @click="handelConfirm">{{ t('tool.gen.action.confirm') }}</el-button>
+          <el-button @click="onClose">{{ t('tool.gen.action.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
   </div>
 </template>
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const open = defineModel()
 const emit = defineEmits(['confirm'])
 const formData = ref({
   label: undefined,
   value: undefined
 })
-const rules = {
+const rules = computed(() => ({
   label: [
     {
       required: true,
-      message: '请输入选项名',
+      message: t('tool.build.options.optionNamePlaceholder'),
       trigger: 'blur'
     }
   ],
   value: [
     {
       required: true,
-      message: '请输入选项值',
+      message: t('tool.build.options.optionValuePlaceholder'),
       trigger: 'blur'
     }
   ]
-}
+}))
 const dataType = ref('string')
-const dataTypeOptions = ref([
+const dataTypeOptions = computed(() => [
   {
-    label: '字符串',
+    label: t('tool.build.options.dataTypeString'),
     value: 'string'
   },
   {
-    label: '数字',
+    label: t('tool.build.options.dataTypeNumber'),
     value: 'number'
   }
 ])

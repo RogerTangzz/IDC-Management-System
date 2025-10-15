@@ -1,0 +1,66 @@
+{
+  "field": {
+    "jobId": "Job ID",
+    "jobName": "Job Name",
+    "jobGroup": "Job Group",
+    "jobGroupLabel": "Job Group",
+    "invokeTarget": "Invoke Target",
+    "invokeMethod": "Invoke Method",
+    "invokeTargetMethod": "Invoke Target Method",
+    "cronExpression": "Cron Expression",
+    "cronExecutionExpression": "Cron Execution Expression",
+    "misfirePolicy": "Misfire Policy",
+    "concurrent": "Concurrent",
+    "nextValidTime": "Next Execution Time"
+  },
+  "action": {
+    "log": "Log",
+    "scheduleLog": "Schedule Log",
+    "executeOnce": "Execute Once",
+    "jobDetail": "Job Detail",
+    "generateExpression": "Generate Expression"
+  },
+  "placeholder": {
+    "inputJobName": "Please enter job name",
+    "selectJobGroup": "Please select job group",
+    "selectTaskStatus": "Please select task status",
+    "inputInvokeTarget": "Please enter invoke target",
+    "inputCronExpression": "Please enter cron expression",
+    "select": "Please select"
+  },
+  "validation": {
+    "jobNameRequired": "Job name cannot be empty",
+    "invokeTargetRequired": "Invoke target cannot be empty",
+    "cronExpressionRequired": "Cron expression cannot be empty"
+  },
+  "status": {
+    "normal": "Normal",
+    "paused": "Paused"
+  },
+  "misfirePolicy": {
+    "default": "Default Policy",
+    "executeImmediately": "Execute Immediately",
+    "executeOnce": "Execute Once",
+    "abandonExecution": "Abandon Execution"
+  },
+  "concurrent": {
+    "allow": "Allow",
+    "forbid": "Forbid"
+  },
+  "message": {
+    "confirmStatusChange": "Confirm to \"{action}\" the \"{jobName}\" task?",
+    "statusChangeSuccess": "{action} successfully",
+    "confirmExecute": "Confirm to execute \"{jobName}\" task once immediately?",
+    "executeSuccess": "Execute successfully",
+    "confirmDelete": "Are you sure to delete the scheduled task with ID \"{jobIds}\"?"
+  },
+  "dialog": {
+    "addTask": "Add Task",
+    "editTask": "Edit Task",
+    "taskDetail": "Task Detail",
+    "cronGeneratorTitle": "Cron Expression Generator"
+  },
+  "tooltip": {
+    "invokeMethodHelp": "Bean invocation example: ryTask.ryParams('ry')\nClass invocation example: com.ruoyi.quartz.task.RyTask.ryParams('ry')\nParameter description: Supports string, boolean, long, float, and integer types"
+  }
+}

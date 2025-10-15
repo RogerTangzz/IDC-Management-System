@@ -1,0 +1,39 @@
+{
+  "field": {
+    "ipaddr": "Login IP",
+    "userName": "User Name",
+    "status": "Status",
+    "loginTime": "Login Time",
+    "infoId": "Access No.",
+    "address": "Address",
+    "loginLocation": "Login Location",
+    "os": "Operating System",
+    "browser": "Browser",
+    "loginStatus": "Login Status",
+    "description": "Description",
+    "accessTime": "Access Time"
+  },
+  "action": {
+    "search": "Search",
+    "reset": "Reset",
+    "delete": "Delete",
+    "clean": "Clean",
+    "unlock": "Unlock",
+    "export": "Export"
+  },
+  "placeholder": {
+    "ipaddr": "Please enter login IP",
+    "userName": "Please enter user name",
+    "status": "Login status",
+    "startDate": "Start date",
+    "endDate": "End date"
+  },
+  "message": {
+    "confirmDelete": "Are you sure to delete access No. \"{infoIds}\"?",
+    "confirmClean": "Are you sure to clean all login log data?",
+    "confirmUnlock": "Are you sure to unlock user \"{username}\"?",
+    "deleteSuccess": "Deleted successfully",
+    "cleanSuccess": "Cleaned successfully",
+    "unlockSuccess": "User {username} unlocked successfully"
+  }
+}

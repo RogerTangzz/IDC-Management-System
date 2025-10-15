@@ -265,7 +265,7 @@ function handleCopyLast() {
   getLatestInspection().then(response => {
     if (response.data) {
       form.value.items = normalizeItems(response.data.items)
-      form.value.remark = `[复制自巡检#${response.data.inspectionNo}]`
+      form.value.remark = `[${t('business.inspection.message.copiedFrom')}#${response.data.inspectionNo}]`
       proxy.$modal.msgSuccess(t('business.inspection.message.copySuccess'))
     } else {
       proxy.$modal.msgWarning(t('business.inspection.message.noLastInspection'))
@@ -294,7 +294,7 @@ function detectAnomalies() {
 
       if (isAnomaly) {
         detectedAnomalies.push({
-          floor: floor.replace('floor', '') + '楼',
+          floor: t('business.inspection.message.floorLabel', { floor: floor.replace('floor', '') }),
           itemId: item.id,
           itemName: item.label,
           value: value,

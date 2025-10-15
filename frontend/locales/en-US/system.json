@@ -1,0 +1,475 @@
+{
+  "common": {
+    "search": "Search",
+    "reset": "Reset",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "export": "Export",
+    "import": "Import",
+    "submit": "OK",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "status": "Status",
+    "createTime": "Create Time",
+    "operation": "Operation",
+    "remark": "Remark",
+    "inputRemark": "Please enter content",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "expandCollapse": "Expand/Collapse"
+  },
+  "user": {
+    "title": "User Management",
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "importUser": "Import User",
+    "userId": "User ID",
+    "userName": "User Name",
+    "nickName": "Nick Name",
+    "deptName": "Department",
+    "phonenumber": "Phone Number",
+    "email": "Email",
+    "sex": "Gender",
+    "password": "Password",
+    "dept": "Department",
+    "post": "Post",
+    "role": "Role",
+    "placeholder": {
+      "userName": "Please enter user name",
+      "nickName": "Please enter nick name",
+      "phonenumber": "Please enter phone number",
+      "email": "Please enter email",
+      "password": "Please enter password",
+      "deptName": "Please enter department name",
+      "dept": "Please select department",
+      "sex": "Please select",
+      "status": "User status",
+      "post": "Please select",
+      "role": "Please select"
+    },
+    "validation": {
+      "userNameRequired": "User name cannot be empty",
+      "userNameLength": "User name length must be between 2 and 20",
+      "nickNameRequired": "Nick name cannot be empty",
+      "passwordRequired": "Password cannot be empty",
+      "passwordLength": "Password length must be between 5 and 20",
+      "passwordIllegal": "Cannot contain illegal characters: < > \" ' \\ |",
+      "emailFormat": "Please enter a valid email address",
+      "phonenumberFormat": "Please enter a valid phone number"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete user ID \"{userId}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully",
+      "confirmStatus": "Are you sure you want to \"{text}\" user \"{userName}\"?",
+      "confirmTitle": "Confirm",
+      "enable": "enable",
+      "disable": "disable",
+      "statusSuccess": "{text} successfully",
+      "resetPassword": "Please enter new password for \"{userName}\"",
+      "resetPasswordSuccess": "Modified successfully, new password is: {password}",
+      "passwordLengthError": "Password length must be between 5 and 20",
+      "importResult": "Import Result",
+      "selectFile": "Please select a file with suffix \"xls\" or \"xlsx\".",
+      "updateExistingData": "Update existing user data",
+      "fileFormatTip": "Only xls, xlsx format files are allowed.",
+      "downloadTemplate": "Download Template",
+      "dragOrClick": "Drop file here or ",
+      "clickUpload": "click to upload"
+    },
+    "tooltip": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "resetPassword": "Reset Password",
+      "assignRole": "Assign Role"
+    },
+    "authRole": {
+      "basicInfo": "Basic Info",
+      "roleInfo": "Role Info",
+      "loginAccount": "Login Account",
+      "roleId": "Role ID",
+      "roleName": "Role Name",
+      "roleKey": "Permission Key",
+      "serialNumber": "Serial Number",
+      "submit": "Submit",
+      "return": "Return",
+      "message": {
+        "authSuccess": "Authorization successful"
+      }
+    },
+    "profile": {
+      "title": "Personal Info",
+      "basicInfo": "Basic Info",
+      "userName": "User Name",
+      "userEmail": "User Email",
+      "userDept": "Department",
+      "userRole": "Role",
+      "createDate": "Create Date",
+      "resetPasswordTab": "Reset Password",
+      "oldPassword": "Old Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "avatarTitle": "Update Avatar",
+      "uploadAvatar": "Click to upload avatar",
+      "selectImage": "Select",
+      "submitImage": "Submit",
+      "nickName": "Nick Name",
+      "phonenumber": "Phone Number",
+      "email": "Email",
+      "sex": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "placeholder": {
+        "oldPassword": "Please enter old password",
+        "newPassword": "Please enter new password",
+        "confirmPassword": "Please confirm new password"
+      },
+      "validation": {
+        "oldPasswordRequired": "Old password cannot be empty",
+        "newPasswordRequired": "New password cannot be empty",
+        "newPasswordLength": "Length between 6 and 20 characters",
+        "newPasswordIllegal": "Cannot contain illegal characters: < > \" ' \\ |",
+        "confirmPasswordRequired": "Confirm password cannot be empty",
+        "passwordMismatch": "The two passwords do not match",
+        "imageFormatError": "File format error, please upload image types such as: JPG, PNG.",
+        "nickNameRequired": "Nick name cannot be empty",
+        "emailRequired": "Email address cannot be empty",
+        "emailFormat": "Please enter a valid email address",
+        "phonenumberRequired": "Phone number cannot be empty",
+        "phonenumberFormat": "Please enter a valid phone number"
+      },
+      "message": {
+        "updateSuccess": "Update successful"
+      }
+    }
+  },
+  "role": {
+    "title": "Role Management",
+    "addRole": "Add Role",
+    "editRole": "Edit Role",
+    "roleId": "Role ID",
+    "roleName": "Role Name",
+    "roleKey": "Permission Key",
+    "roleSort": "Role Order",
+    "displayOrder": "Display Order",
+    "dataScope": "Data Permission",
+    "dataScopeTitle": "Assign Data Permission",
+    "permissionScope": "Permission Scope",
+    "menuPermission": "Menu Permission",
+    "parentChild": "Parent-Child Link",
+    "assignUser": "Assign User",
+    "loading": "Loading, please wait",
+    "enable": "Enable",
+    "disable": "Disable",
+    "authUser": {
+      "addUser": "Add User",
+      "batchCancelAuth": "Batch Cancel Authorization",
+      "close": "Close",
+      "cancelAuth": "Cancel Authorization",
+      "phone": "Phone",
+      "email": "Email",
+      "message": {
+        "confirmCancel": "Are you sure you want to cancel role for user \"{userName}\"?",
+        "confirmBatchCancel": "Are you sure you want to cancel authorization for selected users?",
+        "cancelSuccess": "Authorization cancelled successfully"
+      }
+    },
+    "selectUser": {
+      "title": "Select User",
+      "message": {
+        "selectUserRequired": "Please select users to assign"
+      }
+    },
+    "placeholder": {
+      "roleName": "Please enter role name",
+      "roleKey": "Please enter permission key",
+      "status": "Role status",
+      "roleSort": "Please enter display order"
+    },
+    "validation": {
+      "roleNameRequired": "Role name cannot be empty",
+      "roleKeyRequired": "Permission key cannot be empty",
+      "roleSortRequired": "Role order cannot be empty"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete role ID \"{roleIds}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully",
+      "confirmStatus": "Are you sure you want to \"{text}\" role \"{roleName}\"?",
+      "statusSuccess": "{text} successfully"
+    },
+    "dataScopeOptions": {
+      "all": "All Data",
+      "custom": "Custom Data",
+      "dept": "Department Data",
+      "deptAndChild": "Department and Below",
+      "self": "Own Data Only"
+    },
+    "tooltip": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "dataPermission": "Data Permission",
+      "assignUser": "Assign User",
+      "roleKey": "Permission character defined in controller, e.g.: @PreAuthorize(`@ss.hasRole('admin')`)"
+    }
+  },
+  "menu": {
+    "title": "Menu Management",
+    "addMenu": "Add Menu",
+    "editMenu": "Edit Menu",
+    "menuId": "Menu ID",
+    "menuName": "Menu Name",
+    "icon": "Icon",
+    "orderNum": "Order",
+    "displayOrder": "Display Order",
+    "perms": "Permission",
+    "component": "Component Path",
+    "menuType": "Menu Type",
+    "parentMenu": "Parent Menu",
+    "menuIcon": "Menu Icon",
+    "routeName": "Route Name",
+    "routePath": "Route Path",
+    "routeParam": "Route Param",
+    "permissionChar": "Permission Char",
+    "isExternalLink": "External Link",
+    "isCache": "Cache",
+    "displayStatus": "Display Status",
+    "menuStatus": "Menu Status",
+    "mainCategory": "Main Category",
+    "cached": "Cached",
+    "notCached": "Not Cached",
+    "yes": "Yes",
+    "no": "No",
+    "visible": "Visible",
+    "placeholder": {
+      "menuName": "Please enter menu name",
+      "status": "Menu status",
+      "icon": "Click to select icon",
+      "orderNum": "Please enter order",
+      "perms": "Please enter permission",
+      "component": "Please enter component path",
+      "selectParentMenu": "Select parent menu",
+      "routeName": "Please enter route name",
+      "routePath": "Please enter route path",
+      "routeParam": "Please enter route param"
+    },
+    "validation": {
+      "menuNameRequired": "Menu name cannot be empty",
+      "orderNumRequired": "Menu order cannot be empty",
+      "pathRequired": "Route path cannot be empty"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete menu \"{menuName}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully"
+    },
+    "type": {
+      "directory": "Directory",
+      "menu": "Menu",
+      "button": "Button"
+    },
+    "tooltip": {
+      "routeName": "Default is the same as route path: e.g. `user` becomes `User` (Note: router removes routes with duplicate names, customize if needed to ensure uniqueness)",
+      "isExternalLink": "External link route path must start with `http(s)://`",
+      "routePath": "Route path, e.g.: `user`, for external URLs use `http(s)://` prefix",
+      "component": "Component path, e.g.: `system/user/index`, default in `views` directory",
+      "permissionChar": "Permission character defined in controller, e.g.: @PreAuthorize(`@ss.hasPermi('system:user:list')`)",
+      "routeParam": "Default route parameters, e.g.: `{\"id\": 1, \"name\": \"ry\"}`",
+      "isCache": "If yes, will be cached by `keep-alive`, component `name` must match route",
+      "displayStatus": "If hidden, route will not appear in sidebar but can still be accessed",
+      "menuStatus": "If disabled, route will not appear in sidebar and cannot be accessed"
+    }
+  },
+  "dept": {
+    "title": "Department Management",
+    "addDept": "Add Department",
+    "editDept": "Edit Department",
+    "deptId": "Department ID",
+    "deptName": "Department Name",
+    "leader": "Leader",
+    "phone": "Phone",
+    "email": "Email",
+    "orderNum": "Order",
+    "parentDept": "Parent Department",
+    "placeholder": {
+      "deptName": "Please enter department name",
+      "leader": "Please enter leader",
+      "phone": "Please enter phone",
+      "email": "Please enter email",
+      "orderNum": "Please enter order",
+      "parentDept": "Please select parent department"
+    },
+    "validation": {
+      "deptNameRequired": "Department name cannot be empty",
+      "orderNumRequired": "Display order cannot be empty",
+      "emailFormat": "Please enter a valid email address",
+      "phoneFormat": "Please enter a valid phone number"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete department \"{deptName}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully"
+    }
+  },
+  "post": {
+    "title": "Post Management",
+    "addPost": "Add Post",
+    "editPost": "Edit Post",
+    "postId": "Post ID",
+    "postCode": "Post Code",
+    "postName": "Post Name",
+    "postSort": "Post Order",
+    "placeholder": {
+      "postName": "Please enter post name",
+      "postCode": "Please enter post code",
+      "status": "Post status",
+      "postSort": "Please enter display order"
+    },
+    "validation": {
+      "postNameRequired": "Post name cannot be empty",
+      "postCodeRequired": "Post code cannot be empty",
+      "postSortRequired": "Post order cannot be empty"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete post ID \"{postId}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully"
+    }
+  },
+  "dict": {
+    "title": "Dictionary Management",
+    "dataTitle": "Dictionary Data",
+    "addDict": "Add Dictionary",
+    "editDict": "Edit Dictionary",
+    "addData": "Add Data",
+    "editData": "Edit Data",
+    "dictId": "Dictionary ID",
+    "dictCode": "Dictionary Code",
+    "dictName": "Dictionary Name",
+    "dictType": "Dictionary Type",
+    "dictLabel": "Dictionary Label",
+    "dictValue": "Dictionary Value",
+    "dictSort": "Dictionary Order",
+    "dataLabel": "Data Label",
+    "dataValue": "Data Value",
+    "dataSort": "Data Order",
+    "displaySort": "Display Order",
+    "cssClass": "CSS Class",
+    "listClass": "List Class",
+    "displayStyle": "Display Style",
+    "isDefault": "Is Default",
+    "dataStatus": "Data Status",
+    "placeholder": {
+      "dictName": "Please enter dictionary name",
+      "dictType": "Please enter dictionary type",
+      "status": "Dictionary status",
+      "dictLabel": "Please enter dictionary label",
+      "dictValue": "Please enter dictionary value",
+      "dictSort": "Please enter dictionary order",
+      "cssClass": "Please enter CSS class",
+      "listClass": "Please select"
+    },
+    "validation": {
+      "dictNameRequired": "Dictionary name cannot be empty",
+      "dictTypeRequired": "Dictionary type cannot be empty",
+      "dictLabelRequired": "Dictionary label cannot be empty",
+      "dictValueRequired": "Dictionary value cannot be empty",
+      "dictSortRequired": "Dictionary order cannot be empty",
+      "dataLabelRequired": "Data label cannot be empty",
+      "dataValueRequired": "Data value cannot be empty",
+      "dataSortRequired": "Data order cannot be empty"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete dictionary ID \"{dictId}\"?",
+      "confirmDeleteData": "Are you sure you want to delete dictionary code \"{dictCode}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully",
+      "refreshCache": "Refresh Cache"
+    },
+    "listClassOption": {
+      "default": "Default",
+      "primary": "Primary",
+      "success": "Success",
+      "info": "Info",
+      "warning": "Warning",
+      "danger": "Danger"
+    }
+  },
+  "config": {
+    "title": "Config Management",
+    "addConfig": "Add Config",
+    "editConfig": "Edit Config",
+    "configId": "Config ID",
+    "configName": "Config Name",
+    "configKey": "Config Key",
+    "configValue": "Config Value",
+    "configType": "System Built-in",
+    "placeholder": {
+      "configName": "Please enter config name",
+      "configKey": "Please enter config key",
+      "configValue": "Please enter config value",
+      "configType": "System built-in"
+    },
+    "validation": {
+      "configNameRequired": "Config name cannot be empty",
+      "configKeyRequired": "Config key cannot be empty",
+      "configValueRequired": "Config value cannot be empty"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete config ID \"{configId}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully",
+      "refreshCacheBtn": "Refresh Cache",
+      "refreshCacheSuccess": "Cache refreshed successfully"
+    },
+    "type": {
+      "yes": "Yes",
+      "no": "No"
+    }
+  },
+  "notice": {
+    "title": "Notice Management",
+    "addNotice": "Add Notice",
+    "editNotice": "Edit Notice",
+    "noticeId": "Notice ID",
+    "serialNumber": "Serial Number",
+    "noticeTitle": "Notice Title",
+    "noticeType": "Notice Type",
+    "noticeContent": "Notice Content",
+    "createBy": "Operator",
+    "creator": "Creator",
+    "content": "Content",
+    "placeholder": {
+      "noticeTitle": "Please enter notice title",
+      "noticeType": "Please select notice type",
+      "createBy": "Please enter operator",
+      "status": "Notice status",
+      "select": "Please select"
+    },
+    "validation": {
+      "noticeTitleRequired": "Notice title cannot be empty",
+      "noticeTypeRequired": "Notice type cannot be empty"
+    },
+    "message": {
+      "confirmDelete": "Are you sure you want to delete notice ID \"{noticeId}\"?",
+      "deleteSuccess": "Deleted successfully",
+      "editSuccess": "Modified successfully",
+      "addSuccess": "Added successfully"
+    },
+    "type": {
+      "notice": "Notice",
+      "announcement": "Announcement"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "title": {
+    "cpu": "CPU",
+    "memory": "内存",
+    "serverInfo": "服务器信息",
+    "jvmInfo": "Java虚拟机信息",
+    "diskStatus": "磁盘状态"
+  },
+  "field": {
+    "property": "属性",
+    "value": "值",
+    "cores": "核心数",
+    "userUsage": "用户使用率",
+    "systemUsage": "系统使用率",
+    "idleRate": "当前空闲率",
+    "memoryColumn": "内存",
+    "jvmColumn": "JVM",
+    "totalMemory": "总内存",
+    "usedMemory": "已用内存",
+    "freeMemory": "剩余内存",
+    "usageRate": "使用率",
+    "serverName": "服务器名称",
+    "operatingSystem": "操作系统",
+    "serverIp": "服务器IP",
+    "systemArchitecture": "系统架构",
+    "javaName": "Java名称",
+    "javaVersion": "Java版本",
+    "startTime": "启动时间",
+    "runDuration": "运行时长",
+    "installPath": "安装路径",
+    "projectPath": "项目路径",
+    "runParameters": "运行参数",
+    "diskPath": "盘符路径",
+    "fileSystem": "文件系统",
+    "diskType": "盘符类型",
+    "totalSize": "总大小",
+    "availableSize": "可用大小",
+    "usedSize": "已用大小",
+    "usedPercentage": "已用百分比"
+  },
+  "message": {
+    "loading": "正在加载服务监控数据，请稍候！"
+  }
+}

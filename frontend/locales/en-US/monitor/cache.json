@@ -1,0 +1,51 @@
+{
+  "field": {
+    "redisVersion": "Redis Version",
+    "runMode": "Run Mode",
+    "port": "Port",
+    "clientCount": "Clients",
+    "uptime": "Uptime (Days)",
+    "usedMemory": "Used Memory",
+    "usedCpu": "Used CPU",
+    "memoryConfig": "Memory Config",
+    "aofEnabled": "AOF Enabled",
+    "rdbStatus": "RDB Status",
+    "keyCount": "Key Count",
+    "networkIO": "Network Input/Output",
+    "cacheName": "Cache Name",
+    "cacheKeyName": "Cache Key",
+    "cacheContent": "Cache Content",
+    "remark": "Remark",
+    "serialNumber": "No."
+  },
+  "title": {
+    "basicInfo": "Basic Information",
+    "commandStats": "Command Statistics",
+    "memoryInfo": "Memory Information",
+    "cacheList": "Cache List",
+    "keyList": "Key List",
+    "cacheContent": "Cache Content"
+  },
+  "value": {
+    "standalone": "Standalone",
+    "cluster": "Cluster",
+    "yes": "Yes",
+    "no": "No",
+    "command": "Command",
+    "peak": "Peak",
+    "memoryUsage": "Memory Usage"
+  },
+  "action": {
+    "refresh": "Refresh",
+    "delete": "Delete",
+    "cleanAll": "Clean All"
+  },
+  "message": {
+    "loading": "Loading cache monitoring data, please wait...",
+    "refreshCacheListSuccess": "Cache list refreshed successfully",
+    "refreshKeyListSuccess": "Key list refreshed successfully",
+    "cleanCacheNameSuccess": "Cache name [{cacheName}] cleaned successfully",
+    "cleanCacheKeySuccess": "Cache key [{cacheKey}] cleaned successfully",
+    "cleanAllSuccess": "All caches cleaned successfully"
+  }
+}

@@ -4,8 +4,8 @@
       @close="onClose">
       <!-- 仅保留需要的 header 插槽内容，移除未使用的作用域变量以通过 lint -->
       <template #header>
-        选择图标
-        <el-input v-model="key" size="small" :style="{ width: '260px' }" placeholder="请输入图标名称" prefix-icon="Search"
+        {{ t('tool.build.dialog.selectIcon') }}
+        <el-input v-model="key" size="small" :style="{ width: '260px' }" :placeholder="t('tool.build.dialog.selectIconPlaceholder')" prefix-icon="Search"
           clearable />
       </template>
       <ul class="icon-ul">
@@ -24,7 +24,9 @@
 <script setup>
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const iconList = ref([])
 const originList = []
 const key = ref('')

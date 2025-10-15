@@ -5,7 +5,7 @@
       v-model="queryParams"
       v-model:dateRange="dateRange"
       v-model:showSearch="showSearch"
-      :dicts="{ ticket_status }"
+      :dicts="{ ticket_status, equipment_specialty }"
       @search="handleQuery"
       @reset="resetQuery"
     />

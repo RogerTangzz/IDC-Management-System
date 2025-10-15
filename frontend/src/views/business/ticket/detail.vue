@@ -139,7 +139,7 @@
             <el-select v-model="logFilters.action" :placeholder="$t('business.ticket.field.latestAction')" clearable size="small" style="width:130px;margin-right:8px" @change="reloadLogs">
               <el-option v-for="opt in actionOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
             </el-select>
-            <el-date-picker v-model="logFilters.daterange" type="datetimerange" range-separator="至" :start-placeholder="$t('business.ticket.field.startTime')" :end-placeholder="$t('business.ticket.report.endDate')" size="small" value-format="YYYY-MM-DD HH:mm:ss" @change="reloadLogs" style="margin-right:8px" />
+            <el-date-picker v-model="logFilters.daterange" type="datetimerange" :range-separator="$t('business.ticket.dateRange.to')" :start-placeholder="$t('business.ticket.field.startTime')" :end-placeholder="$t('business.ticket.report.endDate')" size="small" value-format="YYYY-MM-DD HH:mm:ss" @change="reloadLogs" style="margin-right:8px" />
             <el-button size="small" icon="Refresh" @click="resetLogFilters">{{ $t('business.ticket.action.reset') }}</el-button>
           </div>
           <el-timeline>
@@ -324,14 +324,14 @@ function getRemainTime() {
 
   const hours = Math.floor(diff / (1000 * 60 * 60))
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  return `${hours}小时${minutes}分钟`
+  return `${hours}${t('business.ticket.message.hour')}${minutes}${t('business.ticket.message.minute')}`
 }
 
 /** 获取超时类型 */
 function getTimeoutType() {
   const remain = getRemainTime()
   if (remain === t('business.ticket.message.timeoutStatus')) return 'danger'
-  if (remain.includes('小时') && parseInt(remain) < 2) return 'warning'
+  if (remain.includes(t('business.ticket.message.hour')) && parseInt(remain) < 2) return 'warning'
   return 'success'
 }
 

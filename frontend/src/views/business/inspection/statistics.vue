@@ -226,34 +226,34 @@ const statistics = reactive({
 const anomalyAnalysis = ref([
   {
     floor: 'floor1',
-    itemName: '地埋油罐及蓄冷罐是否正常',
+    itemName: t('business.inspection.statistics.oilTankItem'),
     count: 8,
     avgTime: 2.5,
     priority: 'high',
-    suggestion: '建议增加日常维护频次，定期检查管道连接'
+    suggestion: t('business.inspection.statistics.suggestionOilTank')
   },
   {
     floor: 'floor2',
-    itemName: '冷却塔是否正常',
+    itemName: t('business.inspection.statistics.coolingTowerItem'),
     count: 6,
     avgTime: 4.2,
     priority: 'medium',
-    suggestion: '建议每月清洗冷却塔，检查风扇运行状态'
+    suggestion: t('business.inspection.statistics.suggestionCoolingTower')
   },
   {
     floor: 'floor3',
-    itemName: 'UPS设备运行状态',
+    itemName: t('business.inspection.statistics.upsItem'),
     count: 5,
     avgTime: 1.8,
     priority: 'high',
-    suggestion: '建议定期进行UPS电池测试和维护'
+    suggestion: t('business.inspection.statistics.suggestionUPS')
   }
 ])
 
 // 完成率排行数据
 const completionRanking = ref([
   {
-    name: '张三',
+    name: t('business.inspection.statistics.zhang'),
     total: 28,
     completed: 28,
     completionRate: 100,
@@ -261,7 +261,7 @@ const completionRanking = ref([
     anomalyFoundRate: 15
   },
   {
-    name: '李四',
+    name: t('business.inspection.statistics.li'),
     total: 25,
     completed: 24,
     completionRate: 96,
@@ -269,7 +269,7 @@ const completionRanking = ref([
     anomalyFoundRate: 12
   },
   {
-    name: '王五',
+    name: t('business.inspection.statistics.wang'),
     total: 22,
     completed: 20,
     completionRate: 91,
@@ -277,7 +277,7 @@ const completionRanking = ref([
     anomalyFoundRate: 18
   },
   {
-    name: '赵六',
+    name: t('business.inspection.statistics.zhao'),
     total: 20,
     completed: 17,
     completionRate: 85,

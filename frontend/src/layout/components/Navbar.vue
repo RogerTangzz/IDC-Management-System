@@ -18,47 +18,51 @@
           </template>
           <div class="msg-pop">
             <div class="msg-pop-header">
-              <span>未读消息</span>
+              <span>{{ t('core.navbar.message.unread') }}</span>
               <div>
-                <el-button text type="primary" @click="goMessage">更多</el-button>
-                <el-button text type="primary" @click="readAllQuick" v-if="unread>0">全部已读</el-button>
+                <el-button text type="primary" @click="goMessage">{{ t('core.navbar.message.more') }}</el-button>
+                <el-button text type="primary" @click="readAllQuick" v-if="unread>0">{{ t('core.navbar.message.markAllRead') }}</el-button>
               </div>
             </div>
             <el-scrollbar height="240px">
               <el-skeleton v-if="msgLoading" :rows="3" animated />
               <div v-else>
-                <div v-if="topMessages.length===0" class="msg-empty">暂无未读</div>
+                <div v-if="topMessages.length===0" class="msg-empty">{{ t('core.navbar.message.noUnread') }}</div>
                 <div v-for="m in topMessages" :key="m.msgId" class="msg-item">
                   <div class="msg-title">{{ m.title }}</div>
                   <div class="msg-content">{{ m.content }}</div>
                   <div class="msg-meta">{{ parseTime(m.createTime) }}</div>
-                  <el-button text type="primary" size="small" @click="readQuick(m.msgId)">已读</el-button>
+                  <el-button text type="primary" size="small" @click="readQuick(m.msgId)">{{ t('core.navbar.message.markRead') }}</el-button>
                 </div>
               </div>
             </el-scrollbar>
           </div>
         </el-popover>
 
-        <el-tooltip content="源码地址" effect="dark" placement="bottom">
-          <ruo-yi-git id="ruoyi-git" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
-        <el-tooltip content="文档地址" effect="dark" placement="bottom">
-          <ruo-yi-doc id="ruoyi-doc" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
 
-        <el-tooltip content="主题模式" effect="dark" placement="bottom">
+        <el-tooltip :content="t('core.navbar.tooltip.theme')" effect="dark" placement="bottom">
           <div class="right-menu-item hover-effect theme-switch-wrapper" @click="toggleTheme">
             <svg-icon v-if="settingsStore.isDark" icon-class="sunny" />
             <svg-icon v-if="!settingsStore.isDark" icon-class="moon" />
           </div>
         </el-tooltip>
 
-        <el-tooltip content="布局大小" effect="dark" placement="bottom">
+        <el-tooltip :content="t('core.navbar.tooltip.size')" effect="dark" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip>
+
+        <el-dropdown class="right-menu-item hover-effect" trigger="hover" @command="handleLocaleChange">
+          <div style="display: flex; align-items: center;">
+            <svg-icon icon-class="language" style="font-size: 20px;" />
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="zh-CN" :disabled="currentLocale === 'zh-CN'">简体中文</el-dropdown-item>
+              <el-dropdown-item command="en-US" :disabled="currentLocale === 'en-US'">English</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </template>
 
       <el-dropdown @command="handleCommand" class="avatar-container right-menu-item hover-effect" trigger="hover">
@@ -69,13 +73,13 @@
         <template #dropdown>
           <el-dropdown-menu>
             <router-link to="/user/profile">
-              <el-dropdown-item>个人中心</el-dropdown-item>
+              <el-dropdown-item>{{ t('core.navbar.user.profile') }}</el-dropdown-item>
             </router-link>
             <el-dropdown-item command="setLayout" v-if="settingsStore.showSettings">
-                <span>布局设置</span>
+                <span>{{ t('core.navbar.user.layout') }}</span>
               </el-dropdown-item>
             <el-dropdown-item divided command="logout">
-              <span>退出登录</span>
+              <span>{{ t('core.navbar.user.logout') }}</span>
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -90,14 +94,13 @@ import request from '@/utils/request'
 import { getUnreadMessages, markAllRead, markRead } from '@/api/business/message'
 import { parseTime } from '@/utils/ruoyi'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'
 import Hamburger from '@/components/Hamburger'
 import Screenfull from '@/components/Screenfull'
 import SizeSelect from '@/components/SizeSelect'
 import HeaderSearch from '@/components/HeaderSearch'
-import RuoYiGit from '@/components/RuoYi/Git'
-import RuoYiDoc from '@/components/RuoYi/Doc'
 import useAppStore from '@/store/modules/app'
 import useUserStore from '@/store/modules/user'
 import useSettingsStore from '@/store/modules/settings'
@@ -106,6 +109,8 @@ const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const router = useRouter()
+const { locale, t } = useI18n()
+const currentLocale = ref(locale.value)
 const unread = ref(0)
 const topMessages = ref([])
 const msgLoading = ref(false)
@@ -129,9 +134,9 @@ function handleCommand(command) {
 }
 
 function logout() {
-  ElMessageBox.confirm('确定注销并退出系统吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('core.login.confirm.logout'), t('core.login.confirm.logoutTitle'), {
+    confirmButtonText: t('core.navbar.confirm.ok'),
+    cancelButtonText: t('core.navbar.confirm.cancel'),
     type: 'warning'
   }).then(() => {
     userStore.logOut().then(() => {
@@ -147,6 +152,13 @@ function setLayout() {
 
 function toggleTheme() {
   settingsStore.toggleTheme()
+}
+
+function handleLocaleChange(lang) {
+  locale.value = lang
+  currentLocale.value = lang
+  localStorage.setItem('locale', lang)
+  location.reload()
 }
 
 function goMessage(){
