@@ -91,4 +91,13 @@ public interface BizTicketMapper
     java.util.List<java.util.Map<String,Object>> trendCreated(java.util.Map<String,Object> params);
     /** 趋势：按完成日期统计完成 */
     java.util.List<java.util.Map<String,Object>> trendCompleted(java.util.Map<String,Object> params);
+
+    /**
+     * 查询来源于指定巡检的工单
+     *
+     * @param sourceId 来源ID (inspectionId)
+     * @param source 来源类型 ('inspection')
+     * @return 工单列表
+     */
+    List<BizTicket> selectTicketsBySourceIdAndType(Long sourceId, String source);
 }

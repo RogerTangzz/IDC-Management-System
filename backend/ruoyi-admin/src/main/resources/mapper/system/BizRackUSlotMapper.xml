@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BizRackUSlotMapper">
+
+    <resultMap type="BizRackUSlot" id="BizRackUSlotResult">
+        <result property="slotId"         column="slot_id"         />
+        <result property="rackId"         column="rack_id"         />
+        <result property="uNumber"        column="u_number"        />
+        <result property="status"         column="status"          />
+        <result property="deviceId"       column="device_id"       />
+        <result property="deviceName"     column="device_name"     />
+        <result property="deviceType"     column="device_type"     />
+        <result property="startU"         column="start_u"         />
+        <result property="uCount"         column="u_count"         />
+        <result property="allocationDate" column="allocation_date" />
+        <result property="allocatedBy"    column="allocated_by"    />
+        <result property="releaseDate"    column="release_date"    />
+        <result property="releasedBy"     column="released_by"     />
+        <result property="remark"         column="remark"          />
+        <result property="delFlag"        column="del_flag"        />
+        <result property="createBy"       column="create_by"       />
+        <result property="createTime"     column="create_time"     />
+        <result property="updateBy"       column="update_by"       />
+        <result property="updateTime"     column="update_time"     />
+        <!-- 扩展字段 -->
+        <result property="rackNo"         column="rack_no"         />
+        <result property="rackName"       column="rack_name"       />
+    </resultMap>
+
+    <sql id="selectBizRackUSlotVo">
+        select s.slot_id, s.rack_id, s.u_number, s.status,
+               s.device_id, s.device_name, s.device_type,
+               s.start_u, s.u_count,
+               s.allocation_date, s.allocated_by,
+               s.release_date, s.released_by,
+               s.remark, s.del_flag,
+               s.create_by, s.create_time, s.update_by, s.update_time,
+               r.rack_no, r.rack_name
+        from biz_rack_u_slot s
+        left join biz_asset_rack r on s.rack_id = r.rack_id and r.del_flag = '0'
+    </sql>
+
+    <select id="selectBizRackUSlotList" parameterType="BizRackUSlot" resultMap="BizRackUSlotResult">
+        <include refid="selectBizRackUSlotVo"/>
+        <where>
+            s.del_flag = '0'
+
+            <!-- 机柜ID精确匹配 -->
+            <if test="rackId != null">
+                and s.rack_id = #{rackId}
+            </if>
+
+            <!-- 状态精确匹配 -->
+            <if test="status != null and status != ''">
+                and s.status = #{status}
+            </if>
+
+            <!-- U位编号范围查询 -->
+            <if test="params != null and params.startU != null">
+                and s.u_number &gt;= #{params.startU}
+            </if>
+            <if test="params != null and params.endU != null">
+                and s.u_number &lt;= #{params.endU}
+            </if>
+
+            <!-- 设备名称模糊查询 -->
+            <if test="deviceName != null and deviceName != ''">
+                and s.device_name like concat('%', #{deviceName}, '%')
+            </if>
+
+            <!-- 设备类型精确匹配 -->
+            <if test="deviceType != null and deviceType != ''">
+                and s.device_type = #{deviceType}
+            </if>
+        </where>
+        order by s.rack_id, s.u_number
+    </select>
+
+    <select id="selectBizRackUSlotBySlotId" parameterType="Long" resultMap="BizRackUSlotResult">
+        <include refid="selectBizRackUSlotVo"/>
+        where s.slot_id = #{slotId} and s.del_flag = '0'
+    </select>
+
+    <select id="selectUSlotsByRackId" parameterType="Long" resultMap="BizRackUSlotResult">
+        <include refid="selectBizRackUSlotVo"/>
+        where s.rack_id = #{rackId} and s.del_flag = '0'
+        order by s.u_number asc
+    </select>
+
+    <select id="checkUSlotConflict" resultType="int">
+        select count(*)
+        from biz_rack_u_slot
+        where rack_id = #{rackId}
+          and del_flag = '0'
+          and status in ('occupied', 'reserved')
+          and u_number between #{startU} and #{startU} + #{uCount} - 1
+    </select>
+
+    <select id="countUSlotsByRackId" parameterType="Long" resultType="java.util.Map">
+        select
+            count(*) as total_slots,
+            sum(case when status = 'free' then 1 else 0 end) as free_slots,
+            sum(case when status = 'occupied' then 1 else 0 end) as occupied_slots,
+            sum(case when status = 'reserved' then 1 else 0 end) as reserved_slots,
+            sum(case when status = 'disabled' then 1 else 0 end) as disabled_slots
+        from biz_rack_u_slot
+        where rack_id = #{rackId} and del_flag = '0'
+    </select>
+
+    <insert id="insertBizRackUSlot" parameterType="BizRackUSlot" useGeneratedKeys="true" keyProperty="slotId">
+        insert into biz_rack_u_slot
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="rackId != null">rack_id,</if>
+            <if test="uNumber != null">u_number,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="deviceId != null">device_id,</if>
+            <if test="deviceName != null">device_name,</if>
+            <if test="deviceType != null">device_type,</if>
+            <if test="startU != null">start_u,</if>
+            <if test="uCount != null">u_count,</if>
+            <if test="allocationDate != null">allocation_date,</if>
+            <if test="allocatedBy != null">allocated_by,</if>
+            <if test="releaseDate != null">release_date,</if>
+            <if test="releasedBy != null">released_by,</if>
+            <if test="remark != null">remark,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="rackId != null">#{rackId},</if>
+            <if test="uNumber != null">#{uNumber},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="deviceId != null">#{deviceId},</if>
+            <if test="deviceName != null">#{deviceName},</if>
+            <if test="deviceType != null">#{deviceType},</if>
+            <if test="startU != null">#{startU},</if>
+            <if test="uCount != null">#{uCount},</if>
+            <if test="allocationDate != null">#{allocationDate},</if>
+            <if test="allocatedBy != null">#{allocatedBy},</if>
+            <if test="releaseDate != null">#{releaseDate},</if>
+            <if test="releasedBy != null">#{releasedBy},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBizRackUSlot" parameterType="BizRackUSlot">
+        update biz_rack_u_slot
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="rackId != null">rack_id = #{rackId},</if>
+            <if test="uNumber != null">u_number = #{uNumber},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="deviceId != null">device_id = #{deviceId},</if>
+            <if test="deviceName != null">device_name = #{deviceName},</if>
+            <if test="deviceType != null">device_type = #{deviceType},</if>
+            <if test="startU != null">start_u = #{startU},</if>
+            <if test="uCount != null">u_count = #{uCount},</if>
+            <if test="allocationDate != null">allocation_date = #{allocationDate},</if>
+            <if test="allocatedBy != null">allocated_by = #{allocatedBy},</if>
+            <if test="releaseDate != null">release_date = #{releaseDate},</if>
+            <if test="releasedBy != null">released_by = #{releasedBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where slot_id = #{slotId}
+    </update>
+
+    <delete id="deleteBizRackUSlotBySlotId" parameterType="Long">
+        update biz_rack_u_slot set del_flag = '1' where slot_id = #{slotId}
+    </delete>
+
+    <delete id="deleteBizRackUSlotBySlotIds" parameterType="Long">
+        update biz_rack_u_slot set del_flag = '1'
+        where slot_id in
+        <foreach item="slotId" collection="array" open="(" separator="," close=")">
+            #{slotId}
+        </foreach>
+    </delete>
+
+    <update id="allocateUSlots">
+        update biz_rack_u_slot
+        set status = 'occupied',
+            device_name = #{deviceName},
+            device_type = #{deviceType},
+            start_u = #{startU},
+            u_count = #{uCount},
+            allocation_date = now(),
+            allocated_by = #{allocatedBy},
+            update_time = now()
+        where rack_id = #{rackId}
+          and u_number between #{startU} and #{startU} + #{uCount} - 1
+          and del_flag = '0'
+          and status = 'free'
+    </update>
+
+    <update id="releaseUSlots">
+        update biz_rack_u_slot
+        set status = 'free',
+            device_id = null,
+            device_name = null,
+            device_type = null,
+            start_u = null,
+            u_count = 1,
+            release_date = now(),
+            released_by = #{releasedBy},
+            update_time = now()
+        where rack_id = #{rackId}
+          and u_number between #{startU} and #{startU} + #{uCount} - 1
+          and del_flag = '0'
+          and status = 'occupied'
+    </update>
+
+</mapper>

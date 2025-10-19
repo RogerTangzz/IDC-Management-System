@@ -49,7 +49,7 @@
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <!-- 数据表格 -->
+   <!-- 数据表格 -->
     <el-table
       v-loading="loading"
       :data="inspectionList"
@@ -121,7 +121,7 @@
     <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
       v-model:limit="queryParams.pageSize" @pagination="getList" />
 
-    <!-- 统计弹窗 -->
+    	<!-- 统计弹窗 -->
     <el-dialog :title="$t('business.inspection.message.inspectionStatistics')" v-model="statisticsOpen" width="800px" append-to-body>
       <div class="statistics-content">
         <el-row :gutter="20">
@@ -151,10 +151,22 @@ import anomalyService from '@/utils/business/inspectionAnomaly.js'
 import { FLOORS } from "./constants";
 import { parseTime } from '@/utils/ruoyi'
 import { useI18n } from 'vue-i18n'
+import { withMineOnly } from '@/utils/business/mineOnly'
+import { ref, reactive, toRefs, computed, getCurrentInstance } from 'vue'
+import { useRouter } from 'vue-router'
+import useUserStore from '@/store/modules/user'
 
 const { t } = useI18n()
 const { proxy } = getCurrentInstance();
 const router = useRouter();
+const userStore = useUserStore();
+
+
+// 管理员权限判断
+const isAdmin = computed(() => {
+  const roles = userStore.roles || []
+  return roles.includes('admin') || roles.includes('ROLE_ADMIN')
+});
 
 const inspectionList = ref([]);
 const loading = ref(true);
@@ -167,9 +179,9 @@ const dateRange = ref([]);
 const statisticsOpen = ref(false);
 
 
-// 当前正在生成工单的巡检ID（行内按钮loading禁用）
+// 当前正在生成工单的巡检ID(行内按钮loading禁用)
 const generatingInspectionId = ref(null)
-  const data = reactive({
+const data = reactive({
     form: {},
     queryParams: {
       pageNum: 1,
@@ -189,11 +201,17 @@ const generatingInspectionId = ref(null)
 
 const { queryParams, statistics } = toRefs(data);
 
-/** 查询巡检列表 */
+	/** 查询巡检列表 */
 function getList() {
   loading.value = true;
-  let params = proxy.addDateRange(queryParams.value, dateRange.value);
-  listInspection(params).then(response => {
+
+  // 构建基础查询参数(包含日期范围)
+  let baseParams = proxy.addDateRange(queryParams.value, dateRange.value);
+
+  // 应用 mineOnly 权限过滤:非管理员只能看到自己相关的巡检
+  const finalParams = withMineOnly(baseParams, isAdmin.value);
+
+  listInspection(finalParams).then(response => {
     inspectionList.value = response.rows;
     total.value = response.total;
     loading.value = false;
@@ -235,7 +253,7 @@ function handleAdd() {
 
 /** 复制上次巡检按钮操作 */
 function handleCopyLast() {
-  // 查找最近完成的巡检记录
+// 查找最近完成的巡检记录
   const lastCompleted = inspectionList.value
     .filter(item => item.status === 'completed')
     .sort((a, b) => new Date(b.inspectionDate) - new Date(a.inspectionDate))[0];
@@ -264,7 +282,7 @@ function handleCopy(row) {
   }).catch(() => { });
 }
 
-/** 生成工单按钮操作（废弃方法） */
+/** 生成工单按钮操作(废弃方法) */
 function handleGenerateTicketsObsolete(row) {
   proxy.$modal.confirm(t('business.inspection.message.confirmGenerateTickets', { count: row.anomalyCount })).then(function () {
     const __count = Number(row.anomalyCount || 0);
@@ -294,13 +312,18 @@ function handleDelete(row) {
 
 /** 导出按钮操作 */
 function handleExport() {
-  const params = proxy.addDateRange({ ...queryParams.value }, dateRange.value)
-  proxy.download('business/inspection/export', params, `inspection_${new Date().getTime()}.xlsx`)
+// 构建基础参数(包含日期范围)
+  const baseParams = proxy.addDateRange({ ...queryParams.value }, dateRange.value)
+
+  // 应用 mineOnly 权限过滤:非管理员只能导出自己相关的巡检
+  const finalParams = withMineOnly(baseParams, isAdmin.value)
+
+  proxy.download('business/inspection/export', finalParams, `inspection_${new Date().getTime()}.xlsx`)
 }
 
 /** 统计分析按钮操作 */
 function handleStatistics() {
-  // 模拟统计数据，实际应该从后端获取
+// 模拟统计数据,实际应该从后端获取
   statistics.value = {
     monthCount: 45,
     monthAnomalyCount: 23,
@@ -309,8 +332,7 @@ function handleStatistics() {
   statisticsOpen.value = true;
 }
 
-// 工具函数：获取楼层标签
-
+// 工具函数:获取楼层标签
 // 生成工单
 async function handleGenerateTickets(row) {
   if (!row || !row.inspectionId) return
@@ -339,7 +361,7 @@ async function handleGenerateTickets(row) {
   } catch (e) { console.error(e) } finally { generatingInspectionId.value = null }
 }
 
-/** 表格行样式（异常行高亮显示） */
+/** 表格行样式(异常行高亮显示) */
 function rowClassName({ row }) {
   if (row && Number(row.anomalyCount) > 0) return 'danger-row'
   if (row && Number(row.progress || 0) < 100) return 'warning-row'

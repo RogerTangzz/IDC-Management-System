@@ -31,6 +31,12 @@
           <th>{{ $t('business.maintenance.field.plannedEndDate') }}</th>
           <td>{{ parseTime(plan?.plannedEndDate) }}</td>
         </tr>
+        <tr>
+          <th>{{ $t('business.maintenance.field.itemCount') }}</th>
+          <td>{{ plan?.itemCount || 0 }}</td>
+          <th>{{ $t('business.maintenance.field.mopCategory') }}</th>
+          <td>{{ plan?.mopCategory || '-' }}</td>
+        </tr>
       </table>
     </div>
 

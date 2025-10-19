@@ -73,9 +73,11 @@
   "message": {
     "basicInfo": "巡检基本信息",
     "inspectionProgress": "巡检进度",
+    "completionProgress": "完成进度",
     "inspectionItems": "巡检项目",
     "onSitePhotos": "现场照片",
     "anomalySummary": "异常项汇总",
+    "operationHistory": "操作历史",
     "detailTitle": "巡检详情",
     "noAnomalyFound": "无异常",
     "anomalyDetected": "检测到异常项",
@@ -124,13 +126,28 @@
     "noInspectionIdForTicket": "未获取到巡检ID，无法生成工单",
     "confirmCancelEdit": "确定要取消吗？未保存的数据将丢失",
     "copiedFrom": "复制自巡检",
+    "copyFailed": "复制巡检失败",
+    "unknown": "未知",
     "inspectionItem": "巡检项目{index}",
     "loadDetailFailed": "获取巡检详情失败",
     "basicInfrastructure": "基础设施",
     "pumpSystem": "水泵系统",
     "coolingSystem": "冷冻系统",
     "invalidInspectionId": "无效的巡检ID",
-    "loadFailed": "加载失败"
+    "loadFailed": "加载失败",
+    "historyLoadFailed": "加载历史记录失败",
+    "noHistory": "暂无操作记录",
+    "anomalyCount": "异常数量"
+  },
+  "history": {
+    "create": "创建巡检",
+    "update": "修改巡检",
+    "copy": "复制巡检",
+    "generate_ticket": "生成工单",
+    "delete": "删除巡检",
+    "all": "全部",
+    "operation": "操作记录",
+    "ticket": "工单记录"
   },
   "validation": {
     "inspectionDateRequired": "请选择巡检日期",

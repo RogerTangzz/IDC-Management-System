@@ -84,6 +84,9 @@ public class BizInspection extends BaseEntity
     /** 删除标志（0代表存在 2代表删除） */
     private String delFlag;
 
+    /** 是否有异常(0无异常,1有异常) - 用于查询条件 */
+    private Integer hasAnomaly;
+
     public void setInspectionId(Long inspectionId) 
     {
         this.inspectionId = inspectionId;
@@ -249,9 +252,19 @@ public class BizInspection extends BaseEntity
         this.delFlag = delFlag;
     }
 
-    public String getDelFlag() 
+    public String getDelFlag()
     {
         return delFlag;
+    }
+
+    public void setHasAnomaly(Integer hasAnomaly)
+    {
+        this.hasAnomaly = hasAnomaly;
+    }
+
+    public Integer getHasAnomaly()
+    {
+        return hasAnomaly;
     }
 
     @Override

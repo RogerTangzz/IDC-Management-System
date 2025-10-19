@@ -11,6 +11,7 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ruoyi.system.domain.BizInspection;
 import com.ruoyi.system.domain.BizTicket;
+import com.ruoyi.system.domain.vo.InspectionHistoryVO;
 import com.ruoyi.system.service.IBizInspectionService;
 import com.ruoyi.system.service.IBizTicketService;
 import com.ruoyi.system.service.IBizTicketLogService;
@@ -31,6 +32,19 @@ public class BizInspectionController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo list(BizInspection criteria) {
         startPage();
+
+        // 注入当前用户信息到 params，用于 mineOnly 数据权限过滤
+        if (criteria.getParams() != null && criteria.getParams().containsKey("mineOnly")) {
+            Long userId = currentUserId();
+            String username = currentUserName();
+            if (userId != null) {
+                criteria.getParams().put("userId", userId);
+            }
+            if (username != null) {
+                criteria.getParams().put("username", username);
+            }
+        }
+
         List<BizInspection> list = bizInspectionService.selectBizInspectionList(criteria);
         return getDataTable(list);
     }
@@ -168,6 +182,17 @@ public class BizInspectionController extends BaseController {
     public AjaxResult export(@RequestParam Map<String, Object> params) {
         // 按 RuoYi 规范实际应写入文件，这里临时返回 success
         return AjaxResult.success();
+    }
+
+    /**
+     * M3: 获取巡检操作历史
+     * GET /business/inspection/{id}/history?type=all|operation|ticket
+     */
+    @GetMapping("/{id}/history")
+    public AjaxResult getHistory(@PathVariable("id") Long inspectionId,
+                                  @RequestParam(required = false, defaultValue = "all") String type) {
+        List<InspectionHistoryVO> history = bizInspectionService.getInspectionHistory(inspectionId, type);
+        return AjaxResult.success(history);
     }
 
     /**

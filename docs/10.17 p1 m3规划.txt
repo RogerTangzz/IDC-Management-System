@@ -1,0 +1,815 @@
+M3「巡检完善」深度分析与优化规划
+📊 一、M3原始规划的深度评估
+1.1 ✅ 合理性分析
+经过仔细审查现有代码和文档,我发现M3规划存在多处问题和遗漏:
+问题1: 详情页已有楼层Tab,但目标描述不清晰
+📍 现状: create.vue已实现完整的楼层Tab切换(lines 54-138)
+📍 现状: detail.vue当前没有楼层Tab,只显示异常项汇总
+⚠️ 问题: M3规划未明确是要在detail.vue新增楼层Tab,还是优化create.vue的Tab
+问题2: "复制流程"概念混淆
+📍 现状: create.vue已有"复制上次巡检"功能(handleCopyLast, lines 264-274)
+📍 现状: API已提供copyInspection(id)和copyLastInspection()两个接口
+⚠️ 问题: M3规划提到"?copy=<id>"预填,但未说明与现有功能的关系
+问题3: 管理员入口可见性缺乏具体场景
+⚠️ 问题: 规划只说"仅管理员可见指定入口",但未明确:
+哪些入口需要管理员权限?
+detail.vue的哪些操作需要限制?
+是否需要后端权限校验?
+问题4: 历史接口shape不完整
+⚠️ 问题: 规划给出的shape示例过于简化:
+// 审批: { time, action: submit|approve|reject, operatorName, comment }
+// 执行: { time, action: start|complete, operatorName, result }
+⚠️ 巡检模块特性: 巡检没有"审批流",只有"创建→执行→生成工单"
+⚠️ 应该对齐: M2维保模块的历史shape,但巡检业务逻辑不同
+1.2 ❌ 正确性问题
+问题5: 与M2对齐的假设错误
+M2是维保计划模块:有审批流(draft→pending→approved→rejected)
+M3是巡检模块:没有审批流,只有执行流程
+⚠️ 错误假设: "操作日志与M2历史shape对齐"不适用于巡检
+问题6: 遗漏核心功能点
+根据现有代码,M3应重点完善:
+详情页增强: 添加完整巡检信息展示(基本信息+楼层Tab+照片+日志)
+复制功能统一: 整合"复制上次"和"复制指定巡检"
+生成工单优化: 详情页已有,但缺少历史追溯
+数据权限: 与工单模块对齐的mineOnly逻辑
+📋 二、基于现状的M3优化规划
+2.1 🎯 重新定义目标与范围
+核心目标(重新定义)
+详情页完善: 添加完整信息展示(基本信息+楼层巡检项+照片+操作历史)
+复制流程统一: 支持从列表/详情复制任意巡检记录,清除敏感字段
+历史追溯: 展示巡检创建/修改/生成工单的操作历史
+权限控制: 数据权限(mineOnly)与操作权限(删除/编辑)对齐工单模块
+i18n完善: 所有新增文案国际化
+明确不在范围
+❌ 列表排序重构(M2已完成模式,M3沿用即可)
+❌ 导出/打印模板(M4规划)
+❌ 审批流程(巡检无审批流)
+❌ 大规模DB迁移
+2.2 📂 关键文件清单(补充完整)
+前端核心文件
+frontend/src/views/business/inspection/
+├── index.vue              # 列表页(已完成,M3小改)
+├── detail.vue             # 详情页(核心改造:+基本信息+楼层Tab+历史)
+├── create.vue             # 创建页(已完成,M3补充复制normalize)
+├── constants.js           # 常量配置(已完成,M3可能补充)
+└── components/            # 可选:抽取复用组件
+    ├── InspectionTimeline.vue  # 操作历史时间线
+    └── InspectionFloorTabs.vue # 楼层Tab组件(复用create.vue逻辑)
+
+frontend/src/api/business/
+└── inspection.js          # API(M3新增getHistory接口)
+
+frontend/src/store/modules/
+└── user.js                # 角色判断(已有isAdmin逻辑)
+后端核心文件
+backend/ruoyi-admin/src/main/java/com/ruoyi/web/controller/business/
+└── BizInspectionController.java  # 新增/history端点
+
+backend/ruoyi-admin/src/main/java/com/ruoyi/system/service/
+└── impl/BizInspectionServiceImpl.java  # 历史聚合逻辑
+
+backend/ruoyi-admin/src/main/resources/mapper/system/
+└── BizInspectionMapper.xml        # SQL查询(可能需要关联日志表)
+🔧 三、接口契约设计(对齐实际需求)
+3.1 核心接口:GET /business/inspection/{id}/history
+请求参数
+// Query参数(可选)
+{
+  type?: 'all' | 'operation' | 'ticket'  // all=所有,operation=操作日志,ticket=工单生成
+  pageNum?: number    // 分页(可选,初期不分页)
+  pageSize?: number
+}
+响应Shape(对齐巡检业务)
+interface InspectionHistoryResponse {
+  code: number
+  msg: string
+  data: InspectionHistoryItem[]
+}
+
+interface InspectionHistoryItem {
+  id: number
+  time: string           // 时间 "YYYY-MM-DD HH:mm:ss"
+  action: InspectionAction  // 动作类型
+  operatorId: number     // 操作人ID
+  operatorName: string   // 操作人姓名
+  detail?: string        // 详情描述
+  relatedId?: number     // 关联ID(如工单ID)
+}
+
+// 巡检特定的动作类型(不是审批流!)
+type InspectionAction =
+  | 'create'           // 创建巡检
+  | 'update'           // 修改巡检
+  | 'copy'             // 复制巡检
+  | 'generate_ticket'  // 生成工单
+  | 'delete'           // 删除(软删除)
+实现说明
+数据来源:
+biz_inspection表的create_time/create_by/update_time/update_by
+biz_ticket表的关联记录(inspection_id字段)
+可选:sys_oper_log操作日志表
+性能优化:
+初期不分页(单条巡检历史记录通常<20条)
+添加索引:idx_inspection_id(如需关联查询)
+3.2 辅助接口:POST /business/inspection/{id}/copy
+用途: 服务端复制(可选,前端也可自行实现)
+请求Body
+{
+  "clearFields": ["inspectionId", "inspectionNo", "createTime", "updateTime"]
+}
+响应
+{
+  "code": 200,
+  "msg": "复制成功",
+  "data": {
+    "inspectionId": null,
+    "inspectionNo": null,
+    "inspectionDate": "2025-10-17",
+    "inspectorName": "张三",
+    "items": {...},
+    "remark": "[复制自#INS202510170001] 2025-10-17 15:30:00"
+  }
+}
+📝 四、前端任务拆解(优化版)
+Update Todos
+
+深入分析M3规划的合理性与正确性
+
+评估现有代码与M3目标的对齐度
+
+优化M3规划方案并输出完整文档
+4.1 任务组A:详情页完善(核心)
+A1. 详情页布局重构
+文件: frontend/src/views/business/inspection/detail.vue 当前状态: 只显示异常项汇总+生成工单按钮 目标状态:
+<template>
+  <div class="app-container">
+    <!-- 1. 顶部操作栏 -->
+    <el-card class="header-card">
+      <el-button @click="handleBack">返回列表</el-button>
+      <el-button type="primary" @click="handleEdit" v-hasPermi="['business:inspection:edit']">编辑</el-button>
+      <el-button @click="handleCopy">复制巡检</el-button>
+      <el-button type="danger" @click="handleDelete" v-hasPermi="['business:inspection:remove']" v-if="isAdmin">删除</el-button>
+    </el-card>
+
+    <!-- 2. 基本信息 -->
+    <el-card class="mb20">
+      <template #header>基本信息</template>
+      <el-descriptions :column="3">
+        <el-descriptions-item label="巡检编号">{{ form.inspectionNo }}</el-descriptions-item>
+        <el-descriptions-item label="巡检日期">{{ form.inspectionDate }}</el-descriptions-item>
+        <el-descriptions-item label="巡检人">{{ form.inspectorName }}</el-descriptions-item>
+        <el-descriptions-item label="交接人">{{ form.relayPerson }}</el-descriptions-item>
+        <el-descriptions-item label="完成进度">{{ form.progress }}%</el-descriptions-item>
+        <el-descriptions-item label="异常数">{{ form.anomalyCount }}</el-descriptions-item>
+      </el-descriptions>
+    </el-card>
+
+    <!-- 3. 楼层巡检项Tab(复用create.vue逻辑) -->
+    <el-card class="mb20">
+      <template #header>巡检项详情</template>
+      <el-tabs v-model="activeTab">
+        <!-- 与create.vue相同的Tab结构,但只读展示 -->
+      </el-tabs>
+    </el-card>
+
+    <!-- 4. 现场照片 -->
+    <el-card class="mb20" v-if="form.photos && form.photos.length > 0">
+      <template #header>现场照片</template>
+      <el-image v-for="photo in form.photos" :src="photo" :preview-src-list="form.photos" />
+    </el-card>
+
+    <!-- 5. 异常项汇总(保留原有) -->
+    <el-card class="mb20">
+      <template #header>异常项汇总</template>
+      <!-- 原有异常项展示+生成工单逻辑 -->
+    </el-card>
+
+    <!-- 6. 操作历史(新增) -->
+    <el-card>
+      <template #header>操作历史</template>
+      <el-timeline>
+        <el-timeline-item v-for="log in history" :timestamp="log.time">
+          <span>{{ getActionText(log.action) }}</span> - {{ log.operatorName }}
+          <div v-if="log.detail">{{ log.detail }}</div>
+        </el-timeline-item>
+      </el-timeline>
+    </el-card>
+  </div>
+</template>
+实现要点:
+复用create.vue的楼层Tab组件结构,改为只读展示
+调用getInspection(id)获取完整数据
+调用getInspectionHistory(id)获取操作历史
+isAdmin判断从store/modules/user获取
+估时: 4小时
+A2. 楼层Tab组件抽取(可选优化)
+文件: frontend/src/views/business/inspection/components/InspectionFloorTabs.vue 目的: create.vue和detail.vue复用相同Tab逻辑 Props设计:
+interface Props {
+  items: Record<string, any>  // { floor1: {...}, floor2: {...}, ... }
+  readonly?: boolean          // 只读模式(detail用)
+  showProgress?: boolean      // 显示进度条(create用)
+}
+估时: 2小时(可选)
+4.2 任务组B:复制功能统一
+B1. 复制Normalize映射清单
+文件: frontend/src/views/business/inspection/create.vue(补充) 当前问题: handleCopyLast只复制items和remark,未清除敏感字段 优化方案:
+// 新增: 统一的复制normalize函数
+function normalizeCopiedInspection(source, copyFrom = 'last') {
+  const timestamp = new Date().toLocaleString('zh-CN')
+  
+  return {
+    // 清除敏感字段
+    inspectionId: undefined,
+    inspectionNo: undefined,
+    createTime: undefined,
+    updateTime: undefined,
+    createBy: undefined,
+    updateBy: undefined,
+    
+    // 保留业务数据
+    inspectionDate: new Date().toISOString().split('T')[0], // 默认今天
+    inspectorName: source.inspectorName || '',
+    relayPerson: source.relayPerson || '',
+    items: normalizeItems(source.items),
+    photos: [], // 清空照片
+    
+    // 备注追加来源
+    remark: `[复制自#${source.inspectionNo || copyFrom}] ${timestamp}\n${source.remark || ''}`
+  }
+}
+
+// 修改现有函数
+function handleCopyLast() {
+  getLatestInspection().then(response => {
+    if (response.data) {
+      Object.assign(form.value, normalizeCopiedInspection(response.data, 'last'))
+      proxy.$modal.msgSuccess(t('business.inspection.message.copySuccess'))
+    }
+  })
+}
+
+// 新增: 从URL参数复制
+onMounted(() => {
+  const copyId = route.query.copy
+  if (copyId) {
+    getInspection(copyId).then(response => {
+      if (response.data) {
+        Object.assign(form.value, normalizeCopiedInspection(response.data, response.data.inspectionNo))
+      }
+    })
+  }
+})
+估时: 1.5小时
+B2. 列表页/详情页添加复制入口
+文件:
+frontend/src/views/business/inspection/index.vue(列表)
+frontend/src/views/business/inspection/detail.vue(详情)
+列表页改动:
+<el-table-column label="操作" width="180">
+  <template #default="scope">
+    <el-button link @click="handleView(scope.row)">详情</el-button>
+    <el-button link @click="handleEdit(scope.row)">编辑</el-button>
+    <el-button link @click="handleCopy(scope.row)">复制</el-button>
+  </template>
+</el-table-column>
+
+<script>
+function handleCopy(row) {
+  router.push(`/business/inspection/create?copy=${row.inspectionId}`)
+}
+</script>
+详情页改动: 顶部操作栏添加"复制"按钮 估时: 0.5小时
+4.3 任务组C:历史追溯接入
+C1. API接口封装
+文件: frontend/src/api/business/inspection.js
+/**
+ * 获取巡检操作历史
+ * @param {number|string} inspectionId
+ * @param {Object} params - { type: 'all'|'operation'|'ticket' }
+ */
+export function getInspectionHistory(inspectionId, params = {}) {
+  return get(`/business/inspection/${inspectionId}/history`, params)
+}
+估时: 0.5小时
+C2. 详情页历史时间线展示
+文件: frontend/src/views/business/inspection/detail.vue 实现:
+<el-card v-loading="historyLoading">
+  <template #header>
+    <span>操作历史</span>
+    <el-radio-group v-model="historyType" size="small" style="float: right">
+      <el-radio-button label="all">全部</el-radio-button>
+      <el-radio-button label="operation">操作</el-radio-button>
+      <el-radio-button label="ticket">工单</el-radio-button>
+    </el-radio-group>
+  </template>
+  
+  <el-timeline v-if="history.length > 0">
+    <el-timeline-item 
+      v-for="log in history" 
+      :key="log.id"
+      :timestamp="log.time"
+      :type="getTimelineType(log.action)"
+    >
+      <div class="timeline-content">
+        <el-tag :type="getActionTagType(log.action)">{{ getActionText(log.action) }}</el-tag>
+        <span class="ml10">{{ log.operatorName }}</span>
+      </div>
+      <div v-if="log.detail" class="timeline-detail">{{ log.detail }}</div>
+      <el-link v-if="log.action === 'generate_ticket' && log.relatedId" 
+               :href="`/business/ticket/detail/${log.relatedId}`" 
+               type="primary">
+        查看工单
+      </el-link>
+    </el-timeline-item>
+  </el-timeline>
+  
+  <el-empty v-else description="暂无操作记录" />
+</el-card>
+
+<script>
+const history = ref([])
+const historyLoading = ref(false)
+const historyType = ref('all')
+
+// 加载历史
+async function loadHistory() {
+  historyLoading.value = true
+  try {
+    const res = await getInspectionHistory(inspectionId, { type: historyType.value })
+    history.value = res.data || []
+  } catch (error) {
+    proxy.$modal.msgError('加载历史失败')
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+// 监听类型切换
+watch(historyType, () => loadHistory())
+
+// 动作文本映射
+function getActionText(action) {
+  const map = {
+    'create': '创建巡检',
+    'update': '修改巡检',
+    'copy': '复制巡检',
+    'generate_ticket': '生成工单',
+    'delete': '删除巡检'
+  }
+  return map[action] || action
+}
+
+function getActionTagType(action) {
+  const map = {
+    'create': 'success',
+    'update': 'primary',
+    'copy': 'info',
+    'generate_ticket': 'warning',
+    'delete': 'danger'
+  }
+  return map[action] || ''
+}
+</script>
+估时: 2小时
+4.4 任务组D:权限控制
+D1. 管理员判断统一
+文件: frontend/src/composables/usePermission.js(新建)
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+
+export function usePermission() {
+  const store = useStore()
+  
+  const isAdmin = computed(() => {
+    const roles = store.getters.roles || []
+    return roles.includes('admin') || roles.includes('ROLE_ADMIN')
+  })
+  
+  const hasPermi = (permission) => {
+    const permissions = store.getters.permissions || []
+    return permissions.includes(permission)
+  }
+  
+  return {
+    isAdmin,
+    hasPermi
+  }
+}
+估时: 0.5小时
+D2. 详情页操作权限控制
+文件: frontend/src/views/business/inspection/detail.vue
+<script setup>
+import { usePermission } from '@/composables/usePermission'
+
+const { isAdmin, hasPermi } = usePermission()
+</script>
+
+<template>
+  <!-- 编辑: 需要编辑权限或是创建人 -->
+  <el-button 
+    v-if="hasPermi('business:inspection:edit') || form.createBy === currentUserId"
+    @click="handleEdit"
+  >
+    编辑
+  </el-button>
+  
+  <!-- 删除: 仅管理员 -->
+  <el-button 
+    v-if="isAdmin && hasPermi('business:inspection:remove')"
+    type="danger" 
+    @click="handleDelete"
+  >
+    删除
+  </el-button>
+  
+  <!-- 操作历史: 仅管理员可见全部,普通用户仅看自己相关 -->
+  <el-card v-if="isAdmin || form.createBy === currentUserId">
+    <template #header>操作历史</template>
+    <!-- ... -->
+  </el-card>
+</template>
+估时: 1小时
+D3. 列表数据权限(mineOnly)
+文件: frontend/src/views/business/inspection/index.vue 对齐工单模块模式:
+import { buildQueryPayload } from '@/utils/business/mineOnly'
+
+function getList() {
+  loading.value = true
+  
+  const params = buildQueryPayload({
+    queryParams: queryParams.value,
+    dateRange: dateRange.value,
+    isAdmin: isAdmin.value,
+    forExport: false
+  })
+  
+  listInspection(params).then(response => {
+    inspectionList.value = response.rows
+    total.value = response.total
+  }).finally(() => {
+    loading.value = false
+  })
+}
+估时: 1小时
+4.5 任务组E:i18n国际化
+E1. 补充语言包
+文件:
+frontend/src/locales/zh-CN/business/inspection.json
+frontend/src/locales/en-US/business/inspection.json
+新增key:
+{
+  "action": {
+    "copy": "复制巡检",
+    "viewHistory": "查看历史",
+    "backToList": "返回列表"
+  },
+  "message": {
+    "basicInfo": "基本信息",
+    "operationHistory": "操作历史",
+    "noHistory": "暂无操作记录",
+    "copySuccess": "复制成功,请修改后保存",
+    "copiedFrom": "复制自",
+    "historyLoadFailed": "加载历史失败"
+  },
+  "history": {
+    "create": "创建巡检",
+    "update": "修改巡检",
+    "copy": "复制巡检",
+    "generate_ticket": "生成工单",
+    "delete": "删除巡检"
+  }
+}
+估时: 1小时
+🔨 五、后端任务拆解
+5.1 任务组F:历史接口实现
+F1. Controller层
+文件: BizInspectionController.java
+/**
+ * 获取巡检操作历史
+ */
+@PreAuthorize("@ss.hasPermi('business:inspection:query')")
+@GetMapping("/{inspectionId}/history")
+public AjaxResult getHistory(@PathVariable Long inspectionId, 
+                             @RequestParam(required = false, defaultValue = "all") String type) {
+    List<InspectionHistoryVO> history = bizInspectionService.getInspectionHistory(inspectionId, type);
+    return success(history);
+}
+估时: 0.5小时
+F2. Service层
+文件: BizInspectionServiceImpl.java
+@Override
+public List<InspectionHistoryVO> getInspectionHistory(Long inspectionId, String type) {
+    List<InspectionHistoryVO> history = new ArrayList<>();
+    
+    // 1. 从巡检表获取创建/修改记录
+    BizInspection inspection = inspectionMapper.selectBizInspectionById(inspectionId);
+    if (inspection != null) {
+        // 创建记录
+        history.add(InspectionHistoryVO.builder()
+            .time(inspection.getCreateTime())
+            .action("create")
+            .operatorId(inspection.getCreateBy())
+            .operatorName(inspection.getCreateByName())
+            .detail("创建巡检记录")
+            .build());
+        
+        // 修改记录(如果update_time != create_time)
+        if (inspection.getUpdateTime() != null && 
+            !inspection.getUpdateTime().equals(inspection.getCreateTime())) {
+            history.add(InspectionHistoryVO.builder()
+                .time(inspection.getUpdateTime())
+                .action("update")
+                .operatorId(inspection.getUpdateBy())
+                .operatorName(inspection.getUpdateByName())
+                .detail("修改巡检记录")
+                .build());
+        }
+    }
+    
+    // 2. 从工单表获取生成工单记录(如果inspection_id字段存在)
+    if (!"operation".equals(type)) {
+        List<BizTicket> tickets = ticketMapper.selectTicketsByInspectionId(inspectionId);
+        for (BizTicket ticket : tickets) {
+            history.add(InspectionHistoryVO.builder()
+                .time(ticket.getCreateTime())
+                .action("generate_ticket")
+                .operatorId(ticket.getCreateBy())
+                .operatorName(ticket.getReporterName())
+                .detail("生成工单: " + ticket.getTitle())
+                .relatedId(ticket.getTicketId())
+                .build());
+        }
+    }
+    
+    // 3. 可选:从操作日志表获取详细操作(如果需要更完整历史)
+    // List<SysOperLog> operLogs = operLogMapper.selectOperLogByBusinessId("inspection", inspectionId);
+    
+    // 4. 按时间排序
+    history.sort(Comparator.comparing(InspectionHistoryVO::getTime));
+    
+    return history;
+}
+估时: 3小时
+F3. Mapper层(如需新增SQL)
+文件: BizInspectionMapper.xml
+<!-- 如果需要关联查询工单,确保ticket表有inspection_id字段 -->
+<select id="selectTicketsByInspectionId" resultType="BizTicket">
+    SELECT 
+        ticket_id, title, create_time, create_by, reporter_name
+    FROM biz_ticket
+    WHERE inspection_id = #{inspectionId}
+    ORDER BY create_time ASC
+</select>
+估时: 1小时
+5.2 任务组G:数据权限(可选)
+G1. Mapper权限过滤
+文件: BizInspectionMapper.xml
+<select id="selectBizInspectionList" parameterType="BizInspection" resultMap="BizInspectionResult">
+    SELECT ...
+    FROM biz_inspection
+    <where>
+        <!-- 数据权限过滤 -->
+        <if test="params.mineOnly != null and params.mineOnly">
+            AND (create_by = #{params.userId} OR inspector_name = #{params.username})
+        </if>
+        
+        <!-- 其他筛选条件 -->
+        <if test="inspectionDate != null">
+            AND inspection_date = #{inspectionDate}
+        </if>
+    </where>
+</select>
+估时: 1小时
+✅ 六、测试验收清单(M3 DoD)
+6.1 功能验收
+功能点	验收标准	优先级
+详情页-基本信息	显示完整字段(编号/日期/巡检人/进度/异常数)	P0
+详情页-楼层Tab	4个楼层可切换,数据正确展示,只读不可编辑	P0
+详情页-照片	显示现场照片,支持预览	P1
+详情页-异常项	保留原有功能,生成工单正常	P0
+详情页-操作历史	显示创建/修改/生成工单记录,时间正确	P0
+复制-列表入口	列表操作列有"复制"按钮,跳转create?copy=id	P0
+复制-详情入口	详情页顶部有"复制"按钮	P0
+复制-字段清理	清除id/编号/时间/创建人,保留业务数据	P0
+复制-备注追加	自动追加"复制自#XXX 时间戳"	P1
+权限-管理员入口	管理员可见删除按钮,普通用户不可见	P0
+权限-数据过滤	非管理员仅看自己相关巡检	P1
+i18n	所有新增文案有中英文	P1
+6.2 健康与回归
+手工测试(Windows终端)
+# 1. 启动服务
+cd frontend && pnpm run dev
+cd backend && mvn spring-boot:run
+
+# 2. 测试场景
+- 详情页: 访问 /business/inspection/detail/{id}
+- 复制: 列表点复制 -> 表单预填 -> 保存 -> 返回列表验证
+- 历史: 详情页查看操作历史,切换类型过滤
+- 权限: 用普通用户登录,验证按钮/数据可见性
+Vitest单元测试(补充)
+文件: frontend/src/__tests__/inspection.detail.test.ts
+describe('Inspection Detail', () => {
+  it('应正确加载详情数据', async () => {
+    // Mock getInspection API
+    // 断言: form填充正确
+  })
+  
+  it('应正确加载操作历史', async () => {
+    // Mock getInspectionHistory API
+    // 断言: history数组长度/字段正确
+  })
+  
+  it('应正确处理复制操作', async () => {
+    // 点击复制按钮
+    // 断言: 路由跳转带copy参数
+  })
+  
+  it('管理员应看到删除按钮', () => {
+    // Mock isAdmin=true
+    // 断言: 删除按钮可见
+  })
+  
+  it('普通用户不应看到删除按钮', () => {
+    // Mock isAdmin=false
+    // 断言: 删除按钮不可见
+  })
+})
+文件: frontend/src/__tests__/inspection.copy.test.ts
+describe('Inspection Copy', () => {
+  it('应清除敏感字段', () => {
+    const source = { inspectionId: 123, inspectionNo: 'INS001', inspectorName: '张三' }
+    const result = normalizeCopiedInspection(source)
+    
+    expect(result.inspectionId).toBeUndefined()
+    expect(result.inspectionNo).toBeUndefined()
+    expect(result.inspectorName).toBe('张三')
+  })
+  
+  it('应追加备注来源', () => {
+    const source = { inspectionNo: 'INS001', remark: '原备注' }
+    const result = normalizeCopiedInspection(source)
+    
+    expect(result.remark).toContain('复制自#INS001')
+    expect(result.remark).toContain('原备注')
+  })
+})
+估时: 3小时
+📚 七、文档交付物
+7.1 接口契约快照
+文件: docs/api/inspection-history-contract.md
+# 巡检历史接口契约 v1.0
+
+## GET /business/inspection/{id}/history
+
+### 请求
+- Path: `inspectionId` (Long) 巡检ID
+- Query: `type` (String, 可选) all|operation|ticket, 默认all
+
+### 响应
+```json
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": [
+    {
+      "id": 1,
+      "time": "2025-10-17 10:00:00",
+      "action": "create",
+      "operatorId": 1,
+      "operatorName": "张三",
+      "detail": "创建巡检记录"
+    },
+    {
+      "id": 2,
+      "time": "2025-10-17 10:30:00",
+      "action": "generate_ticket",
+      "operatorId": 1,
+      "operatorName": "张三",
+      "detail": "生成工单: 2楼UPS负载过高",
+      "relatedId": 456
+    }
+  ]
+}
+动作类型枚举
+create: 创建巡检
+update: 修改巡检
+copy: 复制巡检
+generate_ticket: 生成工单
+delete: 删除巡检
+权限
+business:inspection:query
+
+### 7.2 使用说明更新
+**文件**: `docs/modules/inspection-usage.md` (补充)
+
+```markdown
+## 复制巡检功能
+
+### 入口1: 列表页
+1. 列表操作列点击"复制"
+2. 自动跳转创建页,预填数据
+3. 修改后保存
+
+### 入口2: 详情页
+1. 详情页顶部点击"复制"
+2. 跳转逻辑同上
+
+### 复制规则
+**清除字段**:
+- inspectionId, inspectionNo
+- createTime, updateTime, createBy, updateBy
+
+**保留字段**:
+- inspectorName, relayPerson
+- items(巡检项数据)
+
+**特殊处理**:
+- inspectionDate: 重置为当天
+- photos: 清空
+- remark: 追加"[复制自#原编号] 时间戳"
+⏱️ 八、时间安排(优化版)
+8.1 按优先级分阶段
+Phase 1: 核心功能(2天) - P0
+Day 1 上午:
+✅ F1+F2: 后端历史接口实现与自测(3.5h)
+Day 1 下午:
+✅ A1: 详情页布局重构-基本信息+楼层Tab(4h)
+Day 2 上午:
+✅ C1+C2: 前端历史接口封装+时间线展示(2.5h)
+✅ B1: 复制normalize逻辑(1.5h)
+Day 2 下午:
+✅ B2: 列表/详情复制入口(0.5h)
+✅ D1+D2: 权限控制-管理员判断+操作权限(1.5h)
+✅ 联调测试(2h)
+Phase 2: 增强功能(1天) - P1
+Day 3 上午:
+✅ D3: 列表数据权限(mineOnly)(1h)
+✅ E1: i18n国际化(1h)
+✅ F3+G1: Mapper优化与权限过滤(2h)
+Day 3 下午:
+✅ 完整测试:手工+Vitest(3h)
+✅ 文档输出:契约+使用说明(1h)
+Phase 3: 可选优化(0.5天) - P2
+A2: 楼层Tab组件抽取(2h)
+性能优化与代码重构(2h)
+8.2 总估时
+核心路径(P0): 2天(16小时)
+增强功能(P1): 1天(8小时)
+可选优化(P2): 0.5天(4小时)
+总计: 2.5~3天
+⚠️ 九、风险与缓解措施
+9.1 技术风险
+风险	影响	概率	缓解措施
+历史数据来源不足	操作历史不完整	中	初期仅用inspection表基础字段;后续可接入sys_oper_log
+楼层Tab数据量大	detail.vue加载慢	低	56项数据量不大,无需优化;如需可加骨架屏
+复制字段遗漏	敏感数据泄露	中	建立完整清单,code review必查
+权限判断不一致	安全漏洞	高	前后端双重校验,统一isAdmin逻辑
+9.2 业务风险
+风险	缓解措施
+与M2维保模块概念混淆	M3文档明确"巡检无审批流",历史shape单独设计
+用户习惯改变	保留原有异常项入口,详情页为增强不替换
+数据权限争议	与产品确认:普通用户是否可见所有巡检?
+🎯 十、完成标志(交付清单)
+10.1 代码交付
+ 前端4个文件修改:detail.vue, create.vue, index.vue, inspection.js
+ 后端3个文件修改:Controller, Service, Mapper
+ 新增composable:usePermission.js
+ 新增测试:inspection.detail.test.ts, inspection.copy.test.ts
+10.2 文档交付
+ 接口契约:docs/api/inspection-history-contract.md
+ 使用说明更新:docs/modules/inspection-usage.md
+ M3完成报告(含测试结果)
+10.3 验收标准
+ 所有P0功能测试通过
+ Vitest新增用例100%通过
+ i18n中英文文案完整
+ Code review无阻塞问题
+ 部署到测试环境,产品验收通过
+Update Todos
+
+深入分析M3规划的合理性与正确性
+
+评估现有代码与M3目标的对齐度
+
+优化M3规划方案并输出完整文档
+📊 总结:M3优化规划核心要点
+✅ 主要优化点
+目标重新定义:
+❌ 原规划:"楼层Tab切换"(create.vue已实现,目标不清)
+✅ 优化后:"详情页完善"(新增基本信息+楼层Tab+历史)
+接口契约修正:
+❌ 原规划:照搬M2审批流shape(submit/approve/reject)
+✅ 优化后:巡检特定shape(create/update/copy/generate_ticket)
+任务拆解细化:
+❌ 原规划:笼统描述"楼层Tab+复制+历史"
+✅ 优化后:9个任务组(A~G),共27个子任务,每个有估时和代码示例
+测试验收完善:
+❌ 原规划:只提"手测全链路"
+✅ 优化后:功能验收表(12项)+Vitest用例清单+覆盖率要求
+风险管理:
+❌ 原规划:列出风险但无缓解措施
+✅ 优化后:技术风险矩阵+业务风险应对+优先级分级
+📋 关键交付物
+代码: 7个前端文件 + 3个后端文件 + 2个测试文件
+文档: 接口契约 + 使用说明 + M3完成报告
+时间: 2.5~3天(核心2天,增强1天,优化0.5天)

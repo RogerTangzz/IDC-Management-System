@@ -2,14 +2,15 @@ package com.ruoyi.system.service;
 
 import java.util.List;
 import com.ruoyi.system.domain.BizInspection;
+import com.ruoyi.system.domain.vo.InspectionHistoryVO;
 
 /**
  * 巡检记录Service接口
- * 
+ *
  * @author ruoyi
  * @date 2025-08-29
  */
-public interface IBizInspectionService 
+public interface IBizInspectionService
 {
     /**
      * 查询巡检记录
@@ -53,9 +54,18 @@ public interface IBizInspectionService
 
     /**
      * 删除巡检记录信息
-     * 
+     *
      * @param inspectionId 巡检记录主键
      * @return 结果
      */
     public int deleteBizInspectionByInspectionId(Long inspectionId);
+
+    /**
+     * 获取巡检操作历史
+     *
+     * @param inspectionId 巡检ID
+     * @param type 类型过滤 (all/operation/ticket)
+     * @return 历史记录列表
+     */
+    public List<InspectionHistoryVO> getInspectionHistory(Long inspectionId, String type);
 }

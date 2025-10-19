@@ -34,6 +34,12 @@ export function updateInspection(data) { return put('/business/inspection', data
 export function delInspection(inspectionId) { return del('/business/inspection/' + inspectionId) }
 
 /**
+ * 删除巡检记录（别名）
+ * @param {number|string} inspectionId
+ */
+export function deleteInspection(inspectionId) { return del('/business/inspection/' + inspectionId) }
+
+/**
  * 导出巡检
  * @param {Object} query
  * @returns {Promise<Blob>}
@@ -71,3 +77,13 @@ export function copyLastInspection() { return post('/business/inspection/copyLas
  * @returns {Promise<ApiResult<InspectionStatistics>>}
  */
 export function getInspectionStatistics(params) { return get('/business/inspection/statistics', params) }
+
+/**
+ * 获取巡检操作历史
+ * @param {number|string} inspectionId - 巡检ID
+ * @param {Object} params - { type: 'all'|'operation'|'ticket' }
+ * @returns {Promise<ApiResult<InspectionHistoryVO[]>>}
+ */
+export function getInspectionHistory(inspectionId, params = {}) {
+  return get(`/business/inspection/${inspectionId}/history`, params)
+}

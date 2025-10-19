@@ -35,7 +35,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectBizInspectionList" parameterType="BizInspection" resultMap="BizInspectionResult">
         <include refid="selectBizInspectionVo"/>
-        <where>  
+        <where>
+            <!-- 数据权限过滤: mineOnly 为 true 时，只查询当前用户创建或作为巡检人的记录 -->
+            <if test="params != null and params.mineOnly != null and params.mineOnly">
+                and (create_by = #{params.userId} OR inspector_name = #{params.username})
+            </if>
+
             <if test="inspectionNo != null  and inspectionNo != ''"> and inspection_no = #{inspectionNo}</if>
             <if test="inspectionDate != null "> and inspection_date = #{inspectionDate}</if>
             <if test="floor != null  and floor != ''"> and floor = #{floor}</if>
@@ -51,6 +56,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isCopied != null  and isCopied != ''"> and is_copied = #{isCopied}</if>
             <if test="photos != null  and photos != ''"> and photos = #{photos}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
+
+            <!-- 日期范围过滤 -->
+            <if test="params != null and params.beginTime != null and params.beginTime != ''">
+                and inspection_date &gt;= #{params.beginTime}
+            </if>
+            <if test="params != null and params.endTime != null and params.endTime != ''">
+                and inspection_date &lt;= #{params.endTime}
+            </if>
+
+            <!-- hasAnomaly 过滤：0=无异常，1=有异常 -->
+            <if test="hasAnomaly != null">
+                <choose>
+                    <when test="hasAnomaly == 1">
+                        and anomaly_count &gt; 0
+                    </when>
+                    <when test="hasAnomaly == 0">
+                        and (anomaly_count = 0 OR anomaly_count IS NULL)
+                    </when>
+                </choose>
+            </if>
         </where>
     </select>
     

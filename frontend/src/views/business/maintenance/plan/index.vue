@@ -76,34 +76,34 @@
     </el-row>
 
     <!-- 数据表格 -->
-    <el-table v-loading="loading" :data="maintenanceList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="maintenanceList" @selection-change="handleSelectionChange" @sort-change="handleSortChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column :label="$t('business.maintenance.field.planNo')" align="center" prop="planNo" width="120" />
-      <el-table-column :label="$t('business.maintenance.field.title')" align="left" prop="title" :show-overflow-tooltip="true" />
+      <el-table-column :label="$t('business.maintenance.field.planNo')" align="center" prop="planNo" width="120" sortable="custom" />
+      <el-table-column :label="$t('business.maintenance.field.title')" align="left" prop="title" :show-overflow-tooltip="true" sortable="custom" />
       <el-table-column :label="$t('business.maintenance.field.floor')" align="center" prop="floor" width="80">
         <template #default="scope">
           <el-tag>{{ getFloorLabel(scope.row.floor) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('business.maintenance.field.version')" align="center" prop="version" width="80" />
+      <el-table-column :label="$t('business.maintenance.field.version')" align="center" prop="version" width="80" sortable="custom" />
       <el-table-column :label="$t('business.maintenance.field.mopCategory')" align="center" prop="mopCategory" width="100">
         <template #default="scope">
           <dict-tag :options="mop_category" :value="scope.row.mopCategory" />
         </template>
       </el-table-column>
       <el-table-column :label="$t('business.maintenance.field.executionCycle')" align="center" prop="executionCycle" width="100" />
-      <el-table-column :label="$t('business.maintenance.field.approvalStatus')" align="center" prop="approvalStatus" width="100">
+      <el-table-column :label="$t('business.maintenance.field.approvalStatus')" align="center" prop="approvalStatus" width="100" sortable="custom">
         <template #default="scope">
           <dict-tag :options="approval_status" :value="scope.row.approvalStatus" />
         </template>
       </el-table-column>
-      <el-table-column :label="$t('business.maintenance.field.executionStatus')" align="center" prop="executionStatus" width="100">
+      <el-table-column :label="$t('business.maintenance.field.executionStatus')" align="center" prop="executionStatus" width="100" sortable="custom">
         <template #default="scope">
           <dict-tag :options="execution_status" :value="scope.row.executionStatus" />
         </template>
       </el-table-column>
       <el-table-column :label="$t('business.maintenance.field.approverName')" align="center" prop="approverName" width="100" />
-      <el-table-column :label="$t('business.maintenance.field.nextExecutionTime')" align="center" prop="nextExecutionTime" width="160">
+      <el-table-column :label="$t('business.maintenance.field.nextExecutionTime')" align="center" prop="nextExecutionTime" width="160" sortable="custom">
         <template #default="scope">
           <span v-if="scope.row.nextExecutionTime">
             {{ parseTime(scope.row.nextExecutionTime, '{y}-{m}-{d} {h}:{i}') }}
@@ -111,7 +111,7 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('business.maintenance.field.createTime')" align="center" prop="createTime" width="160">
+      <el-table-column :label="$t('business.maintenance.field.createTime')" align="center" prop="createTime" width="160" sortable="custom">
         <template #default="scope">
           {{ parseTime(scope.row.createTime) }}
         </template>
@@ -210,7 +210,6 @@
 import { ref, reactive, toRefs, onMounted, getCurrentInstance, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import useUserStore from '@/store/modules/user'
-import { withMineOnly } from '@/utils/business/mineOnly'
 import { useRouter } from 'vue-router'
 import {
   listMaintenance, delMaintenance, copyLastPlan, submitApproval, approvePlan, rejectPlan,
@@ -218,6 +217,7 @@ import {
   downloadMaintenanceTemplate, downloadMaintenanceImportErrors
 } from "@/api/business/maintenance";
 import { parseTime } from '@/utils/ruoyi'
+import { SORT_FIELD_MAP, buildQueryPayload } from './index.helpers'
 
 const { proxy } = getCurrentInstance();
 const { t } = useI18n()
@@ -256,7 +256,9 @@ const data = reactive({
     floor: undefined,
     mopCategory: undefined,
     approvalStatus: undefined,
-    executionStatus: undefined
+    executionStatus: undefined,
+    orderByColumn: undefined,
+    isAsc: undefined
   },
   submitForm: {
     planId: undefined,
@@ -284,9 +286,12 @@ const approveRules = {
 /** 查询维保计划列表 */
 function getList() {
   loading.value = true;
-  let params = proxy.addDateRange(queryParams.value, dateRange.value);
-  // 注入数据权限（非管理员仅本人数据），对齐工单列表策略
-  params = withMineOnly(params, isAdmin.value) as any
+  const params = buildQueryPayload({
+    queryParams: queryParams.value,
+    dateRange: dateRange.value,
+    isAdmin: isAdmin.value,
+    forExport: false
+  });
   listMaintenance(params).then(response => {
     maintenanceList.value = response.rows;
     planList.value = [...response.rows];
@@ -328,6 +333,21 @@ function resetQuery() {
   dateRange.value = [];
   proxy.resetForm("queryRef");
   handleQuery();
+}
+
+/** 排序变化处理 */
+function handleSortChange({ column, prop, order }) {
+  if (!prop || !order) {
+    // 清除排序
+    queryParams.value.orderByColumn = undefined
+    queryParams.value.isAsc = undefined
+  } else {
+    // 映射前端字段名到后端字段名
+    const backendField = SORT_FIELD_MAP[prop] || prop
+    queryParams.value.orderByColumn = backendField
+    queryParams.value.isAsc = order === 'ascending' ? 'asc' : 'desc'
+  }
+  handleQuery()
 }
 
 /** 多选框选中数据 */
@@ -469,12 +489,12 @@ function handleDelete(row) {
 
 /** 导出按钮操作 */
 function handleExport() {
-  let params: any = { ...queryParams.value }
-  if (Array.isArray(dateRange.value) && dateRange.value.length === 2) {
-    params.beginTime = `${dateRange.value[0]} 00:00:00`
-    params.endTime = `${dateRange.value[1]} 23:59:59`
-  }
-  params = withMineOnly(params, isAdmin.value)
+  const params = buildQueryPayload({
+    queryParams: queryParams.value,
+    dateRange: dateRange.value,
+    isAdmin: isAdmin.value,
+    forExport: true
+  })
   const filename = `maintenance_${Date.now()}.xlsx`
   if (proxy?.download) {
     proxy.download('business/maintenance/export', params, filename)

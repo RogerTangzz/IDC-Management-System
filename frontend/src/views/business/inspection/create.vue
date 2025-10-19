@@ -260,16 +260,93 @@ function parsePhotos(raw) {
   return []
 }
 
+/**
+ * 统一的复制 normalize 函数
+ * 清理敏感字段，保留业务数据，重置日期和照片
+ * @param {Object} sourceInspection - 源巡检数据
+ * @returns {Object} 清理后的巡检数据
+ */
+function normalizeCopiedInspection(sourceInspection) {
+  if (!sourceInspection) return null
+
+  const now = new Date()
+  const timestamp = now.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  })
+  const sourceNo = sourceInspection.inspectionNo || t('business.inspection.message.unknown')
+
+  return {
+    // 清理敏感字段
+    inspectionId: undefined,
+    inspectionNo: undefined,
+    createTime: undefined,
+    updateTime: undefined,
+    createBy: undefined,
+    updateBy: undefined,
+
+    // 重置日期为今天
+    inspectionDate: now.toISOString().split('T')[0],
+
+    // 保留业务数据
+    inspectorName: sourceInspection.inspectorName || '',
+    relayPerson: sourceInspection.relayPerson || '',
+
+    // 保留巡检项数据
+    items: normalizeItems(sourceInspection.items),
+
+    // 清空照片
+    photos: [],
+
+    // 备注：追加复制来源
+    remark: sourceInspection.remark
+      ? `${sourceInspection.remark}\n\n[${t('business.inspection.message.copiedFrom')}#${sourceNo}] ${timestamp}`
+      : `[${t('business.inspection.message.copiedFrom')}#${sourceNo}] ${timestamp}`
+  }
+}
+
 // 复制上次巡检
 function handleCopyLast() {
   getLatestInspection().then(response => {
     if (response.data) {
-      form.value.items = normalizeItems(response.data.items)
-      form.value.remark = `[${t('business.inspection.message.copiedFrom')}#${response.data.inspectionNo}]`
-      proxy.$modal.msgSuccess(t('business.inspection.message.copySuccess'))
+      const normalized = normalizeCopiedInspection(response.data)
+      if (normalized) {
+        // 合并到当前表单，保持 items 结构完整
+        form.value = {
+          ...form.value,
+          ...normalized,
+          items: normalized.items || form.value.items
+        }
+        proxy.$modal.msgSuccess(t('business.inspection.message.copySuccess'))
+      }
     } else {
       proxy.$modal.msgWarning(t('business.inspection.message.noLastInspection'))
     }
+  })
+}
+
+// 复制指定巡检（通过 URL 参数）
+function handleCopyFromUrl(copyId) {
+  if (!copyId) return
+
+  getInspection(copyId).then(response => {
+    if (response.data) {
+      const normalized = normalizeCopiedInspection(response.data)
+      if (normalized) {
+        form.value = {
+          ...form.value,
+          ...normalized,
+          items: normalized.items || form.value.items
+        }
+        proxy.$modal.msgSuccess(t('business.inspection.message.copySuccess'))
+      }
+    } else {
+      proxy.$modal.msgError(t('business.inspection.message.copyFailed'))
+    }
+  }).catch(error => {
+    console.error('复制巡检失败:', error)
+    proxy.$modal.msgError(t('business.inspection.message.copyFailed'))
   })
 }
 
@@ -402,15 +479,23 @@ function getPriorityType(priority) {
 
 // 初始化
 onMounted(() => {
-  if (inspectionId.value) {
+  // 优先检查 URL 参数中的 copy 参数
+  const copyId = route.query.copy
+
+  if (copyId) {
+    // 复制模式：从指定 ID 复制巡检数据
+    handleCopyFromUrl(copyId)
+  } else if (inspectionId.value) {
+    // 编辑模式：加载现有巡检数据
     getInspection(inspectionId.value).then(response => {
       if (response.data) {
         // 拆分 items
         const { items, ...rest } = response.data
-  form.value = { ...form.value, ...rest, items: normalizeItems(items), photos: parsePhotos(rest.photos) }
+        form.value = { ...form.value, ...rest, items: normalizeItems(items), photos: parsePhotos(rest.photos) }
       }
     })
   }
+  // 否则是新建模式，使用默认的空表单
 })
 </script>
 

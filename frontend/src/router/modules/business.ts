@@ -64,7 +64,7 @@ const businessRoutes: RouteRecordRaw[] = [
                         path: 'rack/detail/:rackId',
                         name: 'RackDetail',
                         hidden: true,
-                        component: () => import('@/views/business/asset/rack/detail.vue'),
+                        component: () => import('@/views/business/asset/rack/detail-new.vue'),
                         meta: { title: '机柜详情', activeMenu: '/business/asset/rack' }
                     }
                     // 注意：移除了 room 路由，避免导入不存在的文件报错

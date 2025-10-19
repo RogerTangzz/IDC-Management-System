@@ -1,0 +1,195 @@
+package com.ruoyi.web.controller.business;
+
+import java.util.List;
+import java.util.Arrays;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.common.annotation.Log;
+import com.ruoyi.common.core.controller.BaseController;
+import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.system.domain.BizAssetRack;
+import com.ruoyi.system.service.IBizAssetRackService;
+import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.common.utils.sql.SqlUtil;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+
+/**
+ * 资产机柜Controller
+ *
+ * @author ruoyi
+ * @date 2025-01-17
+ */
+@Api(tags = "机柜管理")
+@RestController
+@RequestMapping("/business/asset/rack")
+public class BizAssetRackController extends BaseController
+{
+    @Autowired
+    private IBizAssetRackService bizAssetRackService;
+
+    /**
+     * 排序字段白名单（防止SQL注入）
+     */
+    private static final List<String> SORT_WHITELIST = Arrays.asList(
+        "rack_no", "rack_name", "floor", "room", "status",
+        "create_time", "update_time", "u_count", "u_used"
+    );
+
+    /**
+     * 查询资产机柜列表
+     */
+    @ApiOperation("查询机柜列表")
+    @PreAuthorize("@ss.hasPermi('business:assetRack:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(BizAssetRack bizAssetRack,
+                               @ApiParam("排序字段") @RequestParam(required = false) String orderByColumn,
+                               @ApiParam("排序方式(asc/desc)") @RequestParam(required = false) String isAsc)
+    {
+        startPage();
+
+        // 处理排序参数（白名单校验）
+        if (StringUtils.isNotEmpty(orderByColumn))
+        {
+            String column = StringUtils.toUnderScoreCase(orderByColumn);
+            if (!SORT_WHITELIST.contains(column))
+            {
+                // 非白名单字段，忽略排序
+                logger.warn("Sort field [{}] not in whitelist, ignored", column);
+            }
+            else
+            {
+                String order = ("desc".equalsIgnoreCase(isAsc) ? "desc" : "asc");
+                String orderBy = SqlUtil.escapeOrderBySql(column + " " + order);
+                if (bizAssetRack.getParams() == null)
+                {
+                    bizAssetRack.setParams(new java.util.HashMap<>());
+                }
+                bizAssetRack.getParams().put("orderBy", orderBy);
+            }
+        }
+
+        List<BizAssetRack> list = bizAssetRackService.selectBizAssetRackList(bizAssetRack);
+        return getDataTable(list);
+    }
+
+    /**
+     * 导出资产机柜列表
+     */
+    @ApiOperation("导出机柜数据到Excel")
+    @PreAuthorize("@ss.hasPermi('business:assetRack:export')")
+    @Log(title = "资产机柜", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, BizAssetRack bizAssetRack)
+    {
+        List<BizAssetRack> list = bizAssetRackService.selectBizAssetRackList(bizAssetRack);
+        ExcelUtil<BizAssetRack> util = new ExcelUtil<BizAssetRack>(BizAssetRack.class);
+        util.exportExcel(response, list, "Asset Rack Data");
+    }
+
+    /**
+     * 获取资产机柜详细信息
+     */
+    @ApiOperation("获取机柜详情")
+    @PreAuthorize("@ss.hasPermi('business:assetRack:query')")
+    @GetMapping(value = "/{rackId}")
+    public AjaxResult getInfo(@ApiParam("机柜ID") @PathVariable("rackId") Long rackId)
+    {
+        return success(bizAssetRackService.selectBizAssetRackByRackId(rackId));
+    }
+
+    /**
+     * 新增资产机柜
+     */
+    @ApiOperation("新增机柜")
+    @PreAuthorize("@ss.hasPermi('business:assetRack:add')")
+    @Log(title = "资产机柜", businessType = BusinessType.INSERT)
+    @PostMapping
+    public AjaxResult add(@ApiParam("机柜信息") @RequestBody BizAssetRack bizAssetRack)
+    {
+        // 检查机柜编号唯一性
+        if (!"0".equals(bizAssetRackService.checkRackNoUnique(bizAssetRack)))
+        {
+            return error("Failed to add rack '" + bizAssetRack.getRackName() + "', rack number already exists");
+        }
+
+        // 校验已用U数不能超过总U数
+        if (bizAssetRack.getUUsed() != null && bizAssetRack.getUCount() != null
+            && bizAssetRack.getUUsed() > bizAssetRack.getUCount())
+        {
+            return error("Failed to add rack, used U count cannot exceed total U count");
+        }
+
+        bizAssetRack.setCreateBy(getUsername());
+        return toAjax(bizAssetRackService.insertBizAssetRack(bizAssetRack));
+    }
+
+    /**
+     * 修改资产机柜
+     */
+    @ApiOperation("修改机柜")
+    @PreAuthorize("@ss.hasPermi('business:assetRack:edit')")
+    @Log(title = "资产机柜", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@ApiParam("机柜信息") @RequestBody BizAssetRack bizAssetRack)
+    {
+        // 检查机柜编号唯一性
+        if (!"0".equals(bizAssetRackService.checkRackNoUnique(bizAssetRack)))
+        {
+            return error("Failed to update rack '" + bizAssetRack.getRackName() + "', rack number already exists");
+        }
+
+        // 校验已用U数不能超过总U数
+        if (bizAssetRack.getUUsed() != null && bizAssetRack.getUCount() != null
+            && bizAssetRack.getUUsed() > bizAssetRack.getUCount())
+        {
+            return error("Failed to update rack, used U count cannot exceed total U count");
+        }
+
+        bizAssetRack.setUpdateBy(getUsername());
+        return toAjax(bizAssetRackService.updateBizAssetRack(bizAssetRack));
+    }
+
+    /**
+     * 删除资产机柜
+     */
+    @ApiOperation("删除机柜")
+    @PreAuthorize("@ss.hasPermi('business:assetRack:remove')")
+    @Log(title = "资产机柜", businessType = BusinessType.DELETE)
+    @DeleteMapping("/{rackIds}")
+    public AjaxResult remove(@ApiParam("机柜ID数组") @PathVariable Long[] rackIds)
+    {
+        return toAjax(bizAssetRackService.deleteBizAssetRackByRackIds(rackIds));
+    }
+
+    // ========== 机柜变更日志相关接口 ==========
+
+    @Autowired
+    private com.ruoyi.system.service.IBizAssetRackLogService bizAssetRackLogService;
+
+    /**
+     * 查询机柜变更日志列表
+     */
+    @ApiOperation("查询机柜变更日志")
+    @PreAuthorize("@ss.hasPermi('business:assetRack:query')")
+    @GetMapping("/{rackId}/logs")
+    public AjaxResult getRackLogs(@ApiParam("机柜ID") @PathVariable Long rackId)
+    {
+        List<com.ruoyi.system.domain.BizAssetRackLog> logs = bizAssetRackLogService.selectRackLogsByRackId(rackId);
+        return success(logs);
+    }
+}

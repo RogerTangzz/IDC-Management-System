@@ -73,9 +73,11 @@
   "message": {
     "basicInfo": "Basic Information",
     "inspectionProgress": "Inspection Progress",
+    "completionProgress": "Completion Progress",
     "inspectionItems": "Inspection Items",
     "onSitePhotos": "On-site Photos",
     "anomalySummary": "Anomaly Summary",
+    "operationHistory": "Operation History",
     "detailTitle": "Inspection Details",
     "noAnomalyFound": "No Anomaly",
     "anomalyDetected": "Anomalies Detected",
@@ -124,13 +126,28 @@
     "noInspectionIdForTicket": "Unable to get inspection ID, cannot generate tickets",
     "confirmCancelEdit": "Are you sure to cancel? Unsaved data will be lost",
     "copiedFrom": "Copied from Inspection",
+    "copyFailed": "Failed to copy inspection",
+    "unknown": "Unknown",
     "inspectionItem": "Inspection Item {index}",
     "loadDetailFailed": "Failed to load inspection details",
     "basicInfrastructure": "Basic Infrastructure",
     "pumpSystem": "Pump System",
     "coolingSystem": "Cooling System",
     "invalidInspectionId": "Invalid inspection ID",
-    "loadFailed": "Load failed"
+    "loadFailed": "Load failed",
+    "historyLoadFailed": "Failed to load history records",
+    "noHistory": "No operation history",
+    "anomalyCount": "Anomaly Count"
+  },
+  "history": {
+    "create": "Create Inspection",
+    "update": "Update Inspection",
+    "copy": "Copy Inspection",
+    "generate_ticket": "Generate Ticket",
+    "delete": "Delete Inspection",
+    "all": "All",
+    "operation": "Operations",
+    "ticket": "Tickets"
   },
   "validation": {
     "inspectionDateRequired": "Please select inspection date",

@@ -369,4 +369,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                  or create_by = #{params.username})
         </if>
     </select>
+
+    <!-- M3: 查询来源于指定巡检的工单 -->
+    <select id="selectTicketsBySourceIdAndType" resultMap="BizTicketResult">
+        <include refid="selectBizTicketVo"/>
+        where source_id = #{param1}
+          and source = #{param2}
+        order by create_time asc
+    </select>
 </mapper>
